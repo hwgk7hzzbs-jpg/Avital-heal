@@ -190,3 +190,15 @@ section {
   font-weight: 600;
   color: var(--primary-color);
 }
+/* MOBILE – ABOUT IMAGE (no crop) */
+@media (max-width: 768px) {
+  .about-img {
+    height: auto;              /* מבטל גובה קבוע */
+    max-height: 420px;
+    object-fit: contain;       /* לא חותך */
+    object-position: center;
+    background: var(--secondary-color);
+    padding: 8px;
+    border-radius: 12px;
+  }
+}
