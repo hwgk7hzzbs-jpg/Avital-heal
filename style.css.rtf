@@ -1,0 +1,320 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2867
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fnil\fcharset0 HelveticaNeue;}
+{\colortbl;\red255\green255\blue255;\red249\green249\blue249;\red0\green0\blue0;}
+{\*\expandedcolortbl;;\cssrgb\c98039\c98039\c98039;\cssrgb\c0\c0\c0;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\deftab720
+\pard\pardeftab720\partightenfactor0
+
+\f0\fs24 \cf2 \cb3 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 /* \uc0\u1502 \u1513 \u1514 \u1504 \u1497 \u1501  \u1493 \u1510 \u1489 \u1506 \u1497 \u1501  - \u1488 \u1493 \u1493 \u1497 \u1512 \u1492  \u1512 \u1490 \u1493 \u1506 \u1492  \u1493 \u1496 \u1497 \u1508 \u1493 \u1500 \u1497 \u1514  */\
+:root \{\
+    --primary-color: #9DC8B0; /* \uc0\u1497 \u1512 \u1493 \u1511  \u1512 \u1498  \u1497 \u1493 \u1514 \u1512  */\
+    --secondary-color: #F0F7F3; /* \uc0\u1497 \u1512 \u1493 \u1511  \u1489 \u1492 \u1497 \u1512  \u1493 \u1512 \u1498  \u1506 \u1493 \u1491  \u1497 \u1493 \u1514 \u1512  */\
+    --text-color: #4A4A4A; /* \uc0\u1488 \u1508 \u1493 \u1512  \u1499 \u1492 \u1492  \u1512 \u1498  */\
+    --box-bg: rgba(255, 255, 255, 0.95); /* \uc0\u1500 \u1489 \u1503  \u1495 \u1510 \u1497  \u1513 \u1511 \u1493 \u1507  */\
+    --shadow: 0 4px 20px 0 rgba(31, 38, 135, 0.08);\
+    --white: #ffffff;\
+    --bg-color: #F9FCFA; /* \uc0\u1512 \u1511 \u1506  \u1500 \u1489 \u1503  \u1512 \u1498  */\
+\}\
+* \{\
+    box-sizing: border-box;\
+    margin: 0;\
+    padding: 0;\
+\}\
+body \{\
+    font-family: 'Rubik', sans-serif;\
+    background-color: var(--bg-color);\
+    background-image: url('https://images.unsplash.com/photo-1472214103451-9374bd1c798e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1920&q=80');\
+background-attachment: fixed;\
+    background-size: cover;\
+    background-blend-mode: overlay;\
+    color: var(--text-color);\
+    line-height: 1.6;\
+\}\
+a \{\
+    text-decoration: none;\
+    color: inherit;\
+    transition: 0.3s;\
+\}\
+\
+ul \{\
+    list-style: none;\
+\}\
+/* --- HEADER & NAV --- */\
+header \{\
+    background-color: var(--white);\
+    box-shadow: var(--shadow);\
+    position: sticky;\
+    top: 0;\
+    z-index: 1000;\
+    padding: 1rem 0;\
+\}\
+\
+.container \{\
+    max-width: 1100px;\
+    margin: 0 auto;\
+    padding: 0 20px;\
+\}\
+\
+.navbar \{\
+    display: flex;\
+    justify-content: space-between;\
+    align-items: center;\
+\}\
+\
+.logo \{\
+    font-size: 1.5rem;\
+    font-weight: 700;\
+    color: var(--primary-color);\
+\}\
+\
+.nav-links \{\
+    display: flex;\
+    gap: 25px;\
+\}\
+.nav-links a \{\
+    color: var(--text-color);\
+\}\
+\
+.nav-links a:hover \{\
+    color: var(--primary-color);\
+    font-weight: 600;\
+\}\
+.menu-toggle \{\
+    display: none;\
+    font-size: 1.8rem;\
+    cursor: pointer;\
+\}\
+\
+.btn-outline \{\
+    background-color: transparent;\
+    color: var(--primary-color);\
+    border: 2px solid var(--primary-color);\
+    padding: 5px 15px;\
+    border-radius: 5px;\
+\}\
+.btn-outline:hover \{\
+    background-color: var(--primary-color);\
+    color: var(--white);\
+    border-color: var(--primary-color);\
+\}\
+/* --- HERO --- */\
+.hero \{\
+    background: linear-gradient(135deg, rgba(157,200,176,0.6), rgba(240,247,243,0.7)), url('https://images.unsplash.com/photo-1472214103451-9374bd1c798e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1920&q=80') center/cover;\
+background-size: cover;\
+    background-position: center;\
+    height: 80vh;\
+    display: flex;\
+    align-items: center;\
+    justify-content: center;\
+    text-align: center;\
+    color: var(--white);\
+    padding: 0 20px;\
+\}\
+\
+.hero-content h1 \{\
+    font-size: 3rem;\
+    margin-bottom: 1rem;\
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);\
+\}\
+\
+.hero-content p \{\
+    font-size: 1.4rem;\
+    margin-bottom: 2rem;\
+    max-width: 700px;\
+    margin-left: auto;\
+    margin-right: auto;\
+\}\
+\
+.btn \{\
+    display: inline-block;\
+    background-color: var(--primary-color);\
+    color: var(--white);\
+    padding: 12px 30px;\
+    border-radius: 50px;\
+    font-weight: 600;\
+    font-size: 1.1rem;\
+    border: 2px solid var(--primary-color);\
+    transition: 0.3s;\
+\}\
+.btn:hover \{\
+    background-color: var(--secondary-color);\
+    color: var(--text-color);\
+    border-color: var(--secondary-color);\
+\}\
+/* \uc0\u1502 \u1495 \u1500 \u1511 \u1493 \u1514  \u1499 \u1500 \u1500 \u1497 \u1493 \u1514  */\
+section \{\
+    padding: 80px 0;\
+\}\
+\
+.section-title \{\
+    text-align: center;\
+    margin-bottom: 50px;\
+\}\
+\
+.section-title h2 \{\
+    font-size: 2.2rem;\
+    color: var(--primary-color);\
+    margin-bottom: 10px;\
+\}\
+\
+.section-title p \{\
+    color: #666;\
+    max-width: 600px;\
+    margin: 0 auto;\
+\}\
+\
+/* \uc0\u1488 \u1493 \u1491 \u1493 \u1514  */\
+.about-content \{\
+    display: grid;\
+    grid-template-columns: 1fr 1fr;\
+    gap: 50px;\
+    align-items: center;\
+\}\
+\
+@media (max-width: 768px) \{\
+    .about-content \{\
+        grid-template-columns: 1fr;\
+        gap: 30px;\
+    \}\
+    .about-text \{\
+        order: 2;\
+    \}\
+\}\
+.about-img \{\
+    width: 100%;\
+    max-width: 400px;\
+    height: 500px;\
+    object-fit: cover;\
+    object-position: top;\
+    border-radius: 10px;\
+    box-shadow: var(--shadow);\
+    background-color: var(--secondary-color);\
+    border: 1px solid rgba(0,0,0,0.1);\
+    margin: 0 auto;\
+    display: block;\
+\}\
+@media (max-width: 768px) \{\
+    .about-img \{\
+        max-width: 100%;\
+        height: 300px;\
+        width: 100%;\
+        object-fit: cover;\
+        border-radius: 10px;\
+        margin-bottom: 20px;\
+    \}\
+\}\
+/* \uc0\u1513 \u1497 \u1512 \u1493 \u1514 \u1497 \u1501  */\
+.services \{\
+    background-color: var(--secondary-color);\
+\}\
+.services-grid \{\
+    display: grid;\
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));\
+    gap: 30px;\
+\}\
+.service-card \{\
+    background: rgba(255,255,255,0.95);\
+    padding: 30px;\
+    border-radius: 10px;\
+    text-align: center;\
+    transition: 0.3s;\
+    border-top: 5px solid var(--primary-color);\
+    border: 1px solid rgba(0,0,0,0.05);\
+\}\
+.service-card:hover \{\
+    transform: translateY(-10px);\
+    box-shadow: var(--shadow);\
+\}\
+\
+.service-card h3 \{\
+    margin-bottom: 15px;\
+    font-size: 1.4rem;\
+\}\
+\
+/* \uc0\u1492 \u1502 \u1500 \u1510 \u1493 \u1514  */\
+.testimonials \{\
+    background: linear-gradient(135deg, var(--primary-color), #D4E9D7);\
+    color: var(--text-color);\
+    text-align: center;\
+\}\
+.testimonials h2 \{\
+    color: var(--white);\
+\}\
+.testimonial-card \{\
+    background: rgba(255,255,255,0.7);\
+    padding: 30px;\
+    border-radius: 10px;\
+    margin-bottom: 20px;\
+    max-width: 800px;\
+    margin: 0 auto 20px auto;\
+    border: 1px solid rgba(0,0,0,0.05);\
+\}\
+.testimonial-card p \{\
+    font-style: italic;\
+    font-size: 1.1rem;\
+\}\
+\
+.testimonial-card span \{\
+    display: block;\
+    margin-top: 15px;\
+    font-weight: bold;\
+\}\
+\
+/* \uc0\u1510 \u1493 \u1512  \u1511 \u1513 \u1512  */\
+.contact-container \{\
+    display: flex;\
+    flex-wrap: wrap;\
+    justify-content: space-between;\
+    gap: 40px;\
+\}\
+\
+.contact-info \{\
+    flex: 1;\
+    min-width: 300px;\
+\}\
+\
+.contact-form \{\
+    flex: 1;\
+    min-width: 300px;\
+    background: var(--white);\
+    padding: 30px;\
+    border-radius: 10px;\
+    box-shadow: var(--shadow);\
+\}\
+\
+.form-group \{\
+    margin-bottom: 20px;\
+\}\
+\
+.form-group label \{\
+    display: block;\
+    margin-bottom: 5px;\
+    font-weight: 600;\
+\}\
+\
+.form-group input,\
+.form-group textarea \{\
+    width: 100%;\
+    padding: 10px;\
+    border: 1px solid #ddd;\
+    border-radius: 5px;\
+    font-family: inherit;\
+\}\
+\
+/* \uc0\u1512 \u1505 \u1508 \u1493 \u1504 \u1505 \u1497 \u1489 \u1497 \u1493 \u1514  \u1500 \u1504 \u1497 \u1497 \u1491  */\
+@media (max-width: 768px) \{\
+    .hero-content h1 \{\
+        font-size: 2.2rem;\
+    \}\
+\
+    .about-content \{\
+        grid-template-columns: 1fr;\
+    \}\
+    \
+    .about-img \{\
+        order: -1;\
+        height: 300px;\
+    \}\
+\}}
