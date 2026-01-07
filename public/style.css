@@ -138,3 +138,22 @@ section {
   margin-bottom: 0;        /* שלא יידחף עוד למטה מעבר למה שקבענו */
   display: inline-block;   /* נשאר "כמו תגית" */
 }
+/* SECTION TITLE - בקליניקה */
+.section-title {
+  text-align: center;
+  margin-bottom: 50px; /* רווח מהריבועים */
+}
+
+.section-title h2 {
+  margin: 0;
+}
+
+/* שורת המשנה */
+.section-subtitle {
+  margin-top: 14px;           /* רווח מהכותרת */
+  background: var(--box-bg);
+  display: inline-block;
+  padding: 6px 22px;
+  border-radius: 20px;
+  font-size: 0.95rem;
+}
