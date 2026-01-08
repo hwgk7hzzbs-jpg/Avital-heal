@@ -132,21 +132,7 @@ section {
     justify-self: center;
   }
 }
-/* SECTION TITLES (כותרות של אזורים) */
-.section-title {
-  text-align: center;      /* מרכז את "בקליניקה" */
-  margin-bottom: 40px;     /* מרווח גדול לפני הריבועים */
-}
 
-.section-title h2 {
-  margin: 0;
-}
-
-.section-title p {
-  margin-top: 14px;        /* רווח בין הכותרת לטקסט שמתחת */
-  margin-bottom: 0;        /* שלא יידחף עוד למטה מעבר למה שקבענו */
-  display: inline-block;   /* נשאר "כמו תגית" */
-}
 /* SECTION TITLE - בקליניקה */
 .section-title {
   text-align: center;
