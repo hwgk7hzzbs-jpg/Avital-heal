@@ -157,27 +157,10 @@ section {
   width: 100%;
   max-width: 320px;
   height: auto;
-
-  object-fit: contain;
-  border-radius: 18px;
-
-  /* הילה רוחנית בהירה */
-  background: radial-gradient(
-    ellipse at center,
-    rgba(255, 255, 255, 0.95) 0%,
-    rgba(240, 247, 243, 0.9) 60%,
-    rgba(157, 200, 176, 0.35) 100%
-  );
-
-  padding: 16px;
-
-  /* אור עדין מסביב */
-  box-shadow:
-    0 0 0 10px rgba(157, 200, 176, 0.15),
-    0 12px 30px rgba(0, 0, 0, 0.08);
-
-  justify-self: start;
+  border-radius: 16px;
+  box-shadow: 0 10px 25px rgba(157, 200, 176, 0.25);
 }
+
 
 /* =========================
    5) SERVICES
@@ -367,21 +350,12 @@ section {
 
   object-fit: contain;
   border-radius: 18px;
-
-  /* הילה רוחנית בהירה */
-  background: radial-gradient(
-    ellipse at center,
-    rgba(255, 255, 255, 0.95) 0%,
-    rgba(240, 247, 243, 0.9) 60%,
-    rgba(157, 200, 176, 0.35) 100%
-  );
-
-  padding: 16px;
+  background: none;
+  padding: 0;
 
   /* אור עדין מסביב */
   box-shadow:
-    0 0 0 10px rgba(157, 200, 176, 0.15),
-    0 12px 30px rgba(0, 0, 0, 0.08);
+    0 0 0 10px rgba(157, 200, 176, 0.25);
 
   justify-self: start;
 }
