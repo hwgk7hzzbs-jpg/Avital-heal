@@ -237,7 +237,15 @@ section {
   }
 
   .hero-name {
-    font-size: 1.05rem;
-    letter-spacing: 0.12em;
-  }
+  font-size: 1.4rem;
+  margin-bottom: 12px;
+  letter-spacing: 0.15em;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* ⬇️ זה חדש – בסוף הקובץ */
+.hero .btn {
+  margin-top: 40px;
+  opacity: 0.95;
 }
