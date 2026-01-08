@@ -328,7 +328,11 @@ section {
   }
 
   .hero-content {
-    padding: 22px 18px;
+    padding: 28px 20px;              /* יותר אוויר */
+    background: rgba(255,255,255,0.08);  /* הרבה יותר שקוף */
+    border-radius: 22px;
+    backdrop-filter: blur(6px);
+    border: 1px solid rgba(255,255,255,0.25);
   }
 
   .hero h1 {
