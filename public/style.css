@@ -115,12 +115,13 @@ section {
 }
 
 .hero-name {
-  font-size: 1.4rem;
-  margin-bottom: 12px;
-  letter-spacing: 0.15em;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.92);
-  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.2);
+  font-size: 1.5rem;
+  margin-bottom: 14px;
+  letter-spacing: 0.18em;
+  font-weight: 600;
+  color: #ffffff;
+  0 2px 6px rgba(0, 0, 0, 0.35),
+  0 0 12px rgba(255, 255, 255, 0.35);
 }
 
 .hero h1 {
@@ -337,8 +338,8 @@ section {
   }
 
   .hero-name {
-    font-size: 1.1rem;
-    letter-spacing: 0.12em;
+    font-size: 1.25rem;
+    letter-spacing: 0.14em;
   }
 
   /* ABOUT */
