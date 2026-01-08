@@ -341,7 +341,17 @@ section {
     font-size: 1.25rem;
     letter-spacing: 0.14em;
   }
-
+body{
+    background:
+      linear-gradient(
+        rgba(249, 252, 250, 0.78),
+        rgba(249, 252, 250, 0.78)
+      ),
+      url("https://images.unsplash.com/photo-1472214103451-9374bd1c798e?auto=format&fit=crop&w=1920&q=80")
+      center / cover no-repeat;
+    background-attachment: scroll; /* במקום ה-body שלך למטה */
+  }
+   
   /* ABOUT */
   .about-content {
     grid-template-columns: 1fr;
@@ -376,8 +386,5 @@ section {
 
   .whatsapp-btn-large {
     width: 100%;
-  }
-   body {
-    background-attachment: scroll;
   }
 }
