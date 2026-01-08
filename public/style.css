@@ -382,7 +382,12 @@ section {
   .hero { height: 72vh; }
 
   .about-content { grid-template-columns: 1fr; }
-
+   
+   .about-text {
+    font-size: 1.45rem;
+    line-height: 1.9;
+  }
+   
   .about-img {
     width: 100%;
     max-width: 320px;
