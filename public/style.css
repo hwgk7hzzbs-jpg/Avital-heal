@@ -352,8 +352,8 @@ section {
 body{
     background:
       linear-gradient(
-        rgba(249, 252, 250, 0.55),
-        rgba(249, 252, 250, 0.55)
+        rgba(249, 252, 250, 0.35),
+        rgba(249, 252, 250, 0.35)
       ),
       url("https://images.unsplash.com/photo-1472214103451-9374bd1c798e?auto=format&fit=crop&w=1920&q=80")
       center / cover no-repeat;
