@@ -334,26 +334,15 @@ section {
   /* BODY */
   /* BODY – iPhone fix: show the same background on mobile */
 body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-
   background:
-    linear-gradient(
-      rgba(249, 252, 250, 0.30),
-      rgba(249, 252, 250, 0.30)
-    ),
+    linear-gradient(rgba(249, 252, 250, 0.22), rgba(249, 252, 250, 0.22)),
     url("https://images.unsplash.com/photo-1472214103451-9374bd1c798e?auto=format&fit=crop&w=1920&q=80")
       center / cover no-repeat;
-
-  transform: translateZ(0);
-   
-  background-position: center;
-  background-size: cover;
-  background-repeat: no-repeat;
 }
 
+section {
+  background: rgba(255, 255, 255, 0.20);
+}
 
   /* HERO */
   .hero {
@@ -407,6 +396,24 @@ body::before {
     box-shadow: 0 0 0 10px rgba(157, 200, 176, 0.25);
     justify-self: center;
   }
+/* Highlight address on mobile only */
+.contact-address {
+  background: rgba(157, 200, 176, 0.18);
+  padding: 14px 16px;
+  border-radius: 16px;
+  box-shadow: 0 8px 20px rgba(157, 200, 176, 0.25);
+  margin-bottom: 14px;
+}
+
+.address-text {
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.map-icon {
+  width: 16px;
+  height: 16px;
+}
 
   /* CONTACT */
   .contact-container {
@@ -422,4 +429,16 @@ body::before {
     width: 100%;
   }
 }
+/* Address styling */
+.contact-address {
+  line-height: 1.6;
+}
+
+.map-icon {
+  color: var(--primary-color);
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+
 
