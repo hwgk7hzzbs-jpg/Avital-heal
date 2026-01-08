@@ -356,6 +356,7 @@ body::before {
     url("https://images.unsplash.com/photo-1472214103451-9374bd1c798e?auto=format&fit=crop&w=1920&q=80")
       center / cover no-repeat;
 }
+   
 body{
     background-attachment: scroll;
   }
@@ -433,6 +434,12 @@ section {
   width: 16px;
   height: 16px;
   display: inline-block;
+}
+.nav-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: center;
 }
 
   /* CONTACT */
