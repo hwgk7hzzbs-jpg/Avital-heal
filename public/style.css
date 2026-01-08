@@ -23,9 +23,16 @@
 
 body {
   font-family: 'Rubik', sans-serif;
-  background: var(--bg-color);
   color: var(--text-color);
   line-height: 1.6;
+
+   background:
+    linear-gradient(
+      rgba(249, 252, 250, 0.92),
+      rgba(249, 252, 250, 0.92)
+    ),
+    url("https://images.unsplash.com/photo-1472214103451-9374bd1c798e?auto=format&fit=crop&w=1920&q=80")
+      center / cover fixed no-repeat;
 }
 
 a {
@@ -38,6 +45,7 @@ a {
 ========================= */
 section {
   padding: 80px 20px;
+  background: rgba(255, 255, 255, 0.78);
 }
 
 .container {
@@ -85,14 +93,7 @@ section {
    3) HERO
 ========================= */
 .hero {
-  background:
-    linear-gradient(
-      rgba(157, 200, 176, 0.45),
-      rgba(240, 247, 243, 0.75)
-    ),
-    url("https://images.unsplash.com/photo-1472214103451-9374bd1c798e?auto=format&fit=crop&w=1920&q=80")
-      center / cover no-repeat;
-
+  
   height: 80vh;
   display: flex;
   align-items: center;
@@ -101,6 +102,8 @@ section {
   text-align: center;
   color: #ffffff;
   padding: 0 20px;
+   
+  background: rgba(157, 200, 176, 0.15);
 }
 
 .hero-content {
@@ -372,5 +375,8 @@ section {
 
   .whatsapp-btn-large {
     width: 100%;
+  }
+   body {
+    background-attachment: scroll;
   }
 }
