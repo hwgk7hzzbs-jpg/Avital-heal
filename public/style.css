@@ -199,6 +199,8 @@ section {
 
 .about-text {
   text-align: right;
+  font-size: 1.3rem;
+  line-height: 1.8;
 }
 
 .about-img {
