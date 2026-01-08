@@ -156,26 +156,28 @@ section {
 .about-img {
   width: 100%;
   max-width: 320px;
-  height: 420px;
-  object-fit: cover;
-  border-radius: 20px;
+  height: auto;
 
-  /* רקע רוחני בהיר */
+  object-fit: contain;
+  border-radius: 18px;
+
+  /* הילה רוחנית בהירה */
   background: radial-gradient(
-    circle at top,
-    rgba(157, 200, 176, 0.35),
-    rgba(240, 247, 243, 0.9)
+    ellipse at center,
+    rgba(255, 255, 255, 0.95) 0%,
+    rgba(240, 247, 243, 0.9) 60%,
+    rgba(157, 200, 176, 0.35) 100%
   );
 
-  /* הילה רכה */
-  box-shadow:
-    0 12px 30px rgba(157, 200, 176, 0.35),
-    0 0 0 12px rgba(240, 247, 243, 0.6);
+  padding: 16px;
 
-  padding: 8px; /* יוצר מרווח בין התמונה להילה */
+  /* אור עדין מסביב */
+  box-shadow:
+    0 0 0 10px rgba(157, 200, 176, 0.15),
+    0 12px 30px rgba(0, 0, 0, 0.08);
+
   justify-self: start;
 }
-
 
 /* =========================
    5) SERVICES
@@ -359,20 +361,30 @@ section {
   }
 
   .about-img {
-    max-width: 100%;
-    height: auto;
-    max-height: 420px;
-    object-fit: contain; /* לא חותך במובייל */
-    object-position: center;
-    background: radial-gradient(
-      circle at top,
-     rgba(157, 200, 176, 0.35),
-     rgba(240, 247, 243, 0.95)
-   );
-    padding: 8px;
-    border-radius: 12px;
-    justify-self: center;
-  }
+  width: 100%;
+  max-width: 320px;
+  height: auto;
+
+  object-fit: contain;
+  border-radius: 18px;
+
+  /* הילה רוחנית בהירה */
+  background: radial-gradient(
+    ellipse at center,
+    rgba(255, 255, 255, 0.95) 0%,
+    rgba(240, 247, 243, 0.9) 60%,
+    rgba(157, 200, 176, 0.35) 100%
+  );
+
+  padding: 16px;
+
+  /* אור עדין מסביב */
+  box-shadow:
+    0 0 0 10px rgba(157, 200, 176, 0.15),
+    0 12px 30px rgba(0, 0, 0, 0.08);
+
+  justify-self: start;
+}
 
   /* CONTACT */
   .contact-container {
