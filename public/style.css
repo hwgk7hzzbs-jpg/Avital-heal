@@ -322,69 +322,64 @@ section {
    8) MOBILE (ALL MOBILE RULES AT THE END)
 ========================= */
 @media (max-width: 768px) {
+
+  /* BODY */
+  body {
+    background-attachment: scroll;
+  }
+
   /* HERO */
   .hero {
     height: 72vh;
   }
 
   .hero-content {
-    padding: 28px 20px;              /* יותר אוויר */
-    background: rgba(255,255,255,0.08);  /* הרבה יותר שקוף */
-    border-radius: 22px;
+    padding: 28px 20px;
+    max-width: 92%;
+    background: rgba(255,255,255,0.08);
     backdrop-filter: blur(6px);
+    border-radius: 24px;
     border: 1px solid rgba(255,255,255,0.25);
-  }
-
-  .hero h1 {
-    font-size: 2.1rem;
-    line-height: 1.25;
-  }
-
-  .hero p {
-    font-size: 1.05rem;
   }
 
   .hero-name {
     font-size: 1.45rem;
     letter-spacing: 0.18em;
     font-weight: 700;
+    color: #fff;
+    text-shadow:
+      0 3px 8px rgba(0,0,0,0.45),
+      0 0 18px rgba(255,255,255,0.35);
+  }
 
-   text-shadow:
-    0 2px 6px rgba(0,0,0,0.45),
-    0 0 16px rgba(255,255,255,0.4);
+  .hero h1 {
+    font-size: 2.2rem;
+    line-height: 1.25;
+    text-shadow: 0 3px 10px rgba(0,0,0,0.45);
   }
-body{
-    background:
-      linear-gradient(
-        rgba(249, 252, 250, 0.35),
-        rgba(249, 252, 250, 0.35)
-      ),
-      url("https://images.unsplash.com/photo-1472214103451-9374bd1c798e?auto=format&fit=crop&w=1920&q=80")
-      center / cover no-repeat;
-    background-attachment: scroll; /* במקום ה-body שלך למטה */
+
+  .hero p {
+    font-size: 1.05rem;
+    line-height: 1.6;
+    text-shadow: 0 2px 6px rgba(0,0,0,0.35);
   }
-   
+
   /* ABOUT */
   .about-content {
     grid-template-columns: 1fr;
   }
 
   .about-img {
-  width: 100%;
-  max-width: 320px;
-  height: auto;
-
-  object-fit: contain;
-  border-radius: 18px;
-  background: none;
-  padding: 0;
-
-  /* אור עדין מסביב */
-  box-shadow:
-    0 0 0 10px rgba(157, 200, 176, 0.25);
-
-  justify-self: start;
-}
+    width: 100%;
+    max-width: 320px;
+    height: auto;
+    object-fit: contain;
+    border-radius: 18px;
+    background: none;
+    padding: 0;
+    box-shadow: 0 0 0 10px rgba(157, 200, 176, 0.25);
+    justify-self: center;
+  }
 
   /* CONTACT */
   .contact-container {
@@ -400,3 +395,4 @@ body{
     width: 100%;
   }
 }
+
