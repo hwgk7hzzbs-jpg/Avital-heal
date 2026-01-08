@@ -364,7 +364,11 @@ section {
     max-height: 420px;
     object-fit: contain; /* לא חותך במובייל */
     object-position: center;
-    background: var(--secondary-color);
+    background: radial-gradient(
+      circle at top,
+     rgba(157, 200, 176, 0.35),
+     rgba(240, 247, 243, 0.95)
+   );
     padding: 8px;
     border-radius: 12px;
     justify-self: center;
