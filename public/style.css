@@ -274,10 +274,10 @@ section.container {
   margin: 60px auto;
   padding: 70px 28px;
 
-  background: rgba(255,255,255,0.92);
-  border: 1px solid rgba(0,0,0,0.06);
+  background: transparent;
+  border: 0;
   border-radius: var(--glass-radius);
-  box-shadow: var(--shadow-strong);
+  box-shadow: none;
 
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
