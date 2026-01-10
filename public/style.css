@@ -277,8 +277,8 @@ section.container{
   justify-content: center;
   align-items: center;
 
-  background: rgba(255,255,255,0.55);
-  border: 1px solid var(--glass-border-soft);
+  background: rgba(255,255,255,0.18);
+  border: 1px solid rgba(255,255,255,0.25);
   border-radius: 999px;
   padding: 10px 26px;
 
@@ -291,10 +291,10 @@ section.container{
 .section-subtitle{
   display: inline-block;
   margin: 0;
-  background: rgba(255,255,255,0.55);
+  background: rgba(255,255,255,0.18);
   padding: 6px 22px;
   border-radius: 999px;
-  border: 1px solid var(--glass-border-soft);
+  border: 1px solid rgba(255,255,255,0.25);
 
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
