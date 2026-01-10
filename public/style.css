@@ -1,12 +1,12 @@
 /* =========================
-   style.css (FULL - FINAL + FIXED NAV CUT)
+   style.css (NEW - FINAL)
    ✅ Unified Glass Theme
    ✅ Unified Typography (same font/size across site)
    ✅ Sticky Top Nav
-   ✅ Desktop nav one-line + NOT CUT (RTL) + silent horizontal scroll
+   ✅ Desktop nav one-line (smaller pills) + NOT CUT (RTL) + silent horizontal scroll (fallback)
    ✅ Mobile menu stays as-is
    ✅ Google/Waze buttons identical size & shape
-   ✅ NEW: Space between stacked rectangles (content-box)
+   ✅ Space between stacked rectangles (content-box)
 ========================= */
 
 /* =========================
@@ -119,7 +119,7 @@ a { color: inherit; text-decoration: none; }
 .skip-link:focus{ right:10px; }
 
 /* =========================
-   4) TOP NAV (Sticky) - FIXED HEIGHT
+   4) TOP NAV (Sticky)
 ========================= */
 .top-nav{
   position: fixed;
@@ -147,7 +147,7 @@ a { color: inherit; text-decoration: none; }
   justify-content: space-between;
   gap: 16px;
 
-  overflow: visible; /* ✅ prevent parent clipping */
+  overflow: visible;
 }
 
 .brand{
@@ -160,6 +160,7 @@ a { color: inherit; text-decoration: none; }
   display: flex;
   align-items: center;
   gap: 14px;
+  min-width: 0;
 }
 
 .nav-links a{
@@ -177,31 +178,39 @@ a { color: inherit; text-decoration: none; }
   transform: translateY(-1px);
 }
 
-/* ✅ DESKTOP FIX: one line, NOT CUT, RTL-safe */
+/* ✅ DESKTOP: one line, smaller pills so it fits */
 @media (min-width: 769px){
+  .top-nav-inner{
+    padding: 10px 12px;
+  }
+
   .nav-links{
-    min-width: 0;        /* ✅ critical for flex shrink */
-    flex: 1 1 auto;      /* ✅ take remaining space */
+    flex: 1 1 auto;
+    width: 100%;
+    max-width: 100%;
 
     flex-wrap: nowrap;
     white-space: nowrap;
 
-    overflow-x: auto;    /* ✅ scroll instead of cut */
+    justify-content: flex-start;
+
+    gap: 10px;
+    padding-inline: 12px;        /* protects edges from clipping */
+    scroll-padding-inline: 12px;
+
+    overflow-x: auto;            /* fallback: scroll if ultra-narrow */
     overflow-y: hidden;
-
-    justify-content: flex-start; /* ✅ avoid center clipping */
-
-    width: 100%;
-    max-width: 100%;
-
-    padding-inline: 18px;         /* ✅ protect first/last pills */
-    scroll-padding-inline: 18px;
 
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
   }
-
   .nav-links::-webkit-scrollbar{ display: none; }
+
+  .nav-links a{
+    padding: 6px 10px;           /* smaller */
+    font-size: 16px;             /* smaller ONLY in nav */
+    line-height: 1.2;
+  }
 }
 
 /* Burger button (mobile) */
@@ -315,13 +324,13 @@ section.container {
   -webkit-backdrop-filter: blur(8px);
 }
 
-/* ✅ NEW: רווח בין שני "מרובעים" שיושבים אחד מתחת לשני */
+/* ✅ Space between stacked rectangles */
 .content-box + .content-box{
   margin-top: 18px;
 }
 
 /* =========================
-   6) SECTION TITLES (Subtitle under title)
+   6) SECTION TITLES
 ========================= */
 .section-title{
   display: flex;
@@ -381,7 +390,7 @@ section.container {
 .waze-btn { background: var(--waze-blue); }
 .waze-btn:hover { background: var(--waze-blue-dark); }
 
-/* ✅ Contact navigation buttons identical size */
+/* ✅ Google/Waze identical size */
 .nav-buttons{
   display: grid;
   grid-template-columns: 1fr;
@@ -484,7 +493,7 @@ section.container {
 }
 
 /* =========================
-   10) SERVICES (Unified panel)
+   10) SERVICES
 ========================= */
 .services { background: transparent; padding: 0; }
 
