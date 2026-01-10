@@ -284,7 +284,7 @@ section.container {
 }
 
 .content-box{
-  background: rgba(255,255,255,0.985);
+  background: rgba(255,255,255,0.97);
   border: 1px solid rgba(0,0,0,0.06);
   border-radius: 16px;
   box-shadow: 0 10px 25px rgba(0,0,0,0.06);
@@ -466,7 +466,7 @@ section.container {
 }
 
 .service-card {
-  background: rgba(255,255,255,0.985);
+  background: rgba(255,255,255,0.97);
   border: 1px solid rgba(0,0,0,0.06);
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
