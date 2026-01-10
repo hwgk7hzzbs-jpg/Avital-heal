@@ -351,6 +351,34 @@ section.container {
 
 .waze-btn { background: var(--waze-blue); }
 .waze-btn:hover { background: var(--waze-blue-dark); }
+/* =========================
+   WhatsApp Large Button
+========================= */
+.whatsapp-btn-large{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  background: var(--wa-green);
+  color: #ffffff;
+
+  padding: 16px 32px;
+  border-radius: 999px;
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1;
+
+  box-shadow: 0 10px 24px rgba(0,0,0,0.14);
+  transition: transform .2s ease, box-shadow .2s ease, background .2s ease;
+
+  text-decoration: none;
+}
+
+.whatsapp-btn-large:hover{
+  background: var(--wa-green-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 14px 34px rgba(0,0,0,0.18);
+}
 
 /* =========================
    8) HERO
@@ -593,6 +621,10 @@ section.container {
   border: 1px solid rgba(0,0,0,0.06);
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
+  text-align: center;
+}
+.contact-action .whatsapp-btn-large{
+  margin-top: 16px;
 }
 
 /* =========================
