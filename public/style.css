@@ -677,6 +677,29 @@ section:not(.hero) .section-title p{
       url("https://images.unsplash.com/photo-1472214103451-9374bd1c798e?auto=format&fit=crop&w=1920&q=80")
         center / cover no-repeat;
   }
+
+     /* Clinic image – mobile */
+  .clinic-image{
+    max-width: 100%;
+    margin-top: 20px;
+
+    border-radius: 16px;
+    box-shadow: 0 10px 22px rgba(0,0,0,0.14);
+  }
+
+}
+
+/* =========================
+   CLINIC IMAGE
+========================= */
+.clinic-image{
+  width: 100%;
+  max-width: 520px;
+  margin: 24px auto 0;
+  display: block;
+
+  border-radius: 18px;
+  box-shadow: 0 14px 32px rgba(0,0,0,0.16);
 }
 
 /* =========================
