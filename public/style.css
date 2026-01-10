@@ -310,16 +310,7 @@ section:not(.hero) .section-title p{
   backdrop-filter: blur(6px);
   box-shadow: 0 10px 24px rgba(0,0,0,0.08);
 }
-section:not(.hero) .section-title h2,
-section:not(.hero) .section-title h3{
-  display: inline-block;
-  background: rgba(255,255,255,0.55);
-  padding: 10px 26px;
-  border-radius: 999px;
-  border: 1px solid var(--glass-border-soft);
-  backdrop-filter: blur(6px);
-  box-shadow: 0 10px 24px rgba(0,0,0,0.08);
-}
+
 
 /* =========================
    7) BUTTONS
