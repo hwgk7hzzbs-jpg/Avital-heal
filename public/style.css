@@ -586,7 +586,7 @@ section.container {
 
 .contact-info,
 .contact-action{
-  background: rgba(255,255,255,0.985);
+  background: rgba(255,255,255,0.97);
   border-radius: 16px;
   box-shadow: var(--shadow);
   padding: 28px;
