@@ -466,10 +466,10 @@ section.container {
 }
 
 .service-card {
-  background: var(--glass-bg-strong);
-  border: 1px solid rgba(255,255,255,0.30);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background: rgba(255,255,255,0.96);
+  border: 1px solid rgba(0,0,0,0.06);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 
   padding: 22px 20px;
   border-radius: 16px;
