@@ -1,42 +1,69 @@
-{\rtf1\ansi\ansicpg1252\cocoartf2867
-\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fnil\fcharset0 HelveticaNeue;}
-{\colortbl;\red255\green255\blue255;\red249\green249\blue249;\red0\green0\blue0;}
-{\*\expandedcolortbl;;\cssrgb\c98039\c98039\c98039;\cssrgb\c0\c0\c0;}
-\paperw11900\paperh16840\margl1440\margr1440\vieww11520\viewh8400\viewkind0
-\deftab720
-\pard\pardeftab720\partightenfactor0
+/* =========================
+   script.js (Clean version)
+   - Smooth scrolling for anchor links
+   - Mobile menu toggle (if navLinks exists)
+   - Lightbox modal (if imageModal/img01 exist)
+   - FAQ accordion (if .faq-q exists)
+========================= */
 
-\f0\fs24 \cf2 \cb3 \expnd0\expndtw0\kerning0
-\outl0\strokewidth0 \strokec2 // Smooth scrolling for anchor links\
-document.querySelectorAll('a[href^="#"]').forEach(anchor => \{\
-    anchor.addEventListener('click', function (e) \{\
-        e.preventDefault();\
-        \
-        document.querySelector(this.getAttribute('href')).scrollIntoView(\{\
-            behavior: 'smooth'\
-        \});\
-    \});\
-\});\
-\
-// \uc0\u1511 \u1493 \u1491  \u1500 \u1492 \u1508 \u1506 \u1500 \u1514  \u1492 \u1514 \u1508 \u1512 \u1497 \u1496  \u1489 \u1502 \u1493 \u1489 \u1497 \u1497 \u1500 \
-function toggleMenu() \{\
-    const nav = document.getElementById('navLinks');\
-    nav.classList.toggle('active');\
-\}\
-\
-// \uc0\u1511 \u1493 \u1491  \u1500 \u1492 \u1490 \u1491 \u1500 \u1514  \u1514 \u1502 \u1493 \u1504 \u1493 \u1514  (Lightbox)\
-function openModal(src) \{\
-    document.getElementById('imageModal').style.display = "flex";\
-    document.getElementById('img01').src = src;\
-\}\
-\
-function closeModal() \{\
-    document.getElementById('imageModal').style.display = "none";\
-\}\
-\
-window.onclick = function(event) \{\
-    const modal = document.getElementById('imageModal');\
-    if (event.target == modal) \{\
-        modal.style.display = "none";\
-    \}\
-\}}
+/* Smooth scrolling for anchor links */
+document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
+  anchor.addEventListener('click', function (e) {
+    const targetId = this.getAttribute('href');
+
+    // ignore empty / invalid anchors
+    if (!targetId || targetId === "#") return;
+
+    const targetEl = document.querySelector(targetId);
+    if (!targetEl) return;
+
+    e.preventDefault();
+    targetEl.scrollIntoView({ behavior: 'smooth' });
+  });
+});
+
+/* Mobile menu toggle (expects: <div id="navLinks">...) */
+function toggleMenu() {
+  const nav = document.getElementById('navLinks');
+  if (!nav) return;
+  nav.classList.toggle('active');
+}
+
+/* Lightbox (expects: #imageModal and #img01 in HTML) */
+function openModal(src) {
+  const modal = document.getElementById('imageModal');
+  const img = document.getElementById('img01');
+  if (!modal || !img) return;
+
+  modal.style.display = 'flex';
+  img.src = src;
+}
+
+function closeModal() {
+  const modal = document.getElementById('imageModal');
+  if (!modal) return;
+  modal.style.display = 'none';
+}
+
+/* Close modal when clicking outside the image */
+window.addEventListener('click', function (event) {
+  const modal = document.getElementById('imageModal');
+  if (!modal) return;
+
+  if (event.target === modal) {
+    modal.style.display = 'none';
+  }
+});
+
+/* FAQ Accordion (expects: .faq-q button + next sibling .faq-a) */
+document.querySelectorAll('.faq-q').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    const expanded = btn.getAttribute('aria-expanded') === 'true';
+    const answer = btn.nextElementSibling;
+    const icon = btn.querySelector('.faq-icon');
+
+    btn.setAttribute('aria-expanded', String(!expanded));
+    if (answer) answer.hidden = expanded;
+    if (icon) icon.textContent = expanded ? '+' : '–';
+  });
+});
