@@ -193,11 +193,12 @@ a { color: inherit; text-decoration: none; }
 }
 
 .nav-links a{
-  padding: 7px 10px;
-  border-radius: 999px;
-  background: rgba(255,255,255,0.35);
-  border: 1px solid rgba(255,255,255,0.22);
-  transition: transform .15s ease, background .15s ease;
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  transition: topacity .15s ease, transform .15s ease;
 
   flex: 0 0 auto;
   white-space: nowrap;
@@ -205,8 +206,9 @@ a { color: inherit; text-decoration: none; }
   font-weight: 700;
 }
 .nav-links a:hover{
-  background: rgba(255,255,255,0.55);
+  background: transparent;
   transform: translateY(-1px);
+  opacity: 0.85;
 }
 
 @media (min-width: 769px){
