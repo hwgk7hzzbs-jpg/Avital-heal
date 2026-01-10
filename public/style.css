@@ -300,6 +300,21 @@ section.container{
   -webkit-backdrop-filter: blur(6px);
 }
 
+/* Bubble subtitle for all sections EXCEPT hero */
+section:not(.hero) .section-title > p{
+  display: inline-block;
+  margin: 0;
+  background: rgba(255,255,255,0.55);
+  padding: 6px 22px;
+  border-radius: 999px;
+  border: 1px solid var(--glass-border-soft);
+
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+
+  box-shadow: 0 10px 24px rgba(0,0,0,0.08);
+}
+
 /* =========================
    7) BUTTONS
 ========================= */
