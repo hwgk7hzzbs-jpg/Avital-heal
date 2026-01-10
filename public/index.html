@@ -4,14 +4,17 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <title>אביטל הוכברג | טיפול רגשי ורוחני • NLP • מסע הנשמה • ביאו-אורגונומי</title>
-  <meta name="description" content="אביטל הוכברג – מטפלת רגשית ורוחנית. שילוב NLP, מסע הנשמה וביאו-אורגונומי לתהליכי עומק פרקטיים ורכים. מפגשים בקליניקה ובאונליין (עד שעה וחצי)." />
+  <title>אביטל הוכברג | טיפול רגשי ורוחני • NLP • מסע הנשמה • ביואורגונומי</title>
+  <meta name="description" content="אביטל הוכברג – מטפלת רגשית ורוחנית. שילוב NLP, מסע הנשמה וביואורגונומי לתהליכי עומק פרקטיים ורכים. מפגשים בקליניקה ובאונליין (עד שעה וחצי)." />
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;600;700&display=swap" rel="stylesheet" />
 
   <link rel="stylesheet" href="style.css" />
+
+  <!-- ✅ Load script once, after DOM is ready -->
+  <script src="script.js" defer></script>
 </head>
 
 <body>
@@ -25,7 +28,8 @@
     <div class="top-nav-inner">
       <a class="brand" href="#home" aria-label="חזרה לראש העמוד">אביטל הוכברג</a>
 
-      <nav class="nav-links" aria-label="ניווט ראשי">
+      <!-- ✅ IMPORTANT: id="navLinks" to match script.js -->
+      <nav class="nav-links" id="navLinks" aria-label="ניווט ראשי">
         <a href="#about">נעים להכיר</a>
         <a href="#approach">תפיסת עבודה</a>
         <a href="#services">בקליניקה</a>
@@ -36,7 +40,10 @@
         <a href="#contact">יצירת קשר</a>
       </nav>
 
-      <button class="nav-toggle" type="button" aria-label="פתיחת תפריט" aria-expanded="false">
+      <!-- ✅ IMPORTANT: onclick="toggleMenu()" to match script.js -->
+      <button class="nav-toggle" type="button"
+              aria-label="פתיחת תפריט" aria-expanded="false"
+              onclick="toggleMenu()">
         ☰
       </button>
     </div>
@@ -48,10 +55,10 @@
       <h1 class="hero-name">אביטל הוכברג</h1>
       <h2 class="hero-title">לחבר בין הנפש לנשמה</h2>
 
-      <!-- כדי להדגיש את המשפט הזה בעיצוב אחיד: עדיף להגדיר ב-CSS מחלקה (לדוגמה .hero-lead) -->
-      <p class="hero-lead">
+      <!-- ✅ This paragraph becomes bold via CSS (hero-content > p:first-of-type) -->
+      <p>
         ליווי ותמיכה בתהליכי עומק רגשיים ורוחניים, לשחרור חסימות ולמציאת השקט הפנימי שלך –
-        בעזרת <strong>NLP</strong>, <strong>מסע הנשמה</strong> ו<strong>ביאו-אורגונומי</strong>.
+        בעזרת NLP, מסע הנשמה וביואורגונומי.
       </p>
 
       <p class="hero-meta">מפגשים בקליניקה ובאונליין • משך מפגש: עד שעה וחצי</p>
@@ -59,7 +66,7 @@
     </div>
   </section>
 
-  <!-- About Section (UPDATED) -->
+  <!-- About Section -->
   <section id="about" class="container">
     <div class="section-title">
       <div class="section-title-box">
@@ -68,51 +75,40 @@
     </div>
 
     <div class="about-content">
-      <!-- ✅ זה החלק שעודכן לפי הטקסט האחרון + NLP/מסע הנשמה/ביואורגונומי אחד מתחת לשני -->
       <div class="content-box about-text">
         <p><strong>נעים להכיר, שמי אביטל הוכברג</strong> מטפלת רגשית ורוחנית.</p>
         <br />
 
         <p>
-          המסע שלי בעולם הטיפול התחיל מתוך סקרנות עמוקה. רציתי להבין את נפש האדם, אבל יותר מכך –
-          חיפשתי תשובה לשאלה: <strong>כיצד יוצרים שינוי אמיתי שמחזיק מעמד גם ביום־יום?</strong>
+          המסע שלי בעולם הטיפול התחיל מתוך סקרנות עמוקה. רציתי להבין את נפש האדם,
+          אבל יותר מכך – חיפשתי תשובה לשאלה: איך יוצרים שינוי אמיתי שמחזיק מעמד גם ביום־יום?
         </p>
         <br />
 
         <p>
-          לאורך השנים, מתוך הניסיון שצברתי, גיבשתי דרך עבודה ייחודית. הבנתי שטיפול אפקטיבי חייב לחבר בין עולמות:
-          בין צלילה לעומק לבין תחושת רוגע, ובין תובנות רוחניות לכלים מעשיים וארציים.
+          לאורך השנים, מתוך הניסיון שצברתי, גיבשתי דרך עבודה ייחודית.
+          הבנתי שטיפול אפקטיבי חייב לחבר בין עולמות: בין צלילה לעומק לבין תחושת רוגע,
+          ובין תובנות רוחניות לכלים מעשיים וארציים.
         </p>
         <br />
 
         <p>
-          האני מאמין שלי אומר שבתוך כל אחד ואחת מאיתנו קיימת היכולת לרפא את עצמו. אני לא ה"מרפאה",
-          אלא מי שמחזיקה עבורך את הפנס, מאירה את הדרך ומעניקה לך ארגז כלים בטוח ומדויק כדי שתוכל/י
-          לחזור לעוצמה הטבעית שלך.
+          האני מאמין שלי אומר שבתוך כל אחד ואחת מאיתנו קיימת היכולת לרפא את עצמו.
+          אני לא ה"מרפאה", אלא מי שמחזיקה עבורך את הפנס, מאירה את הדרך ומעניקה לך ארגז כלים בטוח ומדויק
+          כדי שתוכל/י לחזור לעוצמה הטבעית שלך.
         </p>
         <br />
 
-        <p class="methods-block">
-          <strong>ארגז הכלים שלי</strong> מכיל שילוב של שלוש גישות משלימות כדי לאפשר את השינוי הזה.
+        <p>
+          ארגז הכלים שלי מכיל שילוב של שלוש גישות משלימות כדי לאפשר את השינוי הזה,
           אני משלבת בקליניקה שלוש שיטות שעובדות יחד בהרמוניה:
         </p>
 
-        <ul class="methods-list">
-          <li>
-            <strong>NLP:</strong>
-            עבודה מדויקת עם התת־מודע. בעזרת כלי זה אנו משחררים דפוסים אוטומטיים ומטמיעים הרגלים חדשים ומעצימים.
-          </li>
-          <li>
-            <strong>מסע הנשמה:</strong>
-            תהליך רוחני עמוק הנעשה בדמיון מודרך. הוא מאפשר לנו לעקוף את "הרעש" היומיומי, להתחבר לפנימיות ולהבין
-            את הייעוד והשיעורים שבחרנו בחיים אלו.
-          </li>
-          <li>
-            <strong>ביואורגונומי:</strong>
-            הסתכלות אנרגטית רחבה. דרך שיטה זו אנו מזהים כיצד השפעות מעץ המשפחה, מהסביבה ומהמערכת האנרגטית מעצבות
-            את המציאות שלך, ומשחררים חסימות סמויות.
-          </li>
-        </ul>
+        <!-- ✅ Each method one under the other -->
+        <br />
+        <p><strong>NLP :</strong> עבודה מדויקת עם התת־מודע. בעזרת כלי זה אנו משחררים דפוסים אוטומטיים ומטמיעים הרגלים חדשים ומעצימים.</p>
+        <p><strong>מסע הנשמה:</strong> תהליך רוחני עמוק הנעשה בדמיון מודרך. הוא מאפשר לנו לעקוף את "הרעש" היומיומי, להתחבר לפנימיות ולהבין את הייעוד והשיעורים שבחרנו בחיים אלו.</p>
+        <p><strong>ביואורגונומי:</strong> הסתכלות אנרגטית רחבה. דרך שיטה זו אנו מזהים כיצד השפעות מעץ המשפחה, מהסביבה ומהמערכת האנרגטית מעצבות את המציאות שלך, ומשחררים חסימות סמויות.</p>
       </div>
 
       <img src="avital-light.jpg" alt="אביטל הוכברג" class="about-img" />
@@ -146,6 +142,7 @@
 
       <br />
 
+      <!-- Quote block (same glass card look) -->
       <div class="content-box" style="margin-top:16px; text-align:center;">
         <p style="font-weight:800; line-height:1.9;">
           “העובדה שאדם יכול לשנות את עצמו... ולשלוט בגורלו היא המסקנה של כל מוח שיער לכוח המחשבה הנכונה.”
@@ -166,31 +163,37 @@
       </div>
 
       <div class="services-grid">
+        <!-- ✅ Body text NOT bold (CSS handles it), only titles -->
         <div class="service-card">
           <h3>טיפול NLP ממוקד</h3>
           <p>
-            ה-NLP מאפשר שינוי דפוסים, חיזוק ביטחון עצמי ועבודה מדויקת עם התת-מודע — בצורה פרקטית וממוקדת מטרה.
+            ה־NLP מאפשר שינוי דפוסים, חיזוק ביטחון עצמי ועבודה מדויקת עם התת־מודע —
+            בצורה פרקטית, רגישה וממוקדת מטרה.
           </p>
         </div>
 
         <div class="service-card">
           <h3>מסע הנשמה</h3>
           <p>
-            תהליך רוחני עמוק בדמיון מודרך, שמאפשר חיבור פנימי, הבנת שיעורים וסגירת מעגלים — עם תחושת בהירות ושקט.
+            תהליך רוחני עמוק בדמיון מודרך, שמאפשר חיבור פנימי, הבנת שיעורים וסגירת מעגלים —
+            עם תחושת בהירות ושקט.
           </p>
         </div>
 
         <div class="service-card">
-          <h3>טיפול ביאו-אורגונומי</h3>
+          <h3>טיפול ביואורגונומי</h3>
           <p>
-            עוזר להבין איך השפעות מעץ המשפחה והמערכת האנרגטית באות לידי ביטוי ביום־יום — ולבנות דרך חדשה עם יותר בחירה ורוגע.
+            עוזר להבין איך השפעות מעץ המשפחה, מהסביבה ומהמערכת האנרגטית באות לידי ביטוי ביום־יום —
+            ולבנות דרך חדשה עם יותר בחירה ורוגע.
           </p>
         </div>
 
-        <div class="service-card">
+        <!-- ✅ Combined card: centered BELOW all on desktop -->
+        <div class="service-card service-card--combined">
           <h3>תהליך משולב</h3>
           <p>
-            ליווי אישי שמשלב בין הכלים השונים לפי מה שעולה בתהליך — כדי ליצור שינוי משמעותי ויציב לאורך זמן.
+            ליווי אישי שמשלב בין הכלים השונים לפי מה שעולה בתהליך —
+            כדי ליצור שינוי משמעותי ויציב לאורך זמן.
           </p>
         </div>
       </div>
@@ -219,7 +222,7 @@
 
       <div class="process-card">
         <h3>3) תהליך מותאם</h3>
-        <p>שילוב NLP, מסע הנשמה וביאו-אורגונומי לפי הצורך ובקצב שלך.</p>
+        <p>שילוב NLP, מסע הנשמה וביואורגונומי לפי הצורך ובקצב שלך.</p>
       </div>
 
       <div class="process-card">
@@ -276,6 +279,7 @@
         <p class="section-subtitle">כמה משפטים מלקוחות</p>
       </div>
 
+      <!-- ✅ Each sentence is its own highlighted card (like the rest of the site) -->
       <div class="testimonial-card">
         <p>"אביטל הצליחה בתוך מספר מפגשים מה שלא הצלחתי לעשות שנים. השילוב בין הרוחניות לפרקטיקה היה בדיוק מה שהייתי צריכה."</p>
         <span>- רחלי כ.</span>
@@ -297,9 +301,10 @@
       <p class="section-subtitle">כדי שיהיה לך ברור ונוח לפני שמתחילים</p>
     </div>
 
+    <!-- ✅ Styled like cards and same width -->
     <div class="faq">
       <div class="faq-item">
-        <button class="faq-q" aria-expanded="false" type="button">
+        <button class="faq-q" type="button" aria-expanded="false">
           כמה זמן נמשך מפגש?
           <span class="faq-icon">+</span>
         </button>
@@ -307,7 +312,7 @@
       </div>
 
       <div class="faq-item">
-        <button class="faq-q" aria-expanded="false" type="button">
+        <button class="faq-q" type="button" aria-expanded="false">
           אפשר גם אונליין?
           <span class="faq-icon">+</span>
         </button>
@@ -315,18 +320,18 @@
       </div>
 
       <div class="faq-item">
-        <button class="faq-q" aria-expanded="false" type="button">
-          מה ההבדל בין NLP, מסע הנשמה וביאו-אורגונומי?
+        <button class="faq-q" type="button" aria-expanded="false">
+          מה ההבדל בין NLP, מסע הנשמה וביואורגונומי?
           <span class="faq-icon">+</span>
         </button>
         <div class="faq-a" hidden>
           NLP נותן כלים פרקטיים לשינוי דפוסים; מסע הנשמה עובד לעומק דרך דמיון מודרך ותובנות פנימיות;
-          ביאו-אורגונומי מסייע להבין השפעות מעץ המשפחה והמערכת האנרגטית כפי שהן באות לידי ביטוי ביום־יום.
+          ביואורגונומי מסייע להבין השפעות מעץ המשפחה והמערכת האנרגטית כפי שהן באות לידי ביטוי ביום־יום.
         </div>
       </div>
 
       <div class="faq-item">
-        <button class="faq-q" aria-expanded="false" type="button">
+        <button class="faq-q" type="button" aria-expanded="false">
           כמה מפגשים בדרך כלל צריך?
           <span class="faq-icon">+</span>
         </button>
@@ -409,25 +414,17 @@
     </svg>
   </a>
 
+  <!-- ✅ Small helper: close mobile nav after clicking a link -->
   <script>
-    // Mobile nav toggle (works with current HTML structure)
-    const toggleBtn = document.querySelector('.nav-toggle');
-    const navLinks = document.querySelector('.nav-links');
-
-    toggleBtn?.addEventListener('click', () => {
-      const isOpen = navLinks.classList.toggle('active');
-      toggleBtn.setAttribute('aria-expanded', String(isOpen));
-    });
-
-    // Close mobile nav on link click
-    document.querySelectorAll('.nav-links a').forEach(a => {
+    document.querySelectorAll('#navLinks a').forEach(a => {
       a.addEventListener('click', () => {
-        navLinks.classList.remove('active');
-        toggleBtn?.setAttribute('aria-expanded', 'false');
+        const nav = document.getElementById('navLinks');
+        if (!nav) return;
+        nav.classList.remove('active');
+        const btn = document.querySelector('.nav-toggle');
+        if (btn) btn.setAttribute('aria-expanded', 'false');
       });
     });
   </script>
-
-  <script src="script.js"></script>
 </body>
 </html>
