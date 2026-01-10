@@ -1,4 +1,9 @@
 /* =========================
+   style.css (Unified Glass Theme)
+   Avital Heal - full rebuild
+========================= */
+
+/* =========================
    1) VARIABLES + RESET
 ========================= */
 :root {
@@ -7,18 +12,23 @@
   --text-color: #4A4A4A;
   --white: #ffffff;
 
-  /* Backgrounds */
-  --bg-color: #F9FCFA;
+  /* Base background */
+  --bg-overlay-strong: rgba(249, 252, 250, 0.55);
+  --bg-overlay-mobile: rgba(249, 252, 250, 0.22);
 
-  /* Glass / Cards */
-  --box-bg: rgba(255, 255, 255, 0.68);   /* כללי לכרטיסים */
+  /* Glass system */
+  --glass-bg: rgba(255, 255, 255, 0.55);
+  --glass-bg-strong: rgba(255, 255, 255, 0.72);
   --glass-border: rgba(255, 255, 255, 0.28);
+  --glass-border-soft: rgba(255, 255, 255, 0.22);
   --glass-blur: 10px;
+  --glass-radius: 22px;
 
   /* Shadows */
   --shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  --shadow-strong: 0 18px 50px rgba(0, 0, 0, 0.10);
 
-  /* WhatsApp accent */
+  /* WhatsApp */
   --wa-green: #25D366;
   --wa-green-dark: #1ebe5d;
 
@@ -32,6 +42,8 @@
   margin: 0;
   padding: 0;
 }
+
+html { scroll-behavior: smooth; }
 
 body {
   font-family: 'Rubik', sans-serif;
@@ -47,20 +59,18 @@ body::before {
   z-index: -1;
 
   background:
-    linear-gradient(rgba(249, 252, 250, 0.55), rgba(249, 252, 250, 0.55)),
+    linear-gradient(var(--bg-overlay-strong), var(--bg-overlay-strong)),
     url("https://images.unsplash.com/photo-1472214103451-9374bd1c798e?auto=format&fit=crop&w=1920&q=80")
       center / cover no-repeat;
 
   transform: translateZ(0);
 }
 
-a {
-  color: inherit;
-  text-decoration: none;
-}
+/* Links */
+a { color: inherit; text-decoration: none; }
 
-/* Focus ברור במקלדת */
-:focus-visible{
+/* Keyboard focus */
+:focus-visible {
   outline: 3px solid rgba(157, 200, 176, 0.95);
   outline-offset: 3px;
   border-radius: 10px;
@@ -81,49 +91,79 @@ a {
 .skip-link:focus{ right:10px; }
 
 /* =========================
-   2) GLOBAL LAYOUT
+   2) GLOBAL LAYOUT (UNIFIED)
 ========================= */
+
+/* Make section backgrounds transparent.
+   We unify the design via glass panels for content sections. */
 section {
-  padding: 80px 20px;
-  background: rgba(255, 255, 255, 0.18);
+  padding: 0;
+  background: transparent;
 }
 
+/* Default container width */
 .container {
   max-width: 1100px;
   margin: auto;
 }
 
-.section-title {
-  text-align: center;
-  margin-bottom: 50px;
+/* ✅ Unified glass panel for ALL sections that use class="container" */
+section.container {
+  margin: 60px auto;
+  padding: 70px 28px;
+
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--glass-radius);
+  box-shadow: var(--shadow-strong);
+
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
 }
 
-.section-title h2 {
-  margin: 0;
+/* Titles */
+.section-title {
+  text-align: center;
+  margin-bottom: 42px;
 }
+
+.section-title-box{
+  display: inline-block;
+  background: rgba(255,255,255,0.55);
+  border: 1px solid var(--glass-border-soft);
+  border-radius: 999px;
+  padding: 10px 26px;
+
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+
+  box-shadow: 0 10px 24px rgba(0,0,0,0.08);
+}
+
+.section-title h2 { margin: 0; }
 
 .section-subtitle {
   margin-top: 14px;
-  background: rgba(255,255,255,0.45);
+  background: rgba(255,255,255,0.55);
   display: inline-block;
   padding: 6px 22px;
   border-radius: 999px;
   font-size: 0.95rem;
-  border: 1px solid rgba(255,255,255,0.22);
+  border: 1px solid var(--glass-border-soft);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
 }
 
-/* Shared content box (used in Approach + any other sections) */
+/* Shared content box (inside panels) */
 .content-box{
-  background: var(--box-bg);
+  background: var(--glass-bg);
+  border: 1px solid rgba(255,255,255,0.30);
   border-radius: 16px;
   box-shadow: var(--shadow);
   padding: 30px 32px;
 
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(255,255,255,0.30);
 }
 
 /* Buttons */
@@ -137,20 +177,13 @@ section {
   transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease, background 0.2s ease;
   box-shadow: 0 10px 24px rgba(0,0,0,0.10);
 }
+.btn:hover { transform: translateY(-1px); }
 
-.btn:hover {
-  transform: translateY(-1px);
-}
+/* Waze button */
+.waze-btn { background: var(--waze-blue); }
+.waze-btn:hover { background: var(--waze-blue-dark); }
 
-/* ✅ כפתור Waze כחול */
-.waze-btn {
-  background: var(--waze-blue);
-}
-.waze-btn:hover {
-  background: var(--waze-blue-dark);
-}
-
-/* ✅ עטיפה לשני כפתורי הניווט */
+/* Navigation buttons in contact */
 .nav-buttons{
   display: flex;
   flex-direction: column;
@@ -172,7 +205,7 @@ section {
   color: #ffffff;
   padding: 0 20px;
 
-  background: rgba(157, 200, 176, 0.15);
+  background: rgba(157, 200, 176, 0.12);
 }
 
 .hero-content {
@@ -180,8 +213,9 @@ section {
   padding: 26px 22px;
   border-radius: 18px;
   max-width: 820px;
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+
+  backdrop-filter: blur(7px);
+  -webkit-backdrop-filter: blur(7px);
   border: 1px solid rgba(255,255,255,0.22);
 }
 
@@ -203,54 +237,26 @@ section {
 
 .hero p {
   max-width: 700px;
-  margin: 0 auto 2rem;
+  margin: 0 auto 1.4rem;
   font-size: 1.3rem;
   text-shadow: 0 1px 6px rgba(0, 0, 0, 0.2);
 }
 
-.hero .btn {
-  margin-top: 40px;
-  opacity: 0.95;
-}
+.hero .btn { margin-top: 28px; opacity: 0.95; }
 
-/* Optional meta line under hero text (add <p class="hero-meta">...) */
+/* Optional: small meta line under hero text */
 .hero-meta{
-  margin-top: -10px;
+  margin-top: -6px;
   margin-bottom: 10px;
-  font-weight: 700;
+  font-weight: 800;
   font-size: 1.05rem;
   opacity: 0.95;
   text-shadow: 0 1px 6px rgba(0,0,0,0.2);
 }
 
 /* =========================
-   4) ABOUT – Unified glass panel (NEW)
+   4) ABOUT
 ========================= */
-/* הופך את כל "נעים להכיר" לפאנל זכוכית אחד */
-#about{
-  background: rgba(255, 255, 255, 0.55);
-  border: 1px solid var(--glass-border);
-  border-radius: 22px;
-  box-shadow: 0 18px 50px rgba(0,0,0,0.10);
-
-  backdrop-filter: blur(var(--glass-blur));
-  -webkit-backdrop-filter: blur(var(--glass-blur));
-
-  padding: 70px 28px;
-  margin: 60px auto;
-}
-
-/* מבטל "כרטיס בתוך כרטיס" רק ב-About */
-#about .content-box{
-  background: transparent;
-  box-shadow: none;
-  padding: 0;
-  border: none;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-}
-
-/* About layout */
 .about-content {
   display: grid;
   grid-template-columns: 1fr 320px;
@@ -261,7 +267,7 @@ section {
 .about-text {
   text-align: right;
   font-size: 1.3rem;
-  line-height: 1.8;
+  line-height: 1.85;
 }
 
 .about-img {
@@ -273,76 +279,148 @@ section {
 }
 
 /* =========================
-   5) APPROACH (NEW SECTION)
-========================= */
-.approach-box{
-  text-align: right;
-  line-height: 1.9;
-  font-size: 1.15rem;
-}
-
-.approach-box p{
-  margin: 0 0 14px;
-}
-
-.approach-quote{
-  margin-top: 18px;
-  padding: 16px 18px;
-  border-right: 4px solid rgba(157, 200, 176, 0.9);
-  background: rgba(255,255,255,0.55);
-  border-radius: 14px;
-  border: 1px solid rgba(255,255,255,0.22);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-}
-
-.approach-quote p{
-  margin: 0 0 8px;
-  font-weight: 700;
-}
-
-.approach-quote span{
-  display: block;
-  font-size: 0.95rem;
-  opacity: 0.9;
-}
-
-/* =========================
-   6) SERVICES
+   5) SERVICES (UNIFIED)
+   NOTE: your HTML has <section id="services" class="services">
+   We'll make it look like the same glass panel.
 ========================= */
 .services {
-  background: var(--secondary-color);
+  background: transparent;
+  padding: 0;
+}
+
+/* Make the inner .container behave like a unified panel even inside services */
+.services .container{
+  max-width: 1100px;
+  margin: 60px auto;
+  padding: 70px 28px;
+
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--glass-radius);
+  box-shadow: var(--shadow-strong);
+
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
 }
 
 .services-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 30px;
+  gap: 18px;
 }
 
 .service-card {
-  background: white;
-  padding: 30px;
-  border-radius: 12px;
+  background: var(--glass-bg-strong);
+  border: 1px solid rgba(255,255,255,0.30);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+
+  padding: 22px 20px;
+  border-radius: 16px;
   box-shadow: var(--shadow);
   text-align: center;
 }
 
+.service-card h3 { margin-bottom: 10px; }
+.service-card p { line-height: 1.8; }
+
 /* =========================
-   7) TESTIMONIALS
+   6) PROCESS (if added)
+========================= */
+.process-grid{
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+}
+
+.process-card{
+  background: var(--glass-bg-strong);
+  border: 1px solid rgba(255,255,255,0.30);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+  padding: 20px 18px;
+  text-align: right;
+
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.process-card h3{
+  margin-bottom: 8px;
+  font-size: 1.05rem;
+}
+
+.center-cta{
+  margin-top: 26px;
+  text-align: center;
+}
+
+/* =========================
+   7) FIT (if added)
+========================= */
+.fit-grid{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  align-items: start;
+}
+
+@media (min-width: 900px){
+  .fit-grid{
+    grid-template-columns: 1.15fr 0.85fr;
+  }
+}
+
+.fit-box{ text-align: right; }
+
+.fit-box h3{ margin-bottom: 10px; }
+
+.fit-box ul{
+  margin: 0;
+  padding-right: 18px;
+  line-height: 1.9;
+}
+
+.fit-note{
+  margin-top: 12px;
+  opacity: 0.9;
+}
+
+/* =========================
+   8) TESTIMONIALS (UNIFIED)
+   NOTE: your HTML has <section id="testimonials" class="testimonials">
+   We'll use a unified panel inside as well.
 ========================= */
 .testimonials {
-  background: linear-gradient(135deg, var(--primary-color), #D4E9D7);
-  padding: 80px 20px;
+  background: transparent;
+  padding: 0;
+}
+
+.testimonials .container{
+  max-width: 1100px;
+  margin: 60px auto;
+  padding: 70px 28px;
+
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--glass-radius);
+  box-shadow: var(--shadow-strong);
+
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
 }
 
 .testimonial-card {
-  background: var(--white);
-  padding: 30px 35px;
-  border-radius: 14px;
+  background: var(--glass-bg-strong);
+  border: 1px solid rgba(255,255,255,0.30);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+
+  padding: 26px 28px;
+  border-radius: 16px;
   box-shadow: var(--shadow);
-  max-width: 800px;
-  margin: 0 auto 30px auto;
+  max-width: 900px;
+  margin: 0 auto 16px auto;
   text-align: center;
 }
 
@@ -354,25 +432,72 @@ section {
 
 .testimonial-card span {
   display: block;
-  margin-top: 18px;
-  font-weight: 700;
+  margin-top: 14px;
+  font-weight: 800;
   color: var(--primary-color);
 }
 
 /* =========================
-   8) CONTACT
+   9) FAQ (if added)
 ========================= */
-#contact .section-title {
-  margin-bottom: 40px;
+.faq{
+  max-width: 900px;
+  margin: 0 auto;
+  text-align: right;
 }
+
+.faq-item{
+  background: rgba(255,255,255,0.55);
+  border: 1px solid rgba(255,255,255,0.25);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  margin-bottom: 12px;
+  overflow: hidden;
+
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.faq-q{
+  width: 100%;
+  background: transparent;
+  border: none;
+  padding: 16px 18px;
+  cursor: pointer;
+  text-align: right;
+  font-weight: 900;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  color: var(--text-color);
+}
+
+.faq-icon{
+  font-weight: 900;
+  font-size: 1.2rem;
+  opacity: 0.85;
+}
+
+.faq-a{
+  padding: 0 18px 16px 18px;
+  line-height: 1.9;
+  opacity: 0.95;
+}
+
+/* =========================
+   10) CONTACT
+========================= */
+#contact .section-title { margin-bottom: 40px; }
 
 .contact-subtitle {
   margin-top: 10px;
   background: rgba(255,255,255,0.55);
   display: inline-block;
-  padding: 5px 20px;
-  border-radius: 20px;
-  border: 1px solid rgba(255,255,255,0.22);
+  padding: 6px 20px;
+  border-radius: 999px;
+  border: 1px solid var(--glass-border-soft);
+
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
 }
@@ -380,16 +505,17 @@ section {
 .contact-container {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 28px;
+  gap: 18px;
   align-items: stretch;
 }
 
 .contact-info,
 .contact-action {
-  background: rgba(255,255,255,0.72);
+  background: var(--glass-bg-strong);
   border-radius: 16px;
   box-shadow: var(--shadow);
   padding: 28px;
+
   border: 1px solid rgba(255,255,255,0.30);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
@@ -402,19 +528,12 @@ section {
   font-size: 1.25rem;
 }
 
-.contact-info p,
-.contact-action p {
-  color: var(--text-color);
-}
-
 .contact-info a[href^="tel:"] {
   color: var(--primary-color);
-  font-weight: 800;
+  font-weight: 900;
 }
 
-.contact-address {
-  line-height: 1.6;
-}
+.contact-address { line-height: 1.6; }
 
 .map-icon {
   color: var(--primary-color);
@@ -422,11 +541,9 @@ section {
   vertical-align: middle;
 }
 
-.address-text {
-  font-weight: 500;
-}
+.address-text { font-weight: 500; }
 
-/* WhatsApp button */
+/* WhatsApp big button */
 .whatsapp-btn-large {
   display: inline-flex;
   align-items: center;
@@ -438,7 +555,7 @@ section {
   color: #fff;
   padding: 14px 22px;
   border-radius: 14px;
-  font-weight: 800;
+  font-weight: 900;
   font-size: 1.05rem;
 
   box-shadow: 0 14px 28px rgba(37, 211, 102, 0.25);
@@ -451,6 +568,7 @@ section {
   box-shadow: 0 16px 34px rgba(37, 211, 102, 0.30);
 }
 
+/* Floating WhatsApp */
 .whatsapp-float {
   position: fixed;
   bottom: 18px;
@@ -474,28 +592,66 @@ section {
 }
 
 /* =========================
-   9) MOBILE
+   11) MOBILE CTA (if added)
+========================= */
+.mobile-cta{ display: none; }
+
+@media (max-width: 768px){
+  .mobile-cta{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    z-index: 9998;
+  }
+
+  .mobile-cta-btn{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 14px 12px;
+    border-radius: 14px;
+    font-weight: 900;
+
+    background: rgba(255,255,255,0.70);
+    border: 1px solid rgba(255,255,255,0.30);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow: 0 14px 30px rgba(0,0,0,0.10);
+  }
+
+  .mobile-cta-wa{
+    background: rgba(37, 211, 102, 0.92);
+    color: #fff;
+    border: none;
+  }
+
+  /* prevent overlap */
+  .whatsapp-float{ bottom: 86px; }
+}
+
+/* =========================
+   12) RESPONSIVE
 ========================= */
 @media (max-width: 768px) {
 
   body::before {
     background:
-      linear-gradient(rgba(249, 252, 250, 0.22), rgba(249, 252, 250, 0.22)),
+      linear-gradient(var(--bg-overlay-mobile), var(--bg-overlay-mobile)),
       url("https://images.unsplash.com/photo-1472214103451-9374bd1c798e?auto=format&fit=crop&w=1920&q=80")
         center / cover no-repeat;
   }
 
-  section {
-    background: rgba(255, 255, 255, 0.14);
+  /* Glass panels spacing */
+  section.container{
+    margin: 28px 12px;
+    padding: 48px 18px;
   }
 
   .hero { height: 72vh; }
-
-  /* About glass panel spacing on mobile */
-  #about{
-    padding: 48px 18px;
-    margin: 28px auto;
-  }
 
   .about-content { grid-template-columns: 1fr; }
 
@@ -515,34 +671,29 @@ section {
     justify-self: center;
   }
 
-  .content-box{
-    padding: 22px;
+  /* Services panel inside .services */
+  .services .container,
+  .testimonials .container{
+    margin: 28px 12px;
+    padding: 48px 18px;
   }
 
-  .approach-box{
-    font-size: 1.2rem;
-  }
+  .process-grid { grid-template-columns: 1fr; }
 
-  .contact-container {
-    grid-template-columns: 1fr;
-  }
+  .fit-grid { grid-template-columns: 1fr; }
+
+  .contact-container { grid-template-columns: 1fr; }
 
   .contact-info,
-  .contact-action {
-    padding: 22px;
-  }
+  .contact-action { padding: 22px; }
 
-  .whatsapp-btn-large {
-    width: 100%;
-  }
+  .whatsapp-btn-large { width: 100%; }
 
-  /* ✅ רווח גדול יותר במובייל בין הכפתורים */
   .nav-buttons{
     gap: 16px;
     align-items: stretch;
   }
 
-  /* ✅ במובייל הכפתורים יהיו ברוחב מלא */
   .nav-buttons .btn{
     width: 100%;
     text-align: center;
@@ -550,7 +701,7 @@ section {
 }
 
 /* =========================
-   10) ACCESSIBILITY
+   13) ACCESSIBILITY
 ========================= */
 @media (prefers-reduced-motion: reduce){
   *{
