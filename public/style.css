@@ -1,6 +1,6 @@
 /* =========================
-   style.css (Unified Glass Theme + Unified Typography + Unified Section Titles)
-   Avital Heal - Full rebuild (latest)
+   style.css (FULL - Updated with Top Navigation + Back To Top)
+   Avital Heal - Unified Glass Theme + Unified Typography + Unified Titles
 ========================= */
 
 /* =========================
@@ -36,12 +36,7 @@
   --waze-blue-dark: #1B79B5;
 }
 
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
+* { box-sizing: border-box; margin: 0; padding: 0; }
 html { scroll-behavior: smooth; }
 
 /* =========================
@@ -52,6 +47,9 @@ body{
   font-size: 18px;           /* ✅ one base size everywhere */
   line-height: 1.85;
   color: var(--text-color);
+
+  /* ✅ space for sticky nav */
+  padding-top: 74px;
 }
 
 p, li, a, button, input, textarea, label, span{
@@ -75,7 +73,10 @@ h3{ font-size: 1.25rem; line-height: 1.35; }
 }
 
 @media (max-width: 768px){
-  body{ font-size: 18px; }   /* keep consistent in mobile too */
+  body{
+    font-size: 18px;
+    padding-top: 66px;
+  }
 }
 
 /* =========================
@@ -118,10 +119,138 @@ a { color: inherit; text-decoration: none; }
 .skip-link:focus{ right:10px; }
 
 /* =========================
-   4) GLOBAL LAYOUT (UNIFIED GLASS)
+   4) TOP NAV (Sticky) + Back To Top
+========================= */
+.top-nav{
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: 0;
+  z-index: 10000;
+
+  background: rgba(255,255,255,0.55);
+  border-bottom: 1px solid rgba(255,255,255,0.28);
+
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.top-nav-inner{
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 12px 18px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.brand{
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+/* Desktop nav */
+.nav-links{
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.nav-links a{
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.35);
+  border: 1px solid rgba(255,255,255,0.22);
+  transition: transform .15s ease, background .15s ease;
+}
+
+.nav-links a:hover{
+  background: rgba(255,255,255,0.55);
+  transform: translateY(-1px);
+}
+
+/* Burger button (mobile) */
+.nav-toggle{
+  display: none;
+  border: 0;
+  background: rgba(255,255,255,0.45);
+  border: 1px solid rgba(255,255,255,0.22);
+  border-radius: 12px;
+  padding: 8px 12px;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+/* Back to top */
+.back-to-top{
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  width: 46px;
+  height: 46px;
+  border-radius: 999px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: rgba(255,255,255,0.65);
+  border: 1px solid rgba(255,255,255,0.28);
+  box-shadow: 0 14px 30px rgba(0,0,0,0.10);
+
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+
+  font-weight: 900;
+  z-index: 9999;
+}
+
+/* Mobile menu */
+@media (max-width: 768px){
+  .nav-toggle{ display: inline-flex; }
+
+  .nav-links{
+    display: none;              /* closed by default */
+    position: absolute;
+    top: 64px;
+    right: 12px;
+    left: 12px;
+
+    background: rgba(255,255,255,0.70);
+    border: 1px solid rgba(255,255,255,0.28);
+    border-radius: 18px;
+    padding: 12px;
+
+    flex-direction: column;
+    gap: 10px;
+
+    box-shadow: 0 18px 50px rgba(0,0,0,0.10);
+
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  .nav-links.active{ display: flex; }
+
+  .nav-links a{
+    width: 100%;
+    text-align: center;
+    padding: 12px 14px;
+  }
+
+  /* avoid collision with floating WhatsApp */
+  .back-to-top{ bottom: 82px; }
+}
+
+/* =========================
+   5) GLOBAL LAYOUT (UNIFIED GLASS)
 ========================= */
 section {
-  padding: 0;              /* we control spacing via panels */
+  padding: 0;              /* spacing controlled by panels */
   background: transparent;  /* no section-to-section color jumps */
 }
 
@@ -157,7 +286,7 @@ section.container {
 }
 
 /* =========================
-   5) SECTION TITLES (SUBTITLE ALWAYS UNDER TITLE)
+   6) SECTION TITLES (SUBTITLE ALWAYS UNDER TITLE)
 ========================= */
 .section-title{
   display: flex;
@@ -199,7 +328,7 @@ section.container {
 }
 
 /* =========================
-   6) BUTTONS
+   7) BUTTONS
 ========================= */
 .btn {
   background: var(--primary-color);
@@ -227,7 +356,7 @@ section.container {
 }
 
 /* =========================
-   7) HERO
+   8) HERO
 ========================= */
 .hero {
   height: 80vh;
@@ -287,7 +416,7 @@ section.container {
 .hero .btn { margin-top: 18px; opacity: 0.95; }
 
 /* =========================
-   8) ABOUT
+   9) ABOUT
 ========================= */
 .about-content {
   display: grid;
@@ -307,7 +436,7 @@ section.container {
 }
 
 /* =========================
-   9) SERVICES (UNIFIED PANEL INSIDE .services)
+   10) SERVICES (UNIFIED PANEL INSIDE .services)
 ========================= */
 .services {
   background: transparent;
@@ -349,7 +478,7 @@ section.container {
 .service-card h3 { margin-bottom: 10px; }
 
 /* =========================
-   10) PROCESS (if used)
+   11) PROCESS (if used)
 ========================= */
 .process-grid{
   display: grid;
@@ -380,7 +509,7 @@ section.container {
 }
 
 /* =========================
-   11) FIT (if used)
+   12) FIT (if used)
 ========================= */
 .fit-grid{
   display: grid;
@@ -409,7 +538,7 @@ section.container {
 }
 
 /* =========================
-   12) TESTIMONIALS (UNIFIED PANEL INSIDE .testimonials)
+   13) TESTIMONIALS (UNIFIED PANEL INSIDE .testimonials)
 ========================= */
 .testimonials {
   background: transparent;
@@ -452,7 +581,7 @@ section.container {
 }
 
 /* =========================
-   13) FAQ (if used)
+   14) FAQ (if used)
 ========================= */
 .faq{
   max-width: 900px;
@@ -499,7 +628,7 @@ section.container {
 }
 
 /* =========================
-   14) CONTACT
+   15) CONTACT
 ========================= */
 #contact .section-title { margin-bottom: 40px; }
 
@@ -601,7 +730,7 @@ section.container {
 }
 
 /* =========================
-   15) MOBILE STICKY CTA (optional)
+   16) MOBILE CTA (optional)
 ========================= */
 .mobile-cta{ display: none; }
 
@@ -638,6 +767,7 @@ section.container {
     border: none;
   }
 
+  /* move WA button up */
   .whatsapp-float{ bottom: 86px; }
 
   /* Glass panels spacing */
@@ -695,7 +825,7 @@ section.container {
 }
 
 /* =========================
-   16) ACCESSIBILITY
+   17) ACCESSIBILITY
 ========================= */
 @media (prefers-reduced-motion: reduce){
   *{
