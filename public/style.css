@@ -444,7 +444,7 @@ section.container {
 
   background: transparent;
   border: 0;
-  border-radius: var(--glass-radius);
+  border-radius: 0;
   box-shadow: none;
 
   backdrop-filter: none;
