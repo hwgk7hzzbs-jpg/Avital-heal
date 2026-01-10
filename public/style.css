@@ -6,6 +6,7 @@
    ✅ Desktop nav one-line + NOT CUT (RTL) + silent horizontal scroll
    ✅ Mobile menu stays as-is
    ✅ Google/Waze buttons identical size & shape
+   ✅ NEW: Space between stacked rectangles (content-box)
 ========================= */
 
 /* =========================
@@ -312,6 +313,11 @@ section.container {
 
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
+}
+
+/* ✅ NEW: רווח בין שני "מרובעים" שיושבים אחד מתחת לשני */
+.content-box + .content-box{
+  margin-top: 18px;
 }
 
 /* =========================
