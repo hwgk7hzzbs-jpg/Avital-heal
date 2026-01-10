@@ -442,10 +442,10 @@ section.container {
   margin: 60px auto;
   padding: 70px 28px;
 
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
+  background: transparent;
+  border: 0;
   border-radius: var(--glass-radius);
-  box-shadow: var(--shadow-strong);
+  box-shadow: none;
 
   backdrop-filter: blur(var(--glass-blur));
   -webkit-backdrop-filter: blur(var(--glass-blur));
