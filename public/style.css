@@ -1,6 +1,10 @@
 /* =========================
-   style.css (FULL - Updated with Top Navigation + Back To Top)
-   Avital Heal - Unified Glass Theme + Unified Typography + Unified Titles
+   style.css (FULL - Updated)
+   ✅ Unified Glass Theme
+   ✅ Unified Typography
+   ✅ Sticky Top Nav
+   ✅ Desktop nav in one line
+   ✅ Navigation buttons (Google/Waze) same size
 ========================= */
 
 /* =========================
@@ -11,11 +15,9 @@
   --text-color: #4A4A4A;
   --white: #ffffff;
 
-  /* Background overlay */
   --bg-overlay-strong: rgba(249, 252, 250, 0.55);
   --bg-overlay-mobile: rgba(249, 252, 250, 0.22);
 
-  /* Glass system */
   --glass-bg: rgba(255, 255, 255, 0.55);
   --glass-bg-strong: rgba(255, 255, 255, 0.72);
   --glass-border: rgba(255, 255, 255, 0.28);
@@ -23,15 +25,12 @@
   --glass-blur: 10px;
   --glass-radius: 22px;
 
-  /* Shadows */
   --shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   --shadow-strong: 0 18px 50px rgba(0, 0, 0, 0.10);
 
-  /* WhatsApp */
   --wa-green: #25D366;
   --wa-green-dark: #1ebe5d;
 
-  /* Waze */
   --waze-blue: #2D9CDB;
   --waze-blue-dark: #1B79B5;
 }
@@ -40,15 +39,15 @@
 html { scroll-behavior: smooth; }
 
 /* =========================
-   2) TYPOGRAPHY (ONE SIZE ACROSS THE SITE)
+   2) TYPOGRAPHY (ONE SIZE)
 ========================= */
 body{
   font-family: 'Rubik', sans-serif;
-  font-size: 18px;           /* ✅ one base size everywhere */
+  font-size: 18px;
   line-height: 1.85;
   color: var(--text-color);
 
-  /* ✅ space for sticky nav */
+  /* space for sticky nav */
   padding-top: 74px;
 }
 
@@ -62,7 +61,6 @@ h1{ font-size: 2.6rem; line-height: 1.2; }
 h2{ font-size: 2.0rem; line-height: 1.25; }
 h3{ font-size: 1.25rem; line-height: 1.35; }
 
-/* Remove local font-size overrides that cause inconsistency */
 .hero p,
 .about-text,
 .testimonial-card p,
@@ -119,7 +117,7 @@ a { color: inherit; text-decoration: none; }
 .skip-link:focus{ right:10px; }
 
 /* =========================
-   4) TOP NAV (Sticky) + Back To Top
+   4) TOP NAV (Sticky)
 ========================= */
 .top-nav{
   position: fixed;
@@ -151,13 +149,27 @@ a { color: inherit; text-decoration: none; }
   white-space: nowrap;
 }
 
-/* Desktop nav */
+/* Desktop nav default */
 .nav-links{
   display: flex;
   align-items: center;
   gap: 14px;
-  flex-wrap: wrap;
   justify-content: center;
+}
+
+/* ✅ ONE LINE ONLY on desktop/tablet */
+@media (min-width: 769px){
+  .nav-links{
+    flex-wrap: nowrap;
+    white-space: nowrap;
+    overflow: hidden;     /* no scroll on desktop */
+    max-width: 72vw;
+    gap: 12px;
+  }
+  .nav-links a{
+    white-space: nowrap;
+    flex: 0 0 auto;
+  }
 }
 
 .nav-links a{
@@ -167,7 +179,6 @@ a { color: inherit; text-decoration: none; }
   border: 1px solid rgba(255,255,255,0.22);
   transition: transform .15s ease, background .15s ease;
 }
-
 .nav-links a:hover{
   background: rgba(255,255,255,0.55);
   transform: translateY(-1px);
@@ -183,6 +194,39 @@ a { color: inherit; text-decoration: none; }
   padding: 8px 12px;
   font-size: 18px;
   cursor: pointer;
+}
+
+/* Mobile menu */
+@media (max-width: 768px){
+  .nav-toggle{ display: inline-flex; }
+
+  .nav-links{
+    display: none;
+    position: absolute;
+    top: 64px;
+    right: 12px;
+    left: 12px;
+
+    background: rgba(255,255,255,0.70);
+    border: 1px solid rgba(255,255,255,0.28);
+    border-radius: 18px;
+    padding: 12px;
+
+    flex-direction: column;
+    gap: 10px;
+    box-shadow: 0 18px 50px rgba(0,0,0,0.10);
+
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  .nav-links.active{ display: flex; }
+
+  .nav-links a{
+    width: 100%;
+    text-align: center;
+    padding: 12px 14px;
+  }
 }
 
 /* Back to top */
@@ -209,57 +253,21 @@ a { color: inherit; text-decoration: none; }
   z-index: 9999;
 }
 
-/* Mobile menu */
 @media (max-width: 768px){
-  .nav-toggle{ display: inline-flex; }
-
-  .nav-links{
-    display: none;              /* closed by default */
-    position: absolute;
-    top: 64px;
-    right: 12px;
-    left: 12px;
-
-    background: rgba(255,255,255,0.70);
-    border: 1px solid rgba(255,255,255,0.28);
-    border-radius: 18px;
-    padding: 12px;
-
-    flex-direction: column;
-    gap: 10px;
-
-    box-shadow: 0 18px 50px rgba(0,0,0,0.10);
-
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-  }
-
-  .nav-links.active{ display: flex; }
-
-  .nav-links a{
-    width: 100%;
-    text-align: center;
-    padding: 12px 14px;
-  }
-
-  /* avoid collision with floating WhatsApp */
   .back-to-top{ bottom: 82px; }
 }
 
 /* =========================
    5) GLOBAL LAYOUT (UNIFIED GLASS)
 ========================= */
-section {
-  padding: 0;              /* spacing controlled by panels */
-  background: transparent;  /* no section-to-section color jumps */
-}
+section { padding: 0; background: transparent; }
 
 .container {
   max-width: 1100px;
   margin: auto;
 }
 
-/* ✅ Unified glass panel for ALL sections with class="container" */
+/* Unified glass panel */
 section.container {
   margin: 60px auto;
   padding: 70px 28px;
@@ -273,7 +281,6 @@ section.container {
   -webkit-backdrop-filter: blur(var(--glass-blur));
 }
 
-/* Shared content box (inside panels) */
 .content-box{
   background: var(--glass-bg);
   border: 1px solid rgba(255,255,255,0.30);
@@ -286,7 +293,7 @@ section.container {
 }
 
 /* =========================
-   6) SECTION TITLES (SUBTITLE ALWAYS UNDER TITLE)
+   6) SECTION TITLES (Subtitle under title)
 ========================= */
 .section-title{
   display: flex;
@@ -346,13 +353,29 @@ section.container {
 .waze-btn { background: var(--waze-blue); }
 .waze-btn:hover { background: var(--waze-blue-dark); }
 
-/* Navigation buttons in contact */
+/* =========================
+   ✅ CONTACT NAV BUTTONS (Google/Waze) SAME SIZE
+   - identical width, height, shape, text alignment
+========================= */
 .nav-buttons{
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: 1fr; /* vertical */
   gap: 12px;
   margin-top: 12px;
-  align-items: flex-start;
+  width: 100%;
+  max-width: 360px;          /* ✅ consistent button block */
+}
+
+.nav-buttons .btn{
+  width: 100%;
+  height: 56px;              /* ✅ same height */
+  display: flex;             /* ✅ center text perfectly */
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 0 22px;           /* ✅ same padding for both */
+  border-radius: 999px;      /* ✅ same shape */
+  font-weight: 900;
 }
 
 /* =========================
@@ -408,7 +431,7 @@ section.container {
 .hero-meta{
   margin-top: -4px;
   margin-bottom: 10px;
-  font-weight: 800;
+  font-weight: 900;
   opacity: 0.95;
   text-shadow: 0 1px 6px rgba(0,0,0,0.2);
 }
@@ -436,12 +459,9 @@ section.container {
 }
 
 /* =========================
-   10) SERVICES (UNIFIED PANEL INSIDE .services)
+   10) SERVICES (Unified panel)
 ========================= */
-.services {
-  background: transparent;
-  padding: 0;
-}
+.services { background: transparent; padding: 0; }
 
 .services .container{
   max-width: 1100px;
@@ -478,7 +498,7 @@ section.container {
 .service-card h3 { margin-bottom: 10px; }
 
 /* =========================
-   11) PROCESS (if used)
+   11) PROCESS
 ========================= */
 .process-grid{
   display: grid;
@@ -509,7 +529,7 @@ section.container {
 }
 
 /* =========================
-   12) FIT (if used)
+   12) FIT
 ========================= */
 .fit-grid{
   display: grid;
@@ -538,12 +558,9 @@ section.container {
 }
 
 /* =========================
-   13) TESTIMONIALS (UNIFIED PANEL INSIDE .testimonials)
+   13) TESTIMONIALS
 ========================= */
-.testimonials {
-  background: transparent;
-  padding: 0;
-}
+.testimonials { background: transparent; padding: 0; }
 
 .testimonials .container{
   max-width: 1100px;
@@ -576,12 +593,12 @@ section.container {
 .testimonial-card span {
   display: block;
   margin-top: 14px;
-  font-weight: 800;
+  font-weight: 900;
   color: var(--primary-color);
 }
 
 /* =========================
-   14) FAQ (if used)
+   14) FAQ
 ========================= */
 .faq{
   max-width: 900px;
@@ -730,53 +747,14 @@ section.container {
 }
 
 /* =========================
-   16) MOBILE CTA (optional)
+   16) MOBILE
 ========================= */
-.mobile-cta{ display: none; }
-
 @media (max-width: 768px){
-  .mobile-cta{
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    position: fixed;
-    left: 12px;
-    right: 12px;
-    bottom: 12px;
-    z-index: 9998;
-  }
-
-  .mobile-cta-btn{
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 14px 12px;
-    border-radius: 14px;
-    font-weight: 900;
-
-    background: rgba(255,255,255,0.70);
-    border: 1px solid rgba(255,255,255,0.30);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    box-shadow: 0 14px 30px rgba(0,0,0,0.10);
-  }
-
-  .mobile-cta-wa{
-    background: rgba(37, 211, 102, 0.92);
-    color: #fff;
-    border: none;
-  }
-
-  /* move WA button up */
-  .whatsapp-float{ bottom: 86px; }
-
-  /* Glass panels spacing */
   section.container{
     margin: 28px 12px;
     padding: 48px 18px;
   }
 
-  /* Services/Testimonial inner panels */
   .services .container,
   .testimonials .container{
     margin: 28px 12px;
@@ -801,19 +779,15 @@ section.container {
   .process-grid { grid-template-columns: 1fr; }
   .fit-grid { grid-template-columns: 1fr; }
   .contact-container { grid-template-columns: 1fr; }
+
   .contact-info,
   .contact-action { padding: 22px; }
 
   .whatsapp-btn-large { width: 100%; }
 
+  /* keep nav-buttons same size also on mobile */
   .nav-buttons{
-    gap: 16px;
-    align-items: stretch;
-  }
-
-  .nav-buttons .btn{
-    width: 100%;
-    text-align: center;
+    max-width: 100%;
   }
 
   body::before {
