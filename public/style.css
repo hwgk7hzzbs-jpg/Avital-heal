@@ -532,7 +532,7 @@ section.container {
 }
 
 .faq-item{
-  background: rgba(255,255,255,0.985);
+  background: rgba(255,255,255,0.97);
   border: 1px solid rgba(0,0,0,0.06);
   border-radius: 16px;
   box-shadow: var(--shadow);
