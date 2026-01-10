@@ -586,13 +586,13 @@ section.container {
 
 .contact-info,
 .contact-action{
-  background: var(--glass-bg-strong);
+  background: rgba(255,255,255,0.96);
   border-radius: 16px;
   box-shadow: var(--shadow);
   padding: 28px;
-  border: 1px solid rgba(255,255,255,0.30);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(0,0,0,0.06);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 /* =========================
