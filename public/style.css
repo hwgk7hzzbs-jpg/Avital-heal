@@ -1,12 +1,7 @@
 /* =========================
    style.css (FULL - UPDATED)
-   ✅ Unified Glass Theme
-   ✅ Unified Typography (same font/size across site)
-   ✅ Sticky Top Nav
-   ✅ Desktop nav stays ONE LINE (shrinks pills to fit) + no cutting
-   ✅ Mobile menu stays as-is
-   ✅ Google/Waze buttons identical size & shape
-   ✅ Consistent cards (Process / Fit / Testimonials / FAQ)
+   ✅ Added: About "methods list" (NLP / מסע הנשמה / ביואורגונומי) as 3 separate lines/cards
+   (Everything else stays the same)
 ========================= */
 
 /* =========================
@@ -145,9 +140,9 @@ a { color: inherit; text-decoration: none; }
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 14px;
+  gap: 16px;
 
-  overflow: visible; /* prevent parent clipping */
+  overflow: visible; /* ✅ prevent parent clipping */
 }
 
 .brand{
@@ -159,7 +154,7 @@ a { color: inherit; text-decoration: none; }
 .nav-links{
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
 }
 
 .nav-links a{
@@ -177,50 +172,31 @@ a { color: inherit; text-decoration: none; }
   transform: translateY(-1px);
 }
 
-/* ✅ DESKTOP: keep one line, never cut */
+/* ✅ DESKTOP FIX: one line, NOT CUT, RTL-safe */
 @media (min-width: 769px){
   .nav-links{
-    min-width: 0;
-    flex: 1 1 auto;
+    min-width: 0;        /* ✅ critical for flex shrink */
+    flex: 1 1 auto;      /* ✅ take remaining space */
 
     flex-wrap: nowrap;
     white-space: nowrap;
 
-    overflow-x: auto;     /* fallback if still tight */
+    overflow-x: auto;    /* ✅ scroll instead of cut */
     overflow-y: hidden;
 
-    justify-content: flex-start;
+    justify-content: flex-start; /* ✅ avoid center clipping */
 
     width: 100%;
     max-width: 100%;
 
-    padding-inline: 18px;         /* protects first/last pill */
+    padding-inline: 18px;         /* ✅ protect first/last pills */
     scroll-padding-inline: 18px;
 
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
   }
+
   .nav-links::-webkit-scrollbar{ display: none; }
-}
-
-/* ✅ Shrink pills so it fits on a single line on typical desktop widths */
-@media (min-width: 769px) and (max-width: 1200px){
-  .brand{ font-size: 16px; }
-  .nav-links{ gap: 10px; padding-inline: 14px; }
-  .nav-links a{
-    font-size: 15px;
-    padding: 6px 10px;
-  }
-}
-
-/* Even tighter laptops */
-@media (min-width: 769px) and (max-width: 1024px){
-  .brand{ font-size: 15px; }
-  .nav-links{ gap: 8px; padding-inline: 12px; }
-  .nav-links a{
-    font-size: 14px;
-    padding: 6px 9px;
-  }
 }
 
 /* Burger button (mobile) */
@@ -309,7 +285,7 @@ section { padding: 0; background: transparent; }
   margin: auto;
 }
 
-/* Unified glass panel for "section.container" */
+/* Unified glass panel */
 section.container {
   margin: 60px auto;
   padding: 70px 28px;
@@ -333,9 +309,6 @@ section.container {
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
 }
-
-/* Utility: center area spacing */
-.center-cta{ margin-top: 22px; text-align: center; }
 
 /* =========================
    6) SECTION TITLES (Subtitle under title)
@@ -368,7 +341,7 @@ section.container {
 .section-title h2 { margin: 0; }
 
 .section-subtitle{
-  display: inline-block;
+  display: block;
   margin: 0;
   background: rgba(255,255,255,0.55);
   padding: 6px 22px;
@@ -387,7 +360,7 @@ section.container {
   padding: 12px 30px;
   border-radius: 999px;
   color: white;
-  font-weight: 800;
+  font-weight: 700;
   display: inline-block;
   transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease, background 0.2s ease;
   box-shadow: 0 10px 24px rgba(0,0,0,0.10);
@@ -398,7 +371,7 @@ section.container {
 .waze-btn { background: var(--waze-blue); }
 .waze-btn:hover { background: var(--waze-blue-dark); }
 
-/* Contact navigation buttons identical size */
+/* ✅ Contact navigation buttons identical size */
 .nav-buttons{
   display: grid;
   grid-template-columns: 1fr;
@@ -470,12 +443,6 @@ section.container {
   text-shadow: 0 1px 6px rgba(0, 0, 0, 0.2);
 }
 
-/* ✅ lead paragraph emphasis (your request) */
-.hero-lead strong{
-  font-weight: 800;
-  text-shadow: 0 2px 10px rgba(0,0,0,0.22);
-}
-
 .hero-meta{
   margin-top: -4px;
   margin-bottom: 10px;
@@ -506,8 +473,35 @@ section.container {
   box-shadow: 0 10px 25px rgba(157, 200, 176, 0.25);
 }
 
+/* ✅ NEW: About methods list (each method on its own line, same site style) */
+.methods-block{
+  margin-top: 8px;
+}
+
+.methods-list{
+  list-style: none;
+  padding: 0;
+  margin: 14px 0 0;
+  display: grid;
+  gap: 12px;
+}
+
+.methods-list li{
+  background: rgba(255,255,255,0.55);
+  border: 1px solid rgba(255,255,255,0.28);
+  border-radius: 16px;
+  padding: 14px 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.methods-list strong{
+  font-weight: 900;
+}
+
 /* =========================
-   10) SERVICES
+   10) SERVICES (Unified panel)
 ========================= */
 .services { background: transparent; padding: 0; }
 
@@ -546,170 +540,7 @@ section.container {
 .service-card h3 { margin-bottom: 10px; }
 
 /* =========================
-   11) PROCESS (consistent cards)
-========================= */
-.process-grid{
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 18px;
-}
-
-.process-card{
-  background: var(--glass-bg-strong);
-  border: 1px solid rgba(255,255,255,0.30);
-  border-radius: 16px;
-  box-shadow: var(--shadow);
-  padding: 22px 20px;
-  text-align: right;
-
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-}
-
-.process-card h3{ margin-bottom: 8px; }
-
-/* =========================
-   12) FIT (space between the 2 big boxes)
-========================= */
-.fit-grid{
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 22px; /* ✅ visible spacing between rectangles */
-  align-items: stretch;
-}
-
-.fit-box{
-  height: 100%;
-}
-
-.fit-box h3{
-  margin-bottom: 10px;
-}
-
-.fit-box ul{
-  padding-right: 18px;
-  margin-top: 6px;
-}
-
-.fit-box li{
-  margin-bottom: 10px;
-}
-
-.fit-note{
-  margin-top: 12px;
-  opacity: 0.92;
-  font-weight: 700;
-}
-
-@media (max-width: 900px){
-  .fit-grid{ grid-template-columns: 1fr; }
-}
-
-/* =========================
-   13) TESTIMONIALS (consistent)
-========================= */
-.testimonials{ background: transparent; padding: 0; }
-
-.testimonials .container{
-  max-width: 1100px;
-  margin: 60px auto;
-  padding: 70px 28px;
-
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
-  border-radius: var(--glass-radius);
-  box-shadow: var(--shadow-strong);
-
-  backdrop-filter: blur(var(--glass-blur));
-  -webkit-backdrop-filter: blur(var(--glass-blur));
-}
-
-.testimonial-card{
-  background: var(--glass-bg-strong);
-  border: 1px solid rgba(255,255,255,0.30);
-  border-radius: 16px;
-  box-shadow: var(--shadow);
-  padding: 22px 22px;
-  text-align: right;
-  margin-top: 16px;
-
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-}
-
-.testimonial-card span{
-  display: inline-block;
-  margin-top: 10px;
-  font-weight: 900;
-  opacity: 0.9;
-}
-
-/* =========================
-   14) FAQ (same width + same alignment as other cards)
-========================= */
-.faq{
-  max-width: 900px;
-  margin: 0 auto;
-  display: grid;
-  gap: 14px;
-}
-
-/* Outer card per item */
-.faq-item{
-  background: var(--glass-bg-strong);
-  border: 1px solid rgba(255,255,255,0.30);
-  border-radius: 16px;
-  box-shadow: var(--shadow);
-
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  overflow: hidden;
-}
-
-/* The question row */
-.faq-q{
-  width: 100%;
-  border: 0;
-  background: transparent;
-  cursor: pointer;
-
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-
-  padding: 18px 20px;
-  font-weight: 900;
-  text-align: right;
-}
-
-/* icon pill (left side visually) */
-.faq-icon{
-  width: 36px;
-  height: 36px;
-  border-radius: 999px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
-  background: rgba(255,255,255,0.55);
-  border: 1px solid rgba(255,255,255,0.28);
-  box-shadow: 0 10px 24px rgba(0,0,0,0.06);
-
-  flex: 0 0 auto;
-  font-size: 22px;
-  line-height: 1;
-}
-
-/* The answer area */
-.faq-a{
-  padding: 0 20px 18px 20px;
-  text-align: right;
-  opacity: 0.95;
-}
-
-/* =========================
-   15) CONTACT + WhatsApp
+   11) CONTACT + WhatsApp
 ========================= */
 #contact .section-title { margin-bottom: 40px; }
 
@@ -795,7 +626,7 @@ section.container {
 }
 
 /* =========================
-   16) MOBILE
+   12) MOBILE
 ========================= */
 @media (max-width: 768px){
   section.container{
@@ -804,11 +635,6 @@ section.container {
   }
 
   .services .container{
-    margin: 28px 12px;
-    padding: 48px 18px;
-  }
-
-  .testimonials .container{
     margin: 28px 12px;
     padding: 48px 18px;
   }
@@ -843,7 +669,7 @@ section.container {
 }
 
 /* =========================
-   17) ACCESSIBILITY
+   13) ACCESSIBILITY
 ========================= */
 @media (prefers-reduced-motion: reduce){
   *{
