@@ -1,12 +1,11 @@
 /* =========================
-   style.css (NEW - FINAL)
+   style.css (FULL - UPDATED)
    ✅ Unified Glass Theme
    ✅ Unified Typography (same font/size across site)
-   ✅ Sticky Top Nav
-   ✅ Desktop nav one-line (smaller pills) + NOT CUT (RTL) + silent horizontal scroll (fallback)
-   ✅ Mobile menu stays as-is
+   ✅ Sticky Top Nav (one line, no cut)
+   ✅ FAQ same width/alignment like other sections cards
+   ✅ Process / Fit / Testimonials unified (no section-to-section mismatch)
    ✅ Google/Waze buttons identical size & shape
-   ✅ Space between stacked rectangles (content-box)
 ========================= */
 
 /* =========================
@@ -39,6 +38,7 @@
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html { scroll-behavior: smooth; }
+body { direction: rtl; }
 
 /* =========================
    2) TYPOGRAPHY (ONE SIZE)
@@ -119,7 +119,7 @@ a { color: inherit; text-decoration: none; }
 .skip-link:focus{ right:10px; }
 
 /* =========================
-   4) TOP NAV (Sticky)
+   4) TOP NAV (Sticky) - FIXED HEIGHT
 ========================= */
 .top-nav{
   position: fixed;
@@ -147,7 +147,7 @@ a { color: inherit; text-decoration: none; }
   justify-content: space-between;
   gap: 16px;
 
-  overflow: visible;
+  overflow: visible; /* prevent clipping */
 }
 
 .brand{
@@ -159,12 +159,11 @@ a { color: inherit; text-decoration: none; }
 .nav-links{
   display: flex;
   align-items: center;
-  gap: 14px;
-  min-width: 0;
+  gap: 12px;
 }
 
 .nav-links a{
-  padding: 8px 12px;
+  padding: 7px 10px;
   border-radius: 999px;
   background: rgba(255,255,255,0.35);
   border: 1px solid rgba(255,255,255,0.22);
@@ -172,45 +171,45 @@ a { color: inherit; text-decoration: none; }
 
   flex: 0 0 auto;
   white-space: nowrap;
+
+  /* slightly smaller only for nav pills */
+  font-size: 0.95rem;
+  font-weight: 700;
 }
 .nav-links a:hover{
   background: rgba(255,255,255,0.55);
   transform: translateY(-1px);
 }
 
-/* ✅ DESKTOP: one line, smaller pills so it fits */
+/* Desktop: one line, not cut. If screen too narrow => silent horizontal scroll (no cut). */
 @media (min-width: 769px){
-  .top-nav-inner{
-    padding: 10px 12px;
-  }
-
   .nav-links{
+    min-width: 0;
     flex: 1 1 auto;
-    width: 100%;
-    max-width: 100%;
 
     flex-wrap: nowrap;
     white-space: nowrap;
 
-    justify-content: flex-start;
-
-    gap: 10px;
-    padding-inline: 12px;        /* protects edges from clipping */
-    scroll-padding-inline: 12px;
-
-    overflow-x: auto;            /* fallback: scroll if ultra-narrow */
+    overflow-x: auto;
     overflow-y: hidden;
+
+    justify-content: flex-start;
+    width: 100%;
+    max-width: 100%;
+
+    padding-inline: 14px;
+    scroll-padding-inline: 14px;
 
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
   }
   .nav-links::-webkit-scrollbar{ display: none; }
+}
 
-  .nav-links a{
-    padding: 6px 10px;           /* smaller */
-    font-size: 16px;             /* smaller ONLY in nav */
-    line-height: 1.2;
-  }
+/* Make pills a touch smaller on mid desktop widths to fit better */
+@media (max-width: 1100px) and (min-width: 769px){
+  .nav-links{ gap: 10px; }
+  .nav-links a{ padding: 6px 9px; font-size: 0.92rem; }
 }
 
 /* Burger button (mobile) */
@@ -258,6 +257,7 @@ a { color: inherit; text-decoration: none; }
     width: 100%;
     text-align: center;
     padding: 12px 14px;
+    font-size: 1rem;
   }
 }
 
@@ -313,6 +313,7 @@ section.container {
   -webkit-backdrop-filter: blur(var(--glass-blur));
 }
 
+/* Main inner content glass box (same style everywhere) */
 .content-box{
   background: var(--glass-bg);
   border: 1px solid rgba(255,255,255,0.30);
@@ -324,13 +325,8 @@ section.container {
   -webkit-backdrop-filter: blur(8px);
 }
 
-/* ✅ Space between stacked rectangles */
-.content-box + .content-box{
-  margin-top: 18px;
-}
-
 /* =========================
-   6) SECTION TITLES
+   6) SECTION TITLES (Subtitle under title)
 ========================= */
 .section-title{
   display: flex;
@@ -360,7 +356,7 @@ section.container {
 .section-title h2 { margin: 0; }
 
 .section-subtitle{
-  display: block;
+  display: inline-block;
   margin: 0;
   background: rgba(255,255,255,0.55);
   padding: 6px 22px;
@@ -379,8 +375,10 @@ section.container {
   padding: 12px 30px;
   border-radius: 999px;
   color: white;
-  font-weight: 700;
-  display: inline-block;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease, background 0.2s ease;
   box-shadow: 0 10px 24px rgba(0,0,0,0.10);
 }
@@ -390,7 +388,7 @@ section.container {
 .waze-btn { background: var(--waze-blue); }
 .waze-btn:hover { background: var(--waze-blue-dark); }
 
-/* ✅ Google/Waze identical size */
+/* Contact navigation buttons identical size */
 .nav-buttons{
   display: grid;
   grid-template-columns: 1fr;
@@ -403,13 +401,8 @@ section.container {
 .nav-buttons .btn{
   width: 100%;
   height: 56px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
   padding: 0 22px;
   border-radius: 999px;
-  font-weight: 900;
 }
 
 /* =========================
@@ -493,7 +486,7 @@ section.container {
 }
 
 /* =========================
-   10) SERVICES
+   10) SERVICES (Unified panel)
 ========================= */
 .services { background: transparent; padding: 0; }
 
@@ -532,7 +525,175 @@ section.container {
 .service-card h3 { margin-bottom: 10px; }
 
 /* =========================
-   11) CONTACT + WhatsApp
+   11) PROCESS (was missing -> unify)
+========================= */
+.process-grid{
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.process-card{
+  background: var(--glass-bg-strong);
+  border: 1px solid rgba(255,255,255,0.30);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+  padding: 22px 20px;
+  text-align: right;
+
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.process-card h3{
+  margin-bottom: 8px;
+  font-weight: 900;
+}
+
+.center-cta{
+  margin-top: 22px;
+  display: flex;
+  justify-content: center;
+}
+
+/* =========================
+   12) FIT (was missing -> unify + add spacing between boxes)
+========================= */
+.fit-grid{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 22px; /* ✅ space between the 2 rectangles */
+  align-items: start;
+}
+
+.fit-box h3{
+  margin-bottom: 10px;
+  font-weight: 900;
+}
+
+.fit-box ul{
+  padding-right: 18px;
+}
+
+.fit-box li{
+  margin: 8px 0;
+}
+
+.fit-note{
+  margin-top: 12px;
+  font-weight: 700;
+  opacity: 0.9;
+}
+
+/* =========================
+   13) TESTIMONIALS (was missing -> unify)
+========================= */
+.testimonials { background: transparent; padding: 0; }
+
+.testimonials .container{
+  max-width: 1100px;
+  margin: 60px auto;
+  padding: 70px 28px;
+
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--glass-radius);
+  box-shadow: var(--shadow-strong);
+
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+}
+
+.testimonials-grid{
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.testimonial-card{
+  background: var(--glass-bg-strong);
+  border: 1px solid rgba(255,255,255,0.30);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+  padding: 22px 20px;
+  text-align: right;
+
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.testimonial-card p{
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.testimonial-card span{
+  font-weight: 900;
+  opacity: 0.85;
+}
+
+/* =========================
+   14) FAQ (NEW) -> same width/alignment like other sections
+========================= */
+/* The FAQ will be inside .content-box, so it matches the site.
+   Here we control the inner width & alignment to look like cards. */
+
+.faq{
+  /* ✅ same "comfortable" reading width like other inner blocks */
+  max-width: 900px;
+  margin: 0 auto;
+
+  display: grid;
+  gap: 12px;
+}
+
+.faq-item{
+  background: var(--glass-bg-strong);
+  border: 1px solid rgba(255,255,255,0.30);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.faq-q{
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  background: transparent;
+  border: 0;
+  padding: 16px 18px;
+
+  cursor: pointer;
+  text-align: right;
+  font-weight: 900;
+}
+
+.faq-icon{
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  background: rgba(255,255,255,0.55);
+  border: 1px solid rgba(255,255,255,0.22);
+  flex: 0 0 auto;
+  font-weight: 900;
+}
+
+.faq-a{
+  padding: 0 18px 16px 18px;
+  opacity: 0.95;
+}
+
+/* =========================
+   15) CONTACT + WhatsApp
 ========================= */
 #contact .section-title { margin-bottom: 40px; }
 
@@ -618,7 +779,7 @@ section.container {
 }
 
 /* =========================
-   12) MOBILE
+   16) MOBILE
 ========================= */
 @media (max-width: 768px){
   section.container{
@@ -626,12 +787,14 @@ section.container {
     padding: 48px 18px;
   }
 
-  .services .container{
+  .services .container,
+  .testimonials .container{
     margin: 28px 12px;
     padding: 48px 18px;
   }
 
   .hero{ height: 72vh; }
+
   .about-content{ grid-template-columns: 1fr; }
 
   .about-img{
@@ -644,6 +807,11 @@ section.container {
     box-shadow: 0 0 0 10px rgba(157, 200, 176, 0.25);
     justify-self: center;
   }
+
+  .process-grid{ grid-template-columns: 1fr; }
+  .fit-grid{ grid-template-columns: 1fr; }
+
+  .testimonials-grid{ grid-template-columns: 1fr; }
 
   .contact-container{ grid-template-columns: 1fr; }
   .contact-info,
@@ -661,7 +829,7 @@ section.container {
 }
 
 /* =========================
-   13) ACCESSIBILITY
+   17) ACCESSIBILITY
 ========================= */
 @media (prefers-reduced-motion: reduce){
   *{
