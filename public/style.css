@@ -1,12 +1,11 @@
 /* =========================
    style.css (FULL - UPDATED)
    ✅ Unified Glass Theme
-   ✅ Unified Typography (same font/size across site)
-   ✅ Sticky Top Nav
-   ✅ Desktop nav one-line + NOT CUT (RTL) + silent horizontal scroll
-   ✅ Mobile menu stays as-is
-   ✅ Google/Waze buttons identical size & shape
-   ✅ Services cards: 3 equal cards + combined card spans full width under them
+   ✅ Sticky Top Nav (RTL safe)
+   ✅ Desktop nav one-line (smaller pills) + fallback silent scroll
+   ✅ FAQ cards same width as sections + accordion works
+   ✅ Services: 3 equal cards + “תהליך משולב” spans full row under them
+   ✅ Service body text NOT bold (only titles)
 ========================= */
 
 /* =========================
@@ -48,6 +47,7 @@ body{
   font-size: 18px;
   line-height: 1.85;
   color: var(--text-color);
+  font-weight: 400;
 
   /* space for sticky nav */
   padding-top: 74px;
@@ -57,11 +57,12 @@ p, li, a, button, input, textarea, label, span{
   font-family: inherit;
   font-size: inherit;
   line-height: inherit;
+  font-weight: 400;
 }
 
-h1{ font-size: 2.6rem; line-height: 1.2; }
-h2{ font-size: 2.0rem; line-height: 1.25; }
-h3{ font-size: 1.25rem; line-height: 1.35; }
+h1{ font-size: 2.6rem; line-height: 1.2; font-weight: 800; }
+h2{ font-size: 2.0rem; line-height: 1.25; font-weight: 800; }
+h3{ font-size: 1.25rem; line-height: 1.35; font-weight: 800; }
 
 .hero p,
 .about-text,
@@ -119,7 +120,7 @@ a { color: inherit; text-decoration: none; }
 .skip-link:focus{ right:10px; }
 
 /* =========================
-   4) TOP NAV (Sticky) - FIXED HEIGHT
+   4) TOP NAV (Sticky)
 ========================= */
 .top-nav{
   position: fixed;
@@ -159,11 +160,12 @@ a { color: inherit; text-decoration: none; }
 .nav-links{
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 10px;
 }
 
+/* ✅ Smaller pills so it fits one line */
 .nav-links a{
-  padding: 8px 12px;
+  padding: 7px 10px;
   border-radius: 999px;
   background: rgba(255,255,255,0.35);
   border: 1px solid rgba(255,255,255,0.22);
@@ -171,13 +173,15 @@ a { color: inherit; text-decoration: none; }
 
   flex: 0 0 auto;
   white-space: nowrap;
+  font-size: 16px;  /* ✅ smaller */
+  font-weight: 700;
 }
 .nav-links a:hover{
   background: rgba(255,255,255,0.55);
   transform: translateY(-1px);
 }
 
-/* ✅ DESKTOP FIX: one line, NOT CUT, RTL-safe */
+/* ✅ DESKTOP: keep one line + fallback silent scroll */
 @media (min-width: 769px){
   .nav-links{
     min-width: 0;
@@ -194,8 +198,8 @@ a { color: inherit; text-decoration: none; }
     width: 100%;
     max-width: 100%;
 
-    padding-inline: 18px;
-    scroll-padding-inline: 18px;
+    padding-inline: 10px;
+    scroll-padding-inline: 10px;
 
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
@@ -248,6 +252,7 @@ a { color: inherit; text-decoration: none; }
     width: 100%;
     text-align: center;
     padding: 12px 14px;
+    font-size: 18px;
   }
 }
 
@@ -315,7 +320,7 @@ section.container {
 }
 
 /* =========================
-   6) SECTION TITLES (Subtitle under title)
+   6) SECTION TITLES
 ========================= */
 .section-title{
   display: flex;
@@ -364,7 +369,7 @@ section.container {
   padding: 12px 30px;
   border-radius: 999px;
   color: white;
-  font-weight: 700;
+  font-weight: 800;
   display: inline-block;
   transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease, background 0.2s ease;
   box-shadow: 0 10px 24px rgba(0,0,0,0.10);
@@ -375,7 +380,7 @@ section.container {
 .waze-btn { background: var(--waze-blue); }
 .waze-btn:hover { background: var(--waze-blue-dark); }
 
-/* ✅ Contact navigation buttons identical size */
+/* Contact navigation buttons identical size */
 .nav-buttons{
   display: grid;
   grid-template-columns: 1fr;
@@ -441,15 +446,15 @@ section.container {
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
 }
 
+/* ✅ Bold the first main paragraph in hero */
+.hero-content > p:first-of-type{
+  font-weight: 800;
+}
+
 .hero p {
   max-width: 740px;
   margin: 0 auto 1.2rem;
   text-shadow: 0 1px 6px rgba(0, 0, 0, 0.2);
-}
-
-/* ✅ Make the first description line bold (the one you asked to be emphasized) */
-.hero-content > p:first-of-type{
-  font-weight: 900;
 }
 
 .hero-meta{
@@ -483,7 +488,7 @@ section.container {
 }
 
 /* =========================
-   10) SERVICES (Unified panel)
+   10) SERVICES (3 cards + combined full row)
 ========================= */
 .services { background: transparent; padding: 0; }
 
@@ -501,27 +506,24 @@ section.container {
   -webkit-backdrop-filter: blur(var(--glass-blur));
 }
 
-/* ✅ Grid that forces same height cards in the same row */
+/* Base grid */
 .services-grid {
   display: grid;
-  grid-template-columns: 1fr; /* mobile default */
   gap: 18px;
   align-items: stretch;
 }
 
-/* Tablet: 2 columns */
+/* ✅ Desktop: exactly 3 equal cards */
 @media (min-width: 769px){
   .services-grid{
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    grid-auto-rows: 1fr; /* ✅ makes items in the same row equal height */
+    grid-template-columns: repeat(3, 1fr);
   }
 }
 
-/* Desktop: 3 columns */
-@media (min-width: 1024px){
+/* ✅ Mobile: responsive */
+@media (max-width: 768px){
   .services-grid{
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    grid-auto-rows: 1fr; /* ✅ first row cards become equal height */
+    grid-template-columns: 1fr;
   }
 }
 
@@ -536,30 +538,166 @@ section.container {
   box-shadow: var(--shadow);
   text-align: center;
 
-  /* ✅ ensures consistent height behavior */
-  height: 100%;
+  /* ✅ Equal height feel */
+  min-height: 220px;
   display: flex;
   flex-direction: column;
+  justify-content: center;
 }
 
-.service-card h3 {
-  margin-bottom: 10px;
-  font-weight: 900;
-}
+.service-card h3 { margin-bottom: 10px; font-weight: 900; }
 
-/* ✅ body text not bold */
-.service-card p{
-  font-weight: 400;
-  margin: 0;
-}
+/* ✅ Body text not bold */
+.service-card p { font-weight: 400; }
 
-/* ✅ Combined card spans the full row (width of 3 cards on desktop) */
-.service-card--combined{
-  grid-column: 1 / -1;
+/* ✅ Combined card spans full width under 3 */
+@media (min-width: 769px){
+  .service-card--combined{
+    grid-column: 1 / -1;  /* span 3 columns */
+    min-height: 220px;    /* match others */
+  }
 }
 
 /* =========================
-   11) CONTACT + WhatsApp
+   11) PROCESS (basic styling if missing)
+========================= */
+.process-grid{
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 18px;
+}
+
+.process-card{
+  background: var(--glass-bg-strong);
+  border: 1px solid rgba(255,255,255,0.30);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+  padding: 22px 20px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  text-align: center;
+}
+
+.process-card h3{ margin-bottom: 10px; font-weight: 900; }
+.process-card p{ font-weight: 400; }
+
+.center-cta{
+  margin-top: 22px;
+  text-align: center;
+}
+
+/* =========================
+   12) FIT (spacing between the 2 boxes)
+========================= */
+.fit-grid{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px; /* ✅ space between the two rectangles */
+}
+
+@media (max-width: 768px){
+  .fit-grid{ grid-template-columns: 1fr; }
+}
+
+.fit-box h3{ margin-bottom: 10px; font-weight: 900; }
+.fit-box li{ margin: 8px 0; }
+.fit-note{ margin-top: 12px; opacity: 0.9; }
+
+/* =========================
+   13) TESTIMONIALS
+========================= */
+.testimonials .container{
+  max-width: 1100px;
+  margin: 60px auto;
+  padding: 70px 28px;
+
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--glass-radius);
+  box-shadow: var(--shadow-strong);
+
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+}
+
+.testimonial-card{
+  background: var(--glass-bg-strong);
+  border: 1px solid rgba(255,255,255,0.30);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+  padding: 22px 20px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  margin-top: 16px;
+}
+
+.testimonial-card p{ font-weight: 400; }
+.testimonial-card span{
+  display: block;
+  margin-top: 10px;
+  font-weight: 900;
+  opacity: 0.9;
+}
+
+/* =========================
+   14) FAQ (same width + card look + accordion safe)
+========================= */
+.faq{
+  width: 100%;
+  max-width: 980px;
+  margin: 0 auto;
+  display: grid;
+  gap: 16px;
+}
+
+.faq-item{
+  background: var(--glass-bg-strong);
+  border: 1px solid rgba(255,255,255,0.30);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.faq-q{
+  width: 100%;
+  border: 0;
+  cursor: pointer;
+  background: transparent;
+
+  padding: 20px 22px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* ✅ text right, + left in RTL */
+  gap: 14px;
+
+  font-weight: 900;
+  text-align: right;
+}
+
+.faq-icon{
+  font-size: 28px;
+  font-weight: 900;
+  line-height: 1;
+  flex: 0 0 auto;
+}
+
+/* Answer */
+.faq-a{
+  padding: 0 22px 18px;
+  font-weight: 400;
+  opacity: 0.95;
+}
+
+/* ✅ IMPORTANT: make hidden actually hide (fixes “+ not opening”) */
+.faq-a{ display: block; }
+.faq-a[hidden]{ display: none !important; }
+
+/* =========================
+   15) CONTACT + WhatsApp
 ========================= */
 #contact .section-title { margin-bottom: 40px; }
 
@@ -594,6 +732,7 @@ section.container {
 .contact-action h3{
   margin-bottom: 10px;
   font-size: 1.25rem;
+  font-weight: 900;
 }
 
 .contact-info a[href^="tel:"]{
@@ -645,7 +784,7 @@ section.container {
 }
 
 /* =========================
-   12) MOBILE
+   16) MOBILE
 ========================= */
 @media (max-width: 768px){
   section.container{
@@ -653,7 +792,8 @@ section.container {
     padding: 48px 18px;
   }
 
-  .services .container{
+  .services .container,
+  .testimonials .container{
     margin: 28px 12px;
     padding: 48px 18px;
   }
@@ -688,7 +828,7 @@ section.container {
 }
 
 /* =========================
-   13) ACCESSIBILITY
+   17) ACCESSIBILITY
 ========================= */
 @media (prefers-reduced-motion: reduce){
   *{
