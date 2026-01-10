@@ -6,7 +6,7 @@
    ✅ FAQ cards same width as sections + accordion works
    ✅ Services: 3 equal cards + “תהליך משולב” spans full row under them
    ✅ Service body text NOT bold (only titles)
-   ✅ FIX: Logo image won't blow up (brand-logo sizing)
+   ✅ LOGO: More prominent badge + drop shadow + safe max-width (desktop + mobile)
 ========================= */
 
 /* =========================
@@ -107,6 +107,20 @@ body::before {
 
 a { color: inherit; text-decoration: none; }
 
+/* ✅ Force links to remain text-color in content areas (prevents “blue” on mobile) */
+section a,
+.container a,
+.content-box a,
+.contact-info a{
+  color: inherit;
+}
+
+/* Optional: keep tel link highlighted but not blue */
+.contact-info a[href^="tel:"]{
+  color: var(--text-color);
+  font-weight: 900;
+}
+
 :focus-visible {
   outline: 3px solid rgba(157, 200, 176, 0.95);
   outline-offset: 3px;
@@ -159,32 +173,47 @@ a { color: inherit; text-decoration: none; }
   overflow: visible;
 }
 
-/* ✅ Brand (Logo + text) */
+/* ✅ BRAND as a prominent badge (Desktop + Mobile) */
 .brand{
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  font-weight: 900;
   white-space: nowrap;
+  font-weight: 900;
+  line-height: 1;
+
+  /* standout badge */
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.72);
+  border: 1px solid rgba(255,255,255,0.35);
+  box-shadow: 0 12px 28px rgba(0,0,0,0.10);
+
+  transition: transform .15s ease, background .15s ease;
+}
+.brand:hover{
+  background: rgba(255,255,255,0.82);
+  transform: translateY(-1px);
 }
 
-/* ✅ FIX: logo sizing so it never becomes huge */
+/* ✅ LOGO: bigger + shadow + safe width */
 .brand-logo{
-  height: 56px;      /* desktop */
+  height: 56px;        /* desktop */
   width: auto;
   max-height: 56px;
+  max-width: 160px;    /* prevents pushing nav */
+  object-fit: contain;
   flex: 0 0 auto;
+
+  /* “bolder” without changing colors */
+  filter: drop-shadow(0 6px 14px rgba(0,0,0,0.18));
 }
 
+/* Brand text */
 .brand-text{
   font-weight: 900;
-}
-
-@media (max-width: 768px){
-  .brand-logo{
-    height: 44px;    /* mobile */
-    max-height: 44px;
-  }
+  font-size: 16px;
+  opacity: 0.95;
 }
 
 /* Nav links base */
@@ -250,12 +279,30 @@ a { color: inherit; text-decoration: none; }
   cursor: pointer;
 }
 
-/* Mobile menu */
+/* =========================
+   MOBILE NAV + MOBILE LOGO (IMPORTANT)
+========================= */
 @media (max-width: 768px){
   .top-nav{ height: 66px; }
   .top-nav-inner{ height: 66px; }
 
   .nav-toggle{ display: inline-flex; }
+
+  /* ✅ slightly tighter badge on mobile so it fits */
+  .brand{
+    padding: 6px 10px;
+    gap: 8px;
+  }
+
+  .brand-logo{
+    height: 44px;      /* bigger than before, but safe */
+    max-height: 44px;
+    max-width: 140px;
+  }
+
+  .brand-text{
+    font-size: 15px;
+  }
 
   .nav-links{
     display: none;
@@ -537,25 +584,17 @@ section.container {
   -webkit-backdrop-filter: blur(var(--glass-blur));
 }
 
-/* Base grid */
 .services-grid {
   display: grid;
   gap: 18px;
   align-items: stretch;
 }
 
-/* ✅ Desktop: exactly 3 equal cards */
 @media (min-width: 769px){
-  .services-grid{
-    grid-template-columns: repeat(3, 1fr);
-  }
+  .services-grid{ grid-template-columns: repeat(3, 1fr); }
 }
-
-/* ✅ Mobile: responsive */
 @media (max-width: 768px){
-  .services-grid{
-    grid-template-columns: 1fr;
-  }
+  .services-grid{ grid-template-columns: 1fr; }
 }
 
 .service-card {
@@ -614,18 +653,16 @@ section.container {
 }
 
 /* =========================
-   12) FIT
+   12) FIT (legacy styles kept)
 ========================= */
 .fit-grid{
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 18px;
 }
-
 @media (max-width: 768px){
   .fit-grid{ grid-template-columns: 1fr; }
 }
-
 .fit-box h3{ margin-bottom: 10px; font-weight: 900; }
 .fit-box li{ margin: 8px 0; }
 .fit-note{ margin-top: 12px; opacity: 0.9; }
@@ -717,7 +754,6 @@ section.container {
   font-weight: 400;
   opacity: 0.95;
 }
-
 .faq-a{ display: block; }
 .faq-a[hidden]{ display: none !important; }
 
@@ -757,11 +793,6 @@ section.container {
 .contact-action h3{
   margin-bottom: 10px;
   font-size: 1.25rem;
-  font-weight: 900;
-}
-
-.contact-info a[href^="tel:"]{
-  color: var(--primary-color);
   font-weight: 900;
 }
 
