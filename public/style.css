@@ -1,6 +1,6 @@
 /* =========================
-   style.css (Unified Glass Theme)
-   Avital Heal - full rebuild
+   style.css (Unified Glass Theme + Unified Typography + Unified Section Titles)
+   Avital Heal - Full rebuild (latest)
 ========================= */
 
 /* =========================
@@ -8,11 +8,10 @@
 ========================= */
 :root {
   --primary-color: #9DC8B0;
-  --secondary-color: #F0F7F3;
   --text-color: #4A4A4A;
   --white: #ffffff;
 
-  /* Base background */
+  /* Background overlay */
   --bg-overlay-strong: rgba(249, 252, 250, 0.55);
   --bg-overlay-mobile: rgba(249, 252, 250, 0.22);
 
@@ -45,13 +44,43 @@
 
 html { scroll-behavior: smooth; }
 
-body {
+/* =========================
+   2) TYPOGRAPHY (ONE SIZE ACROSS THE SITE)
+========================= */
+body{
   font-family: 'Rubik', sans-serif;
+  font-size: 18px;           /* ✅ one base size everywhere */
+  line-height: 1.85;
   color: var(--text-color);
-  line-height: 1.6;
 }
 
-/* Background image for the whole site */
+p, li, a, button, input, textarea, label, span{
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+}
+
+h1{ font-size: 2.6rem; line-height: 1.2; }
+h2{ font-size: 2.0rem; line-height: 1.25; }
+h3{ font-size: 1.25rem; line-height: 1.35; }
+
+/* Remove local font-size overrides that cause inconsistency */
+.hero p,
+.about-text,
+.testimonial-card p,
+.section-subtitle,
+.contact-subtitle{
+  font-size: inherit;
+  line-height: inherit;
+}
+
+@media (max-width: 768px){
+  body{ font-size: 18px; }   /* keep consistent in mobile too */
+}
+
+/* =========================
+   3) BACKGROUND + LINKS + ACCESSIBILITY
+========================= */
 body::before {
   content: "";
   position: fixed;
@@ -66,10 +95,8 @@ body::before {
   transform: translateZ(0);
 }
 
-/* Links */
 a { color: inherit; text-decoration: none; }
 
-/* Keyboard focus */
 :focus-visible {
   outline: 3px solid rgba(157, 200, 176, 0.95);
   outline-offset: 3px;
@@ -91,23 +118,19 @@ a { color: inherit; text-decoration: none; }
 .skip-link:focus{ right:10px; }
 
 /* =========================
-   2) GLOBAL LAYOUT (UNIFIED)
+   4) GLOBAL LAYOUT (UNIFIED GLASS)
 ========================= */
-
-/* Make section backgrounds transparent.
-   We unify the design via glass panels for content sections. */
 section {
-  padding: 0;
-  background: transparent;
+  padding: 0;              /* we control spacing via panels */
+  background: transparent;  /* no section-to-section color jumps */
 }
 
-/* Default container width */
 .container {
   max-width: 1100px;
   margin: auto;
 }
 
-/* ✅ Unified glass panel for ALL sections that use class="container" */
+/* ✅ Unified glass panel for ALL sections with class="container" */
 section.container {
   margin: 60px auto;
   padding: 70px 28px;
@@ -119,39 +142,6 @@ section.container {
 
   backdrop-filter: blur(var(--glass-blur));
   -webkit-backdrop-filter: blur(var(--glass-blur));
-}
-
-/* Titles */
-.section-title {
-  text-align: center;
-  margin-bottom: 42px;
-}
-
-.section-title-box{
-  display: inline-block;
-  background: rgba(255,255,255,0.55);
-  border: 1px solid var(--glass-border-soft);
-  border-radius: 999px;
-  padding: 10px 26px;
-
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-
-  box-shadow: 0 10px 24px rgba(0,0,0,0.08);
-}
-
-.section-title h2 { margin: 0; }
-
-.section-subtitle {
-  margin-top: 14px;
-  background: rgba(255,255,255,0.55);
-  display: inline-block;
-  padding: 6px 22px;
-  border-radius: 999px;
-  font-size: 0.95rem;
-  border: 1px solid var(--glass-border-soft);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
 }
 
 /* Shared content box (inside panels) */
@@ -166,7 +156,51 @@ section.container {
   -webkit-backdrop-filter: blur(8px);
 }
 
-/* Buttons */
+/* =========================
+   5) SECTION TITLES (SUBTITLE ALWAYS UNDER TITLE)
+========================= */
+.section-title{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  text-align: center;
+  margin-bottom: 42px;
+}
+
+.section-title-box{
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+
+  background: rgba(255,255,255,0.55);
+  border: 1px solid var(--glass-border-soft);
+  border-radius: 999px;
+  padding: 10px 26px;
+
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+
+  box-shadow: 0 10px 24px rgba(0,0,0,0.08);
+}
+
+.section-title h2 { margin: 0; }
+
+.section-subtitle{
+  display: block;
+  margin: 0;
+  background: rgba(255,255,255,0.55);
+  padding: 6px 22px;
+  border-radius: 999px;
+  border: 1px solid var(--glass-border-soft);
+
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+/* =========================
+   6) BUTTONS
+========================= */
 .btn {
   background: var(--primary-color);
   padding: 12px 30px;
@@ -179,7 +213,7 @@ section.container {
 }
 .btn:hover { transform: translateY(-1px); }
 
-/* Waze button */
+/* Waze */
 .waze-btn { background: var(--waze-blue); }
 .waze-btn:hover { background: var(--waze-blue-dark); }
 
@@ -193,7 +227,7 @@ section.container {
 }
 
 /* =========================
-   3) HERO
+   7) HERO
 ========================= */
 .hero {
   height: 80vh;
@@ -229,33 +263,31 @@ section.container {
   opacity: 0.98;
 }
 
-.hero h1 {
-  font-size: 3rem;
-  margin-bottom: 1rem;
+.hero-title{
+  font-size: 2.0rem;
+  margin-bottom: 10px;
+  font-weight: 700;
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
 }
 
 .hero p {
-  max-width: 700px;
-  margin: 0 auto 1.4rem;
-  font-size: 1.3rem;
+  max-width: 740px;
+  margin: 0 auto 1.2rem;
   text-shadow: 0 1px 6px rgba(0, 0, 0, 0.2);
 }
 
-.hero .btn { margin-top: 28px; opacity: 0.95; }
-
-/* Optional: small meta line under hero text */
 .hero-meta{
-  margin-top: -6px;
+  margin-top: -4px;
   margin-bottom: 10px;
   font-weight: 800;
-  font-size: 1.05rem;
   opacity: 0.95;
   text-shadow: 0 1px 6px rgba(0,0,0,0.2);
 }
 
+.hero .btn { margin-top: 18px; opacity: 0.95; }
+
 /* =========================
-   4) ABOUT
+   8) ABOUT
 ========================= */
 .about-content {
   display: grid;
@@ -264,11 +296,7 @@ section.container {
   align-items: center;
 }
 
-.about-text {
-  text-align: right;
-  font-size: 1.3rem;
-  line-height: 1.85;
-}
+.about-text { text-align: right; }
 
 .about-img {
   width: 100%;
@@ -279,16 +307,13 @@ section.container {
 }
 
 /* =========================
-   5) SERVICES (UNIFIED)
-   NOTE: your HTML has <section id="services" class="services">
-   We'll make it look like the same glass panel.
+   9) SERVICES (UNIFIED PANEL INSIDE .services)
 ========================= */
 .services {
   background: transparent;
   padding: 0;
 }
 
-/* Make the inner .container behave like a unified panel even inside services */
 .services .container{
   max-width: 1100px;
   margin: 60px auto;
@@ -305,7 +330,7 @@ section.container {
 
 .services-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 18px;
 }
 
@@ -322,10 +347,9 @@ section.container {
 }
 
 .service-card h3 { margin-bottom: 10px; }
-.service-card p { line-height: 1.8; }
 
 /* =========================
-   6) PROCESS (if added)
+   10) PROCESS (if used)
 ========================= */
 .process-grid{
   display: grid;
@@ -356,7 +380,7 @@ section.container {
 }
 
 /* =========================
-   7) FIT (if added)
+   11) FIT (if used)
 ========================= */
 .fit-grid{
   display: grid;
@@ -372,13 +396,11 @@ section.container {
 }
 
 .fit-box{ text-align: right; }
-
 .fit-box h3{ margin-bottom: 10px; }
 
 .fit-box ul{
   margin: 0;
   padding-right: 18px;
-  line-height: 1.9;
 }
 
 .fit-note{
@@ -387,9 +409,7 @@ section.container {
 }
 
 /* =========================
-   8) TESTIMONIALS (UNIFIED)
-   NOTE: your HTML has <section id="testimonials" class="testimonials">
-   We'll use a unified panel inside as well.
+   12) TESTIMONIALS (UNIFIED PANEL INSIDE .testimonials)
 ========================= */
 .testimonials {
   background: transparent;
@@ -424,12 +444,6 @@ section.container {
   text-align: center;
 }
 
-.testimonial-card p {
-  font-style: italic;
-  font-size: 1.1rem;
-  line-height: 1.7;
-}
-
 .testimonial-card span {
   display: block;
   margin-top: 14px;
@@ -438,7 +452,7 @@ section.container {
 }
 
 /* =========================
-   9) FAQ (if added)
+   13) FAQ (if used)
 ========================= */
 .faq{
   max-width: 900px;
@@ -481,19 +495,16 @@ section.container {
 
 .faq-a{
   padding: 0 18px 16px 18px;
-  line-height: 1.9;
   opacity: 0.95;
 }
 
 /* =========================
-   10) CONTACT
+   14) CONTACT
 ========================= */
 #contact .section-title { margin-bottom: 40px; }
 
 .contact-subtitle {
-  margin-top: 10px;
   background: rgba(255,255,255,0.55);
-  display: inline-block;
   padding: 6px 20px;
   border-radius: 999px;
   border: 1px solid var(--glass-border-soft);
@@ -524,7 +535,6 @@ section.container {
 .contact-info h3,
 .contact-action h3 {
   margin-bottom: 10px;
-  color: var(--text-color);
   font-size: 1.25rem;
 }
 
@@ -556,7 +566,6 @@ section.container {
   padding: 14px 22px;
   border-radius: 14px;
   font-weight: 900;
-  font-size: 1.05rem;
 
   box-shadow: 0 14px 28px rgba(37, 211, 102, 0.25);
   transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
@@ -592,7 +601,7 @@ section.container {
 }
 
 /* =========================
-   11) MOBILE CTA (if added)
+   15) MOBILE STICKY CTA (optional)
 ========================= */
 .mobile-cta{ display: none; }
 
@@ -629,21 +638,7 @@ section.container {
     border: none;
   }
 
-  /* prevent overlap */
   .whatsapp-float{ bottom: 86px; }
-}
-
-/* =========================
-   12) RESPONSIVE
-========================= */
-@media (max-width: 768px) {
-
-  body::before {
-    background:
-      linear-gradient(var(--bg-overlay-mobile), var(--bg-overlay-mobile)),
-      url("https://images.unsplash.com/photo-1472214103451-9374bd1c798e?auto=format&fit=crop&w=1920&q=80")
-        center / cover no-repeat;
-  }
 
   /* Glass panels spacing */
   section.container{
@@ -651,14 +646,16 @@ section.container {
     padding: 48px 18px;
   }
 
+  /* Services/Testimonial inner panels */
+  .services .container,
+  .testimonials .container{
+    margin: 28px 12px;
+    padding: 48px 18px;
+  }
+
   .hero { height: 72vh; }
 
   .about-content { grid-template-columns: 1fr; }
-
-  .about-text {
-    font-size: 1.45rem;
-    line-height: 1.9;
-  }
 
   .about-img {
     width: 100%;
@@ -671,19 +668,9 @@ section.container {
     justify-self: center;
   }
 
-  /* Services panel inside .services */
-  .services .container,
-  .testimonials .container{
-    margin: 28px 12px;
-    padding: 48px 18px;
-  }
-
   .process-grid { grid-template-columns: 1fr; }
-
   .fit-grid { grid-template-columns: 1fr; }
-
   .contact-container { grid-template-columns: 1fr; }
-
   .contact-info,
   .contact-action { padding: 22px; }
 
@@ -698,10 +685,17 @@ section.container {
     width: 100%;
     text-align: center;
   }
+
+  body::before {
+    background:
+      linear-gradient(var(--bg-overlay-mobile), var(--bg-overlay-mobile)),
+      url("https://images.unsplash.com/photo-1472214103451-9374bd1c798e?auto=format&fit=crop&w=1920&q=80")
+        center / cover no-repeat;
+  }
 }
 
 /* =========================
-   13) ACCESSIBILITY
+   16) ACCESSIBILITY
 ========================= */
 @media (prefers-reduced-motion: reduce){
   *{
