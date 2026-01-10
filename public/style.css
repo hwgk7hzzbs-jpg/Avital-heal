@@ -102,6 +102,14 @@ section {
   font-size: 0.95rem;
 }
 
+/* Shared content box (used in About + Approach + any other sections) */
+.content-box{
+  background: var(--box-bg);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+  padding: 30px 32px;
+}
+
 /* Buttons */
 .btn {
   background: var(--primary-color);
@@ -110,7 +118,7 @@ section {
   color: white;
   font-weight: 700;
   display: inline-block;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease, background 0.2s ease;
   box-shadow: 0 10px 24px rgba(0,0,0,0.10);
 }
 
@@ -187,6 +195,16 @@ section {
   opacity: 0.95;
 }
 
+/* Optional meta line under hero text (add <p class="hero-meta">...) */
+.hero-meta{
+  margin-top: -10px;
+  margin-bottom: 10px;
+  font-weight: 700;
+  font-size: 1.05rem;
+  opacity: 0.95;
+  text-shadow: 0 1px 6px rgba(0,0,0,0.2);
+}
+
 /* =========================
    4) ABOUT
 ========================= */
@@ -212,7 +230,39 @@ section {
 }
 
 /* =========================
-   5) SERVICES
+   5) APPROACH (NEW SECTION)
+========================= */
+.approach-box{
+  text-align: right;
+  line-height: 1.9;
+  font-size: 1.15rem;
+}
+
+.approach-box p{
+  margin: 0 0 14px;
+}
+
+.approach-quote{
+  margin-top: 18px;
+  padding: 16px 18px;
+  border-right: 4px solid rgba(157, 200, 176, 0.9);
+  background: rgba(255,255,255,0.6);
+  border-radius: 14px;
+}
+
+.approach-quote p{
+  margin: 0 0 8px;
+  font-weight: 700;
+}
+
+.approach-quote span{
+  display: block;
+  font-size: 0.95rem;
+  opacity: 0.9;
+}
+
+/* =========================
+   6) SERVICES
 ========================= */
 .services {
   background: var(--secondary-color);
@@ -233,7 +283,7 @@ section {
 }
 
 /* =========================
-   6) TESTIMONIALS
+   7) TESTIMONIALS
 ========================= */
 .testimonials {
   background: linear-gradient(135deg, var(--primary-color), #D4E9D7);
@@ -264,10 +314,18 @@ section {
 }
 
 /* =========================
-   7) CONTACT
+   8) CONTACT
 ========================= */
 #contact .section-title {
   margin-bottom: 40px;
+}
+
+.contact-subtitle {
+  margin-top: 10px;
+  background: var(--box-bg);
+  display: inline-block;
+  padding: 5px 20px;
+  border-radius: 20px;
 }
 
 .contact-container {
@@ -364,7 +422,7 @@ section {
 }
 
 /* =========================
-   8) MOBILE
+   9) MOBILE
 ========================= */
 @media (max-width: 768px) {
 
@@ -383,7 +441,7 @@ section {
 
   .about-content { grid-template-columns: 1fr; }
    
-   .about-text {
+  .about-text {
     font-size: 1.45rem;
     line-height: 1.9;
   }
@@ -397,6 +455,14 @@ section {
     padding: 0;
     box-shadow: 0 0 0 10px rgba(157, 200, 176, 0.25);
     justify-self: center;
+  }
+
+  .content-box{
+    padding: 22px;
+  }
+
+  .approach-box{
+    font-size: 1.2rem;
   }
 
   .contact-container {
@@ -434,11 +500,4 @@ section {
     transition: none !important;
     animation: none !important;
   }
-}
-.contact-subtitle {
-  margin-top: 10px;
-  background: var(--box-bg);
-  display: inline-block;
-  padding: 5px 20px;
-  border-radius: 20px;
 }
