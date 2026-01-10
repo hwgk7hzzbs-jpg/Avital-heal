@@ -274,13 +274,13 @@ section.container {
   margin: 60px auto;
   padding: 70px 28px;
 
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
+  background: rgba(255,255,255,0.92);
+  border: 1px solid rgba(0,0,0,0.06);
   border-radius: var(--glass-radius);
   box-shadow: var(--shadow-strong);
 
-  backdrop-filter: blur(var(--glass-blur));
-  -webkit-backdrop-filter: blur(var(--glass-blur));
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 .content-box{
