@@ -5,7 +5,7 @@
   --primary-color: #9DC8B0;
   --secondary-color: #F0F7F3;
   --text-color: #4A4A4A;
-  --box-bg: rgba(255, 255, 255, 0.72);
+  --box-bg: rgba(255, 255, 255, 0.65);
   --shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   --white: #ffffff;
   --bg-color: #F9FCFA;
@@ -105,12 +105,13 @@ section {
 /* Shared content box (used in About + Approach + any other sections) */
 .content-box{
   background: var(--box-bg);
-  border-radius: 16px;
-  box-shadow: 0 10px 26px rgba(0,0,0,0.08);
+  border-radius: 18px;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.10);
   padding: 30px 32px;
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  border: 1px solid rgba(255,255,255,0.35);
+
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,0.30);
 }
 
 /* Buttons */
