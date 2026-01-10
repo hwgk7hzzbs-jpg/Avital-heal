@@ -615,7 +615,7 @@ section.container {
     padding: 12px;
 
     flex-direction: column;
-    gap: 10px;
+    gap: 16px;
     box-shadow: 0 18px 50px rgba(0,0,0,0.10);
 
     backdrop-filter: blur(12px);
