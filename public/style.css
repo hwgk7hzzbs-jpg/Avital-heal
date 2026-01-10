@@ -1,10 +1,11 @@
 /* =========================
-   style.css (FULL - Updated)
+   style.css (FULL - FINAL)
    ✅ Unified Glass Theme
-   ✅ Unified Typography
+   ✅ Unified Typography (same font/size across site)
    ✅ Sticky Top Nav
-   ✅ Desktop nav in one line
-   ✅ Navigation buttons (Google/Waze) same size
+   ✅ Desktop nav one-line + NOT CUT (RTL) + silent horizontal scroll
+   ✅ Mobile menu stays as-is (excellent)
+   ✅ Google/Waze buttons identical size & shape
 ========================= */
 
 /* =========================
@@ -117,7 +118,7 @@ a { color: inherit; text-decoration: none; }
 .skip-link:focus{ right:10px; }
 
 /* =========================
-   4) TOP NAV (Sticky)
+   4) TOP NAV (Sticky) - FIXED HEIGHT + NOT CUT
 ========================= */
 .top-nav{
   position: fixed;
@@ -126,6 +127,7 @@ a { color: inherit; text-decoration: none; }
   left: 0;
   z-index: 10000;
 
+  height: 74px; /* ✅ fixed height to prevent vertical cut */
   background: rgba(255,255,255,0.55);
   border-bottom: 1px solid rgba(255,255,255,0.28);
 
@@ -138,6 +140,7 @@ a { color: inherit; text-decoration: none; }
   margin: 0 auto;
   padding: 12px 18px;
 
+  height: 74px;  /* ✅ match nav height */
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -157,31 +160,38 @@ a { color: inherit; text-decoration: none; }
   justify-content: center;
 }
 
-/* ✅ ONE LINE ONLY on desktop/tablet */
-@media (min-width: 769px){
-  .nav-links{
-    flex-wrap: nowrap;
-    white-space: nowrap;
-    overflow: hidden;     /* no scroll on desktop */
-    max-width: 72vw;
-    gap: 12px;
-  }
-  .nav-links a{
-    white-space: nowrap;
-    flex: 0 0 auto;
-  }
-}
-
 .nav-links a{
   padding: 8px 12px;
   border-radius: 999px;
   background: rgba(255,255,255,0.35);
   border: 1px solid rgba(255,255,255,0.22);
   transition: transform .15s ease, background .15s ease;
+  flex: 0 0 auto;
+  white-space: nowrap;
 }
 .nav-links a:hover{
   background: rgba(255,255,255,0.55);
   transform: translateY(-1px);
+}
+
+/* ✅ Desktop/tablet: ONE LINE + silent horizontal scroll + no cut on edges */
+@media (min-width: 769px){
+  .nav-links{
+    flex-wrap: nowrap;
+    white-space: nowrap;
+
+    overflow-x: auto;       /* ✅ instead of hidden */
+    overflow-y: hidden;
+
+    max-width: 72vw;
+
+    padding: 4px 14px;      /* ✅ prevents cut on start/end */
+    scroll-padding: 14px;
+    -webkit-overflow-scrolling: touch;
+
+    scrollbar-width: none;  /* Firefox */
+  }
+  .nav-links::-webkit-scrollbar{ display: none; }
 }
 
 /* Burger button (mobile) */
@@ -196,8 +206,11 @@ a { color: inherit; text-decoration: none; }
   cursor: pointer;
 }
 
-/* Mobile menu */
+/* Mobile menu (keep your current excellent behavior) */
 @media (max-width: 768px){
+  .top-nav{ height: 66px; }
+  .top-nav-inner{ height: 66px; }
+
   .nav-toggle{ display: inline-flex; }
 
   .nav-links{
@@ -353,28 +366,25 @@ section.container {
 .waze-btn { background: var(--waze-blue); }
 .waze-btn:hover { background: var(--waze-blue-dark); }
 
-/* =========================
-   ✅ CONTACT NAV BUTTONS (Google/Waze) SAME SIZE
-   - identical width, height, shape, text alignment
-========================= */
+/* ✅ Contact navigation buttons same shape/size */
 .nav-buttons{
   display: grid;
-  grid-template-columns: 1fr; /* vertical */
+  grid-template-columns: 1fr;
   gap: 12px;
   margin-top: 12px;
   width: 100%;
-  max-width: 360px;          /* ✅ consistent button block */
+  max-width: 360px;
 }
 
 .nav-buttons .btn{
   width: 100%;
-  height: 56px;              /* ✅ same height */
-  display: flex;             /* ✅ center text perfectly */
+  height: 56px;
+  display: flex;
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: 0 22px;           /* ✅ same padding for both */
-  border-radius: 999px;      /* ✅ same shape */
+  padding: 0 22px;
+  border-radius: 999px;
   font-weight: 900;
 }
 
@@ -498,14 +508,13 @@ section.container {
 .service-card h3 { margin-bottom: 10px; }
 
 /* =========================
-   11) PROCESS
+   11) PROCESS / FIT / TESTIMONIALS / FAQ (kept)
 ========================= */
 .process-grid{
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 18px;
 }
-
 .process-card{
   background: var(--glass-bg-strong);
   border: 1px solid rgba(255,255,255,0.30);
@@ -513,75 +522,43 @@ section.container {
   box-shadow: var(--shadow);
   padding: 20px 18px;
   text-align: right;
-
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
 }
+.process-card h3{ margin-bottom: 8px; font-size: 1.05rem; }
+.center-cta{ margin-top: 26px; text-align: center; }
 
-.process-card h3{
-  margin-bottom: 8px;
-  font-size: 1.05rem;
-}
-
-.center-cta{
-  margin-top: 26px;
-  text-align: center;
-}
-
-/* =========================
-   12) FIT
-========================= */
 .fit-grid{
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 18px;
   align-items: start;
 }
-
 @media (min-width: 900px){
-  .fit-grid{
-    grid-template-columns: 1.15fr 0.85fr;
-  }
+  .fit-grid{ grid-template-columns: 1.15fr 0.85fr; }
 }
-
 .fit-box{ text-align: right; }
 .fit-box h3{ margin-bottom: 10px; }
+.fit-box ul{ margin: 0; padding-right: 18px; }
+.fit-note{ margin-top: 12px; opacity: 0.9; }
 
-.fit-box ul{
-  margin: 0;
-  padding-right: 18px;
-}
-
-.fit-note{
-  margin-top: 12px;
-  opacity: 0.9;
-}
-
-/* =========================
-   13) TESTIMONIALS
-========================= */
 .testimonials { background: transparent; padding: 0; }
-
 .testimonials .container{
   max-width: 1100px;
   margin: 60px auto;
   padding: 70px 28px;
-
   background: var(--glass-bg);
   border: 1px solid var(--glass-border);
   border-radius: var(--glass-radius);
   box-shadow: var(--shadow-strong);
-
   backdrop-filter: blur(var(--glass-blur));
   -webkit-backdrop-filter: blur(var(--glass-blur));
 }
-
-.testimonial-card {
+.testimonial-card{
   background: var(--glass-bg-strong);
   border: 1px solid rgba(255,255,255,0.30);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-
   padding: 26px 28px;
   border-radius: 16px;
   box-shadow: var(--shadow);
@@ -589,23 +566,14 @@ section.container {
   margin: 0 auto 16px auto;
   text-align: center;
 }
-
-.testimonial-card span {
+.testimonial-card span{
   display: block;
   margin-top: 14px;
   font-weight: 900;
   color: var(--primary-color);
 }
 
-/* =========================
-   14) FAQ
-========================= */
-.faq{
-  max-width: 900px;
-  margin: 0 auto;
-  text-align: right;
-}
-
+.faq{ max-width: 900px; margin: 0 auto; text-align: right; }
 .faq-item{
   background: rgba(255,255,255,0.55);
   border: 1px solid rgba(255,255,255,0.25);
@@ -613,11 +581,9 @@ section.container {
   box-shadow: var(--shadow);
   margin-bottom: 12px;
   overflow: hidden;
-
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
 }
-
 .faq-q{
   width: 100%;
   background: transparent;
@@ -632,34 +598,24 @@ section.container {
   gap: 12px;
   color: var(--text-color);
 }
-
-.faq-icon{
-  font-weight: 900;
-  font-size: 1.2rem;
-  opacity: 0.85;
-}
-
-.faq-a{
-  padding: 0 18px 16px 18px;
-  opacity: 0.95;
-}
+.faq-icon{ font-weight: 900; font-size: 1.2rem; opacity: 0.85; }
+.faq-a{ padding: 0 18px 16px 18px; opacity: 0.95; }
 
 /* =========================
-   15) CONTACT
+   12) CONTACT
 ========================= */
 #contact .section-title { margin-bottom: 40px; }
 
-.contact-subtitle {
+.contact-subtitle{
   background: rgba(255,255,255,0.55);
   padding: 6px 20px;
   border-radius: 999px;
   border: 1px solid var(--glass-border-soft);
-
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
 }
 
-.contact-container {
+.contact-container{
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 18px;
@@ -667,40 +623,33 @@ section.container {
 }
 
 .contact-info,
-.contact-action {
+.contact-action{
   background: var(--glass-bg-strong);
   border-radius: 16px;
   box-shadow: var(--shadow);
   padding: 28px;
-
   border: 1px solid rgba(255,255,255,0.30);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
 }
 
 .contact-info h3,
-.contact-action h3 {
+.contact-action h3{
   margin-bottom: 10px;
   font-size: 1.25rem;
 }
 
-.contact-info a[href^="tel:"] {
+.contact-info a[href^="tel:"]{
   color: var(--primary-color);
   font-weight: 900;
 }
 
-.contact-address { line-height: 1.6; }
-
-.map-icon {
-  color: var(--primary-color);
-  margin-left: 6px;
-  vertical-align: middle;
-}
-
-.address-text { font-weight: 500; }
+.contact-address{ line-height: 1.6; }
+.map-icon{ color: var(--primary-color); margin-left: 6px; vertical-align: middle; }
+.address-text{ font-weight: 500; }
 
 /* WhatsApp big button */
-.whatsapp-btn-large {
+.whatsapp-btn-large{
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -716,15 +665,14 @@ section.container {
   box-shadow: 0 14px 28px rgba(37, 211, 102, 0.25);
   transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
-
-.whatsapp-btn-large:hover {
+.whatsapp-btn-large:hover{
   background: var(--wa-green-dark);
   transform: translateY(-1px);
   box-shadow: 0 16px 34px rgba(37, 211, 102, 0.30);
 }
 
 /* Floating WhatsApp */
-.whatsapp-float {
+.whatsapp-float{
   position: fixed;
   bottom: 18px;
   left: 18px;
@@ -740,14 +688,13 @@ section.container {
   z-index: 9999;
   transition: transform 0.2s ease, background 0.2s ease;
 }
-
-.whatsapp-float:hover {
+.whatsapp-float:hover{
   background: var(--wa-green-dark);
   transform: translateY(-1px);
 }
 
 /* =========================
-   16) MOBILE
+   13) MOBILE
 ========================= */
 @media (max-width: 768px){
   section.container{
@@ -761,11 +708,10 @@ section.container {
     padding: 48px 18px;
   }
 
-  .hero { height: 72vh; }
+  .hero{ height: 72vh; }
+  .about-content{ grid-template-columns: 1fr; }
 
-  .about-content { grid-template-columns: 1fr; }
-
-  .about-img {
+  .about-img{
     width: 100%;
     max-width: 320px;
     height: auto;
@@ -776,21 +722,18 @@ section.container {
     justify-self: center;
   }
 
-  .process-grid { grid-template-columns: 1fr; }
-  .fit-grid { grid-template-columns: 1fr; }
-  .contact-container { grid-template-columns: 1fr; }
+  .process-grid{ grid-template-columns: 1fr; }
+  .fit-grid{ grid-template-columns: 1fr; }
+  .contact-container{ grid-template-columns: 1fr; }
 
   .contact-info,
-  .contact-action { padding: 22px; }
+  .contact-action{ padding: 22px; }
 
-  .whatsapp-btn-large { width: 100%; }
+  .whatsapp-btn-large{ width: 100%; }
 
-  /* keep nav-buttons same size also on mobile */
-  .nav-buttons{
-    max-width: 100%;
-  }
+  .nav-buttons{ max-width: 100%; }
 
-  body::before {
+  body::before{
     background:
       linear-gradient(var(--bg-overlay-mobile), var(--bg-overlay-mobile)),
       url("https://images.unsplash.com/photo-1472214103451-9374bd1c798e?auto=format&fit=crop&w=1920&q=80")
@@ -799,7 +742,7 @@ section.container {
 }
 
 /* =========================
-   17) ACCESSIBILITY
+   14) ACCESSIBILITY
 ========================= */
 @media (prefers-reduced-motion: reduce){
   *{
