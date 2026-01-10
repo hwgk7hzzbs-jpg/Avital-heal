@@ -2,12 +2,11 @@
    style.css (FULL - UPDATED)
    ✅ Unified Glass Theme
    ✅ Unified Typography (same font/size across site)
-   ✅ Sticky Top Nav (Desktop one-line, smaller pills to fit)
+   ✅ Sticky Top Nav
+   ✅ Desktop nav one-line + NOT CUT (RTL) + silent horizontal scroll
    ✅ Mobile menu stays as-is
    ✅ Google/Waze buttons identical size & shape
-   ✅ Process/Fit/Testimonials/FAQ styled like the rest
-   ✅ Services: body text NOT bold (only titles bold)
-   ✅ "תהליך משולב" card centered below all (desktop)
+   ✅ Services cards: 3 equal cards + combined card spans full width under them
 ========================= */
 
 /* =========================
@@ -120,7 +119,7 @@ a { color: inherit; text-decoration: none; }
 .skip-link:focus{ right:10px; }
 
 /* =========================
-   4) TOP NAV (Sticky)
+   4) TOP NAV (Sticky) - FIXED HEIGHT
 ========================= */
 .top-nav{
   position: fixed;
@@ -140,32 +139,31 @@ a { color: inherit; text-decoration: none; }
 .top-nav-inner{
   max-width: 1100px;
   margin: 0 auto;
-  padding: 12px 14px;
+  padding: 12px 18px;
 
   height: 74px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: 16px;
 
-  overflow: visible; /* prevent clipping */
+  overflow: visible;
 }
 
 .brand{
   font-weight: 900;
   white-space: nowrap;
-  font-size: 1.05rem;
 }
 
 /* Nav links base */
 .nav-links{
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 14px;
 }
 
 .nav-links a{
-  padding: 7px 10px;
+  padding: 8px 12px;
   border-radius: 999px;
   background: rgba(255,255,255,0.35);
   border: 1px solid rgba(255,255,255,0.22);
@@ -173,14 +171,13 @@ a { color: inherit; text-decoration: none; }
 
   flex: 0 0 auto;
   white-space: nowrap;
-  font-size: 0.95rem; /* ✅ slightly smaller so it fits in one line */
 }
 .nav-links a:hover{
   background: rgba(255,255,255,0.55);
   transform: translateY(-1px);
 }
 
-/* ✅ DESKTOP: try to fit one line; if not, silent horizontal scroll */
+/* ✅ DESKTOP FIX: one line, NOT CUT, RTL-safe */
 @media (min-width: 769px){
   .nav-links{
     min-width: 0;
@@ -189,7 +186,7 @@ a { color: inherit; text-decoration: none; }
     flex-wrap: nowrap;
     white-space: nowrap;
 
-    overflow-x: auto;  /* scroll instead of cut */
+    overflow-x: auto;
     overflow-y: hidden;
 
     justify-content: flex-start;
@@ -197,23 +194,13 @@ a { color: inherit; text-decoration: none; }
     width: 100%;
     max-width: 100%;
 
-    padding-inline: 12px; /* protect first/last pill */
-    scroll-padding-inline: 12px;
+    padding-inline: 18px;
+    scroll-padding-inline: 18px;
 
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
   }
   .nav-links::-webkit-scrollbar{ display: none; }
-}
-
-/* Further shrink pills on smaller desktops (common cause of cut) */
-@media (min-width: 769px) and (max-width: 1100px){
-  .brand{ font-size: 1rem; }
-  .nav-links{ gap: 8px; }
-  .nav-links a{
-    font-size: 0.90rem;
-    padding: 6px 9px;
-  }
 }
 
 /* Burger button (mobile) */
@@ -261,7 +248,6 @@ a { color: inherit; text-decoration: none; }
     width: 100%;
     text-align: center;
     padding: 12px 14px;
-    font-size: 1rem;
   }
 }
 
@@ -329,7 +315,7 @@ section.container {
 }
 
 /* =========================
-   6) SECTION TITLES
+   6) SECTION TITLES (Subtitle under title)
 ========================= */
 .section-title{
   display: flex;
@@ -359,7 +345,7 @@ section.container {
 .section-title h2 { margin: 0; }
 
 .section-subtitle{
-  display: inline-block;
+  display: block;
   margin: 0;
   background: rgba(255,255,255,0.55);
   padding: 6px 22px;
@@ -438,11 +424,6 @@ section.container {
   border: 1px solid rgba(255,255,255,0.22);
 }
 
-/* ✅ Make the main hero description bold (first paragraph) */
-.hero-content > p:first-of-type{
-  font-weight: 900;
-}
-
 .hero-name {
   font-size: 1.7rem;
   margin-bottom: 16px;
@@ -464,6 +445,11 @@ section.container {
   max-width: 740px;
   margin: 0 auto 1.2rem;
   text-shadow: 0 1px 6px rgba(0, 0, 0, 0.2);
+}
+
+/* ✅ Make the first description line bold (the one you asked to be emphasized) */
+.hero-content > p:first-of-type{
+  font-weight: 900;
 }
 
 .hero-meta{
@@ -497,7 +483,7 @@ section.container {
 }
 
 /* =========================
-   10) SERVICES
+   10) SERVICES (Unified panel)
 ========================= */
 .services { background: transparent; padding: 0; }
 
@@ -515,10 +501,28 @@ section.container {
   -webkit-backdrop-filter: blur(var(--glass-blur));
 }
 
+/* ✅ Grid that forces same height cards in the same row */
 .services-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: 1fr; /* mobile default */
   gap: 18px;
+  align-items: stretch;
+}
+
+/* Tablet: 2 columns */
+@media (min-width: 769px){
+  .services-grid{
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-auto-rows: 1fr; /* ✅ makes items in the same row equal height */
+  }
+}
+
+/* Desktop: 3 columns */
+@media (min-width: 1024px){
+  .services-grid{
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-auto-rows: 1fr; /* ✅ first row cards become equal height */
+  }
 }
 
 .service-card {
@@ -532,180 +536,30 @@ section.container {
   box-shadow: var(--shadow);
   text-align: center;
 
-  /* ✅ body not bold */
-  font-weight: 400;
+  /* ✅ ensures consistent height behavior */
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .service-card h3 {
   margin-bottom: 10px;
-  font-weight: 900; /* ✅ only title bold */
+  font-weight: 900;
 }
 
-.service-card p,
-.service-card li,
-.service-card span{
+/* ✅ body text not bold */
+.service-card p{
   font-weight: 400;
+  margin: 0;
 }
 
-/* ✅ "תהליך משולב" centered below all on desktop */
-@media (min-width: 900px) {
-  .services-grid {
-    grid-template-columns: repeat(3, minmax(260px, 1fr));
-  }
-
-  .service-card--combined {
-    grid-column: 1 / -1;
-    max-width: 760px;
-    justify-self: center;
-  }
+/* ✅ Combined card spans the full row (width of 3 cards on desktop) */
+.service-card--combined{
+  grid-column: 1 / -1;
 }
 
 /* =========================
-   11) PROCESS / FIT / TESTIMONIALS / FAQ
-========================= */
-
-/* Process */
-.process-grid{
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 18px;
-}
-
-.process-card{
-  background: var(--glass-bg-strong);
-  border: 1px solid rgba(255,255,255,0.30);
-  border-radius: 16px;
-  padding: 22px 20px;
-  box-shadow: var(--shadow);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-}
-
-.process-card h3{
-  font-weight: 900;
-  margin-bottom: 8px;
-}
-
-.center-cta{
-  margin-top: 22px;
-  display: flex;
-  justify-content: center;
-}
-
-/* Fit */
-.fit-grid{
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 18px;              /* ✅ space between the two rectangles */
-  align-items: stretch;
-}
-
-.fit-box h3{
-  font-weight: 900;
-  margin-bottom: 10px;
-}
-
-.fit-box ul{
-  padding-right: 18px; /* RTL bullets look better */
-}
-
-.fit-note{
-  margin-top: 12px;
-  opacity: 0.9;
-}
-
-/* Testimonials */
-.testimonials { background: transparent; padding: 0; }
-
-.testimonials .container{
-  max-width: 1100px;
-  margin: 60px auto;
-  padding: 70px 28px;
-
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
-  border-radius: var(--glass-radius);
-  box-shadow: var(--shadow-strong);
-
-  backdrop-filter: blur(var(--glass-blur));
-  -webkit-backdrop-filter: blur(var(--glass-blur));
-}
-
-.testimonial-card{
-  background: var(--glass-bg-strong);
-  border: 1px solid rgba(255,255,255,0.30);
-  border-radius: 16px;
-  padding: 22px 22px;
-  box-shadow: var(--shadow);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  margin-bottom: 16px;
-}
-
-.testimonial-card p{
-  font-weight: 400;
-}
-
-.testimonial-card span{
-  display: inline-block;
-  margin-top: 10px;
-  font-weight: 900;
-}
-
-/* FAQ – match cards width/alignment */
-.faq{
-  display: grid;
-  gap: 14px;
-}
-
-.faq-item{
-  background: var(--glass-bg-strong);
-  border: 1px solid rgba(255,255,255,0.30);
-  border-radius: 18px;
-  box-shadow: var(--shadow);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  overflow: hidden;
-}
-
-.faq-q{
-  width: 100%;
-  border: 0;
-  background: transparent;
-  padding: 18px 18px;
-  cursor: pointer;
-
-  display: flex;
-  align-items: center;
-  justify-content: space-between; /* text right, icon left in RTL */
-  gap: 14px;
-
-  font-weight: 900;
-  text-align: right;
-}
-
-.faq-icon{
-  flex: 0 0 auto;
-  width: 42px;
-  height: 42px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  background: rgba(255,255,255,0.55);
-  border: 1px solid rgba(255,255,255,0.28);
-  font-weight: 900;
-}
-
-.faq-a{
-  padding: 0 18px 18px 18px;
-  font-weight: 400;
-  opacity: 0.95;
-}
-
-/* =========================
-   12) CONTACT + WhatsApp
+   11) CONTACT + WhatsApp
 ========================= */
 #contact .section-title { margin-bottom: 40px; }
 
@@ -740,7 +594,6 @@ section.container {
 .contact-action h3{
   margin-bottom: 10px;
   font-size: 1.25rem;
-  font-weight: 900;
 }
 
 .contact-info a[href^="tel:"]{
@@ -792,7 +645,7 @@ section.container {
 }
 
 /* =========================
-   13) MOBILE
+   12) MOBILE
 ========================= */
 @media (max-width: 768px){
   section.container{
@@ -800,8 +653,7 @@ section.container {
     padding: 48px 18px;
   }
 
-  .services .container,
-  .testimonials .container{
+  .services .container{
     margin: 28px 12px;
     padding: 48px 18px;
   }
@@ -836,7 +688,7 @@ section.container {
 }
 
 /* =========================
-   14) ACCESSIBILITY
+   13) ACCESSIBILITY
 ========================= */
 @media (prefers-reduced-motion: reduce){
   *{
