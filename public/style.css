@@ -703,6 +703,16 @@ section:not(.hero) .section-title p{
 }
 
 /* =========================
+   NAV BUTTONS SPACING (Google Maps / Waze)
+========================= */
+.nav-buttons{
+  display: flex;
+  gap: 12px;           /* הרווח בין הכפתורים בדסקטופ */
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+/* =========================
    15) ACCESSIBILITY
 ========================= */
 @media (prefers-reduced-motion: reduce){
