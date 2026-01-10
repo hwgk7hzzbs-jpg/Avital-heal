@@ -639,6 +639,11 @@ section.container {
 
   font-weight: 900;
   text-align: right;
+
+  color: var(--text-color);
+  -webkit-text-fill-color: var(--text-color);
+  -webkit-appearance: none;
+  appearance: none;
 }
 
 .faq-icon{
