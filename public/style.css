@@ -289,7 +289,7 @@ section.container{
 }
 
 .section-subtitle{
-  display: block;
+  display: inline-block;
   margin: 0;
   background: rgba(255,255,255,0.55);
   padding: 6px 22px;
