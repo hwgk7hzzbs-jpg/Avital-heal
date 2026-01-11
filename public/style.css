@@ -288,6 +288,10 @@ section.container{
   box-shadow: 0 10px 24px rgba(0,0,0,0.08);
 }
 
+.section-title-box h2{
+  color: #fff;
+}
+
 .section-subtitle{
   display: inline-block;
   margin: 0;
