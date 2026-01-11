@@ -15,7 +15,7 @@
   --primary-color: #9DC8B0;
   --text-color: #4A4A4A;
 
-  --bg-overlay-strong: rgba(249, 252, 250, 0.55);
+  --bg-overlay-strong: rgba(0, 0, 0, 0.45);
   --bg-overlay-mobile: rgba(249, 252, 250, 0.22);
 
   --glass-border: rgba(255, 255, 255, 0.28);
