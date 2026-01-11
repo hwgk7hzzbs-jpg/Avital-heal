@@ -387,7 +387,6 @@ section:not(.hero) .section-title p{
   padding: 26px 22px;
   border-radius: 18px;
   max-width: 820px;
-  min-height: 240px; /* ⭐ מונע CLS */
 
   backdrop-filter: blur(7px);
   -webkit-backdrop-filter: blur(7px);
