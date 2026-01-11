@@ -168,7 +168,6 @@ a{ color: inherit; text-decoration: none; }
 
 .brand-logo:hover{
   transform: translateY(-1px);
-  background: rgba(255,255,255,0.28);
 }
 
 .brand-text{
