@@ -156,24 +156,22 @@ a{ color: inherit; text-decoration: none; }
   object-fit: contain;
   flex: 0 0 auto;
 
-  /* ✅ אותו "Glass" כמו הסרגל */
-  background: rgba(255,255,255,0.55);
-  border: 1px solid rgba(255,255,255,0.28);
+  /* ✅ Glass עדין כמו הסרגל, אבל לא לבן חזק */
+  background: rgba(255,255,255,0.22);   /* היה 0.55 – זה מה שעושה לבן מדי */
+  border: 1px solid rgba(255,255,255,0.22);
   border-radius: 16px;
-  padding: 8px 12px;
+  padding: 6px 10px;                   /* קצת פחות “כרית” */
 
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
 
-  /* ✅ בולט ונקי */
-  filter: drop-shadow(0 10px 22px rgba(0,0,0,0.22));
+  box-shadow: 0 10px 22px rgba(0,0,0,0.16);
   transition: transform .18s ease, filter .18s ease, background .18s ease;
 }
 
 .brand-logo:hover{
   transform: translateY(-1px);
-  background: rgba(255,255,255,0.65);
-  filter: drop-shadow(0 14px 28px rgba(0,0,0,0.26));
+  background: rgba(255,255,255,0.28);
 }
 
 .brand-text{
