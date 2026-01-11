@@ -44,7 +44,7 @@ img{
    2) TYPOGRAPHY
 ========================= */
 body{
-  font-family: 'Rubik', sans-serif;
+  font-family: 'Rubik', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   font-size: 18px;
   line-height: 1.85;
   color: var(--text-color);
@@ -372,6 +372,7 @@ section:not(.hero) .section-title p{
 ========================= */
 .hero{
   height: 80vh;
+  min-height: 80vh; /* ✅ NEW */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -408,6 +409,12 @@ section:not(.hero) .section-title p{
   font-weight: 700;
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
 }
+
+.hero-name,
+.hero-title{
+  line-height: 1.25;
+}
+
 
 .hero-content > p:first-of-type{ font-weight: 800; }
 
@@ -668,7 +675,8 @@ section:not(.hero) .section-title p{
     padding: 48px 18px;
   }
 
-  .hero{ height: 72vh; }
+  .hero{ height: 72vh; min-height: 72vh; }
+
   .about-content{ grid-template-columns: 1fr; }
 
   .about-img{
