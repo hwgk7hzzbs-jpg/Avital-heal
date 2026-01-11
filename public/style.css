@@ -73,7 +73,7 @@ body::before{
   z-index: -1;
   background:
     linear-gradient(var(--bg-overlay-strong), var(--bg-overlay-strong)),
-    url("https://images.unsplash.com/photo-1472214103451-9374bd1c798e?auto=format&fit=crop&w=1920&q=80")
+    url("bg-desktop-1600w.webp")
       center / cover no-repeat;
   transform: translateZ(0);
 }
@@ -685,7 +685,7 @@ section:not(.hero) .section-title p{
   body::before{
     background:
       linear-gradient(var(--bg-overlay-mobile), var(--bg-overlay-mobile)),
-      url("https://images.unsplash.com/photo-1472214103451-9374bd1c798e?auto=format&fit=crop&w=1920&q=80")
+      url("bg-mobile-768w.webp")
         center / cover no-repeat;
   }
 
