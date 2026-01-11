@@ -17,9 +17,18 @@
   
   <title>אביטל הוכברג | טיפול רגשי ורוחני בתל אביב | אונליין</title>
   <meta name="description" content="אביטל הוכברג – מטפלת רגשית ורוחנית. שילוב NLP, מסע הנשמה וביואורגונומי לתהליכי עומק פרקטיים ורכים. מפגשים בתל אביב ובאונליין, עם זמינות גם לאזור המרכז והשפלה." />
+  
+  <style>
+  body { background: #0f0f10; }
+  </style>
 
+  
   <!-- ✅ להוסיף כאן (מתחת ל-description) -->
   <link rel="canonical" href="https://avital-heal.com/" />
+  
+  <!-- ✅ Preload background images -->
+  <link rel="preload" as="image" href="bg-desktop-1600w.webp" fetchpriority="high">
+  <link rel="preload" as="image" href="bg-mobile-768w.webp" media="(max-width: 768px)" fetchpriority="high">
 
   <meta property="og:image:secure_url" content="https://avital-heal.com/avital-light.jpg" />
   <meta property="og:image:type" content="image/jpeg" />
@@ -68,9 +77,9 @@
         href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;600;700&display=swap">
 </noscript>
 
-<!-- Main CSS - non render-blocking -->
-<link rel="preload" href="style.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-<noscript><link rel="stylesheet" href="style.css"></noscript>
+<!-- Main CSS -->
+<link rel="stylesheet" href="style.css">
+
 
   <!-- ✅ Load script once, after DOM is ready -->
   <script src="script.js" defer></script>
