@@ -16,7 +16,7 @@
   --text-color: #4A4A4A;
 
   --bg-overlay-strong: rgba(0, 0, 0, 0.45);
-  --bg-overlay-mobile: rgba(249, 252, 250, 0.22);
+  --bg-overlay-mobile: rgba(0, 0, 0, 0.35);
 
   --glass-border: rgba(255, 255, 255, 0.28);
   --glass-border-soft: rgba(255, 255, 255, 0.22);
