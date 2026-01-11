@@ -430,11 +430,21 @@
           📞 טלפון:
           <a href="tel:0507883883">0507-883-883</a>
         </p>
-        <img 
-        src="clinic.png" 
-        alt="הקליניקה – מרחב טיפולי רגוע ונעים"
-        class="clinic-image"
-        loading="lazy">
+        <picture>
+          <source srcset="clinic-mobile.webp" media="(max-width: 768px)" type="image/webp">
+          <source srcset="clinic-tablet.webp" media="(max-width: 1200px)" type="image/webp">
+          <source srcset="clinic-desktop.webp" type="image/webp">
+
+        <img
+          src="clinic.png"
+          alt="הקליניקה – מרחב טיפולי רגוע ונעים"
+          class="clinic-image"
+          loading="lazy"
+          decoding="async"
+          width="1600"
+          height="900"
+        >
+      </picture>
 
       </div>
 
