@@ -744,3 +744,41 @@ section:not(.hero) .section-title p{
     animation: none !important;
   }
 }
+
+/* =========================
+   16) FOOTER
+========================= */
+
+.site-footer{
+  margin-top: 80px;
+  padding: 28px 16px 34px;
+  background: rgba(255,255,255,0.08);
+  border-top: 1px solid rgba(255,255,255,0.22);
+  text-align: center;
+  color: rgba(255,255,255,0.85);
+}
+
+.footer-inner{
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.footer-name{
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.footer-links{
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+.footer-links a{
+  color: rgba(255,255,255,0.9);
+  margin: 0 6px;
+  text-decoration: none;
+}
+
+.footer-links a:hover{
+  text-decoration: underline;
+}
