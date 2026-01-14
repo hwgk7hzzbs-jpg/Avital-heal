@@ -828,3 +828,23 @@ section:not(.hero) .section-title p{
   color: #9DC8B0; /* צבע מותג */
   text-decoration: underline;
 }
+
+/* =========================
+  18) Back to Home (Legal Pages)
+========================= */
+
+.back-home{
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  font-size: 14px;
+  color: #9DC8B0;
+  text-decoration: none;
+  opacity: 0.9;
+  z-index: 1000;
+}
+
+.back-home:hover{
+  text-decoration: underline;
+  opacity: 1;
+}
