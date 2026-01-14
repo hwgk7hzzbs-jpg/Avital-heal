@@ -782,3 +782,49 @@ section:not(.hero) .section-title p{
 .footer-links a:hover{
   text-decoration: underline;
 }
+
+/* =========================
+   17) LEGAL PAGES (Privacy & Accessibility)
+========================= */
+
+.legal-page{
+  background: #0f0f10; /* אותו רקע כמו האתר */
+  color: rgba(255,255,255,0.88);
+  min-height: 100vh;
+}
+
+.legal-page main.container{
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 120px 20px 80px;
+}
+
+.legal-page h1,
+.legal-page h2{
+  color: #ffffff;
+}
+
+.legal-page h1{
+  margin-bottom: 24px;
+}
+
+.legal-page h2{
+  margin-top: 40px;
+  margin-bottom: 12px;
+}
+
+.legal-page p,
+.legal-page li{
+  line-height: 1.9;
+  font-size: 16px;
+  color: rgba(255,255,255,0.85);
+}
+
+.legal-page ul{
+  padding-right: 18px;
+}
+
+.legal-page a{
+  color: #9DC8B0; /* צבע מותג */
+  text-decoration: underline;
+}
