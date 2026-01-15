@@ -22,8 +22,6 @@
   body { background: #0f0f10; }
   </style>
 
-  
-  <!-- ✅ להוסיף כאן (מתחת ל-description) -->
   <link rel="canonical" href="https://avital-heal.com/" />
   
   <!-- ✅ Preload background images -->
@@ -62,26 +60,24 @@
     ]
   }
   </script>
-  <!-- ✅ סוף התוספת -->
 
   <!-- Google Fonts (Rubik) - non render-blocking -->
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
-<link rel="preload"
-      href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;600;700&display=swap"
-      as="style"
-      onload="this.onload=null;this.rel='stylesheet'">
-<noscript>
-  <link rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;600;700&display=swap">
-</noscript>
+  <link rel="preload"
+        href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;600;700&display=swap"
+        as="style"
+        onload="this.onload=null;this.rel='stylesheet'">
+  <noscript>
+    <link rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;600;700&display=swap">
+  </noscript>
 
-<!-- Main CSS -->
-<link rel="stylesheet" href="style.css">
+  <!-- Main CSS -->
+  <link rel="stylesheet" href="style.css">
 
-
-  <!-- ✅ Load script once, after DOM is ready -->
+  <!-- Load script once, after DOM is ready -->
   <script src="script.js" defer></script>
 </head>
 
@@ -119,7 +115,6 @@
         <a href="#contact">יצירת קשר</a>
       </nav>
 
-      <!-- ✅ No inline onclick (script.js handles it) -->
       <button class="nav-toggle" type="button"
               aria-label="פתיחת תפריט" aria-expanded="false">
         ☰
@@ -142,16 +137,32 @@
     </div>
   </section>
 
-  <!-- About Section -->
+  <!-- About Section (UPDATED: Grid Areas, no duplicate image) -->
   <section id="about" class="container">
-    <div class="section-title">
-      <div class="section-title-box">
-        <h2>נעים להכיר - אביטל הוכברג, מטפלת רגשית</h2>
-      </div>
-    </div>
 
-    <div class="about-content">
-      <div class="content-box about-text">
+    <div class="about-grid">
+      <!-- Media (in DOM first, so also first for screen readers) -->
+      <div class="about__media">
+        <img 
+          src="avital-light-560x840.webp"
+          width="560"
+          height="840"
+          alt="אביטל הוכברג – מטפלת רגשית ורוחנית"
+          class="about-img"
+          loading="lazy"
+          decoding="async"
+        >
+      </div>
+
+      <!-- Title -->
+      <div class="about__title section-title">
+        <div class="section-title-box">
+          <h2>נעים להכיר - אביטל הוכברג, מטפלת רגשית</h2>
+        </div>
+      </div>
+
+      <!-- Text -->
+      <div class="about__text content-box about-text">
         <p><strong> שמי אביטל הוכברג</strong> מטפלת רגשית ורוחנית.</p>
         <br />
 
@@ -185,16 +196,8 @@
         <p><strong>מסע הנשמה:</strong> תהליך רוחני עמוק הנעשה בדמיון מודרך. הוא מאפשר לנו לעקוף את "הרעש" היומיומי, להתחבר לפנימיות ולהבין את הייעוד והשיעורים שבחרנו בחיים אלו.</p>
         <p><strong>ביואורגונומי:</strong> הסתכלות אנרגטית רחבה. דרך שיטה זו אנו מזהים כיצד השפעות מעץ המשפחה, מהסביבה ומהמערכת האנרגטית מעצבות את המציאות שלך, ומשחררים חסימות סמויות.</p>
       </div>
-
-      <img 
-        src="avital-light-560x840.webp"
-        width="560"
-        height="840"
-        alt="אביטל הוכברג – מטפלת רגשית ורוחנית"
-        loading="lazy"
-      >
-
     </div>
+
   </section>
 
   <!-- Approach / Philosophy Section -->
@@ -315,7 +318,7 @@
     </div>
   </section>
 
-  <!-- ✅ Fit Section (UPDATED as requested) -->
+  <!-- Fit Section -->
   <section id="fit" class="container">
     <div class="section-title">
       <div class="section-title-box">
@@ -489,7 +492,6 @@
     </div>
   </section>
   
-<!-- ✅ FOOTER (נוסף) -->
   <footer class="site-footer" role="contentinfo">
     <div class="footer-inner">
       <p class="footer-name">© אביטל הוכברג – טיפול רגשי ורוחני</p>
