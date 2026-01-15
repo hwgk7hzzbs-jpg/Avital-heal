@@ -737,7 +737,16 @@ section:not(.hero) .section-title p{
     border-radius: 16px;
     box-shadow: 0 10px 22px rgba(0,0,0,0.14);
   }
+   
+/* Center CTA button in Fit section (mobile only) */
+  .fit-cta{
+    display: flex;
+    justify-content: center;
+  }
 
+  .fit-cta .btn{
+    text-align: center;
+  }
 }
 
 /* =========================
