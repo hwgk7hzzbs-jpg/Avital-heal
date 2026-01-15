@@ -729,16 +729,19 @@ section:not(.hero) .section-title p{
         center / cover no-repeat;
   }
 
-     /* Clinic image – mobile */
+       /* Clinic image – mobile */
   .clinic-image{
     max-width: 100%;
     margin-top: 20px;
-
     border-radius: 16px;
     box-shadow: 0 10px 22px rgba(0,0,0,0.14);
   }
-   
-/* Center CTA button in Fit section (mobile only) */
+
+  /* Center CTA button in Fit section (mobile only) */
+  .fit-single{
+    text-align: center;
+  }
+
   .fit-cta{
     display: flex;
     justify-content: center;
@@ -748,6 +751,7 @@ section:not(.hero) .section-title p{
     text-align: center;
   }
 }
+
 
 /* =========================
    CLINIC IMAGE
