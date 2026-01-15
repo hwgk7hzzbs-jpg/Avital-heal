@@ -616,6 +616,11 @@ section:not(.hero) .section-title p{
   margin-inline: auto;
 }
 
+/* FIT intro – emphasized opening line */
+.fit-intro{
+  font-weight: 900;
+  font-size: 1.15em;
+}
 /* =========================
    14) MOBILE (ONLY ONE)
 ========================= */
