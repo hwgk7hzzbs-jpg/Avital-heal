@@ -440,12 +440,24 @@ section:not(.hero) .section-title p{
 /* =========================
    9) ABOUT
 ========================= */
-.about-content{
+.about-grid{
   display: grid;
   grid-template-columns: 1fr 320px;
-  gap: 40px;
-  align-items: center;
+  grid-template-areas:
+    "title media"
+    "text  media";
+  gap: 26px 40px;
+  align-items: start;
 }
+
+.about__media{
+  grid-area: media;
+  display: flex;
+  justify-content: center;
+}
+
+.about__title{ grid-area: title; }
+.about__text{ grid-area: text; }
 
 .about-text{ text-align: right; }
 
@@ -457,6 +469,23 @@ section:not(.hero) .section-title p{
   box-shadow: 0 10px 25px rgba(157, 200, 176, 0.25);
 }
 
+@media (max-width: 768px){
+  .about-grid{
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "media"
+      "title"
+      "text";
+    gap: 18px;
+  }
+
+  .about-img{
+    max-width: 320px;
+    margin: 0 auto;
+  }
+
+  .about-text{ text-align: right; } /* keeps RTL alignment */
+}
 /* =========================
    10) SERVICES
 ========================= */
@@ -680,7 +709,7 @@ section:not(.hero) .section-title p{
 
   .hero{ height: 72vh; min-height: 72vh; }
 
-  .about-content{ grid-template-columns: 1fr; }
+  .about-grid{ grid-template-columns: 1fr; }
 
   .about-img{
     width: 100%;
