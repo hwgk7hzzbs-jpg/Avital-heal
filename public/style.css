@@ -469,23 +469,7 @@ section:not(.hero) .section-title p{
   box-shadow: 0 10px 25px rgba(157, 200, 176, 0.25);
 }
 
-@media (max-width: 768px){
-  .about-grid{
-    grid-template-columns: 1fr;
-    grid-template-areas:
-      "media"
-      "title"
-      "text";
-    gap: 18px;
-  }
 
-  .about-img{
-    max-width: 320px;
-    margin: 0 auto;
-  }
-
-  .about-text{ text-align: right; } /* keeps RTL alignment */
-}
 /* =========================
    10) SERVICES
 ========================= */
@@ -511,9 +495,7 @@ section:not(.hero) .section-title p{
   .services-grid{ grid-template-columns: repeat(3, 1fr); }
 }
 
-@media (max-width: 768px){
-  .services-grid{ grid-template-columns: 1fr; }
-}
+
 
 .service-card{
   background: rgba(255,255,255,0.97);
@@ -644,113 +626,28 @@ section:not(.hero) .section-title p{
 }
 
 /* =========================
+   FIT SECTION – center CTA (ALL SIZES)
+   Ensures the green CTA pill is centered under the text in RTL/LTR
+========================= */
+.fit-single{
+  text-align: center;
+}
+
+.fit-cta{
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.fit-cta .btn{
+  text-align: center;
+  margin-inline: auto;
+}
+
+/* =========================
    14) MOBILE (ONLY ONE)
 ========================= */
-@media (max-width: 768px){
-  body{
-    font-size: 18px;
-    padding-top: 66px;
-  }
-
-  /* nav heights */
-  .top-nav{ height: 66px; }
-  .top-nav-inner{ height: 66px; }
-
-  /* brand sizing */
-  .brand-logo{
-    height: 50px;
-    max-height: 50px;
-    max-width: 160px;
-    border-radius: 14px;
-    padding: 7px 10px;
-  }
-  .brand-text{ font-size: 15px; max-width: 180px; }
-
-  /* burger + menu */
-  .nav-toggle{ display: inline-flex; }
-
-  .nav-links{
-    display: none;
-    position: absolute;
-    top: 64px;
-    right: 12px;
-    left: 12px;
-
-    background: rgba(255,255,255,0.70);
-    border: 1px solid rgba(255,255,255,0.28);
-    border-radius: 18px;
-    padding: 14px;
-
-    flex-direction: column;
-    gap: 22px; /* more spacing */
-
-    box-shadow: 0 18px 50px rgba(0,0,0,0.10);
-
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-  }
-  .nav-links.active{ display: flex; }
-
-  .nav-links a{
-    width: 100%;
-    text-align: center;
-    padding: 16px 18px;
-    font-size: 18px;
-    font-weight: 700;
-    border-radius: 12px;
-    background: rgba(255,255,255,0.50);
-  }
-
-  /* sections */
-  section.container{
-    margin: 28px 12px;
-    padding: 48px 18px;
-  }
-
-  .hero{ height: 72vh; min-height: 72vh; }
-
-  .about-grid{ grid-template-columns: 1fr; }
-
-  .about-img{
-    width: 100%;
-    max-width: 320px;
-    height: auto;
-    object-fit: contain;
-    border-radius: 18px;
-    justify-self: center;
-  }
-
-  .contact-container{ grid-template-columns: 1fr; }
-
-  body::before{
-    background:
-      linear-gradient(var(--bg-overlay-mobile), var(--bg-overlay-mobile)),
-      url("bg-mobile-768w.webp")
-        center / cover no-repeat;
-  }
-
-       /* Clinic image – mobile */
-  .clinic-image{
-    max-width: 100%;
-    margin-top: 20px;
-    border-radius: 16px;
-    box-shadow: 0 10px 22px rgba(0,0,0,0.14);
-  }
-
-  /* Center CTA button in Fit section (mobile only) */
-  .fit-single{
-    text-align: center;
-  }
-
-  .fit-cta{
-    display: flex;
-    justify-content: center;
-  }
-
-  .fit-cta .btn{
-    text-align: center;
-  }
-}
 
 
 /* =========================
@@ -889,4 +786,122 @@ section:not(.hero) .section-title p{
 .back-home:hover{
   text-decoration: underline;
   opacity: 1;
+}
+
+/* =========================
+   MOBILE (ONLY ONE)
+========================= */
+@media (max-width: 768px){
+
+
+  /* ---- merged from previous mobile blocks ---- */
+
+.about-grid{
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "media"
+      "title"
+      "text";
+    gap: 18px;
+  }
+
+  .about-img{
+    max-width: 320px;
+    margin: 0 auto;
+  }
+
+  .about-text{ text-align: right; } /* keeps RTL alignment */
+
+.services-grid{ grid-template-columns: 1fr; }
+
+body{
+    font-size: 18px;
+    padding-top: 66px;
+  }
+
+  /* nav heights */
+  .top-nav{ height: 66px; }
+  .top-nav-inner{ height: 66px; }
+
+  /* brand sizing */
+  .brand-logo{
+    height: 50px;
+    max-height: 50px;
+    max-width: 160px;
+    border-radius: 14px;
+    padding: 7px 10px;
+  }
+  .brand-text{ font-size: 15px; max-width: 180px; }
+
+  /* burger + menu */
+  .nav-toggle{ display: inline-flex; }
+
+  .nav-links{
+    display: none;
+    position: absolute;
+    top: 64px;
+    right: 12px;
+    left: 12px;
+
+    background: rgba(255,255,255,0.70);
+    border: 1px solid rgba(255,255,255,0.28);
+    border-radius: 18px;
+    padding: 14px;
+
+    flex-direction: column;
+    gap: 22px; /* more spacing */
+
+    box-shadow: 0 18px 50px rgba(0,0,0,0.10);
+
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+  .nav-links.active{ display: flex; }
+
+  .nav-links a{
+    width: 100%;
+    text-align: center;
+    padding: 16px 18px;
+    font-size: 18px;
+    font-weight: 700;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.50);
+  }
+
+  /* sections */
+  section.container{
+    margin: 28px 12px;
+    padding: 48px 18px;
+  }
+
+  .hero{ height: 72vh; min-height: 72vh; }
+
+  .about-grid{ grid-template-columns: 1fr; }
+
+  .about-img{
+    width: 100%;
+    max-width: 320px;
+    height: auto;
+    object-fit: contain;
+    border-radius: 18px;
+    justify-self: center;
+  }
+
+  .contact-container{ grid-template-columns: 1fr; }
+
+  body::before{
+    background:
+      linear-gradient(var(--bg-overlay-mobile), var(--bg-overlay-mobile)),
+      url("bg-mobile-768w.webp")
+        center / cover no-repeat;
+  }
+
+     /* Clinic image – mobile */
+  .clinic-image{
+    max-width: 100%;
+    margin-top: 20px;
+
+    border-radius: 16px;
+    box-shadow: 0 10px 22px rgba(0,0,0,0.14);
+  }
 }
