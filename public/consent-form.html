@@ -18,9 +18,9 @@
   <title>הסכם טיפול והצהרת בריאות | אביטל הוכברג</title>
   <meta name="description" content="הסכם טיפול, הצהרת בריאות וטופס הסכמה מדעת לטיפול רגשי ורוחני עם אביטל הוכברג" />
   
-  <style>
-  body { background: #0f0f10; }
-  </style>
+  <!-- ✅ Preload background images (same as main site) -->
+  <link rel="preload" as="image" href="bg-desktop-1600w.webp" fetchpriority="high">
+  <link rel="preload" as="image" href="bg-mobile-768w.webp" media="(max-width: 768px)" fetchpriority="high">
 
   <link rel="canonical" href="https://avital-heal.com/consent-form.html" />
   
@@ -47,7 +47,7 @@
   <style>
     /* Additional styles for form page */
     .form-container {
-      max-width: 1100px;
+      max-width: 900px;
       margin: 100px auto 60px;
       padding: 40px 20px;
     }
@@ -61,6 +61,7 @@
       color: #ffffff;
       margin-bottom: 16px;
       font-size: 2.2rem;
+      line-height: 1.3;
     }
     
     .form-header p {
@@ -76,15 +77,7 @@
       border: 1px solid rgba(0, 0, 0, 0.06);
       border-radius: 18px;
       box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
-      padding: 20px;
-      overflow: hidden;
-    }
-    
-    .form-iframe {
-      width: 100%;
-      height: 1400px;
-      border: 0;
-      border-radius: 12px;
+      padding: 40px 35px;
     }
     
     .back-link {
@@ -100,6 +93,177 @@
       text-decoration: underline;
     }
     
+    /* Agreement sections */
+    .agreement-section {
+      margin-bottom: 35px;
+      padding-bottom: 25px;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    }
+    
+    .agreement-section:last-of-type {
+      border-bottom: none;
+    }
+    
+    .agreement-section h2 {
+      color: #4A4A4A;
+      font-size: 1.5rem;
+      margin-bottom: 15px;
+      font-weight: 800;
+    }
+    
+    .agreement-section h3 {
+      color: #4A4A4A;
+      font-size: 1.15rem;
+      margin-top: 20px;
+      margin-bottom: 12px;
+      font-weight: 700;
+    }
+    
+    .agreement-section ol {
+      margin-right: 20px;
+      line-height: 1.9;
+    }
+    
+    .agreement-section li {
+      margin-bottom: 12px;
+      color: #4A4A4A;
+    }
+    
+    .agreement-section strong {
+      font-weight: 700;
+      color: #2A2A2A;
+    }
+    
+    /* Form fields */
+    .form-fields {
+      margin-top: 40px;
+      padding-top: 30px;
+      border-top: 2px solid rgba(157, 200, 176, 0.3);
+    }
+    
+    .form-group {
+      margin-bottom: 25px;
+    }
+    
+    .form-group label {
+      display: block;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: #4A4A4A;
+    }
+    
+    .form-group label .required {
+      color: #d32f2f;
+      margin-right: 3px;
+    }
+    
+    .form-group input[type="text"],
+    .form-group input[type="email"],
+    .form-group input[type="date"] {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid rgba(0, 0, 0, 0.15);
+      border-radius: 10px;
+      font-size: 16px;
+      font-family: inherit;
+      transition: border-color 0.2s ease;
+    }
+    
+    .form-group input:focus {
+      outline: none;
+      border-color: #9DC8B0;
+      box-shadow: 0 0 0 3px rgba(157, 200, 176, 0.1);
+    }
+    
+    .checkbox-group {
+      margin-top: 30px;
+      padding: 20px;
+      background: rgba(157, 200, 176, 0.08);
+      border-radius: 12px;
+      border: 1px solid rgba(157, 200, 176, 0.2);
+    }
+    
+    .checkbox-item {
+      margin-bottom: 18px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+    
+    .checkbox-item:last-child {
+      margin-bottom: 0;
+    }
+    
+    .checkbox-item input[type="checkbox"] {
+      margin-top: 4px;
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    
+    .checkbox-item label {
+      cursor: pointer;
+      font-weight: 400;
+      line-height: 1.7;
+      margin: 0;
+    }
+    
+    .submit-section {
+      margin-top: 35px;
+      text-align: center;
+      padding-top: 25px;
+      border-top: 1px solid rgba(0, 0, 0, 0.08);
+    }
+    
+    .submit-btn {
+      background: var(--primary-color);
+      color: #fff;
+      padding: 16px 50px;
+      border: none;
+      border-radius: 999px;
+      font-size: 18px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.10);
+      font-family: inherit;
+    }
+    
+    .submit-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 14px 34px rgba(0, 0, 0, 0.15);
+    }
+    
+    .submit-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+    
+    .success-message {
+      display: none;
+      background: rgba(76, 175, 80, 0.1);
+      border: 1px solid rgba(76, 175, 80, 0.3);
+      color: #2e7d32;
+      padding: 20px;
+      border-radius: 12px;
+      text-align: center;
+      font-weight: 700;
+      margin-top: 20px;
+    }
+    
+    .error-message {
+      background: rgba(244, 67, 54, 0.1);
+      border: 1px solid rgba(244, 67, 54, 0.3);
+      color: #c62828;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      margin-top: 8px;
+      display: none;
+    }
+    
     @media (max-width: 768px) {
       .form-container {
         margin: 80px auto 40px;
@@ -107,7 +271,7 @@
       }
       
       .form-header h1 {
-        font-size: 1.8rem;
+        font-size: 1.7rem;
       }
       
       .form-header p {
@@ -115,11 +279,20 @@
       }
       
       .form-wrapper {
-        padding: 12px;
+        padding: 25px 20px;
       }
       
-      .form-iframe {
-        height: 1600px;
+      .agreement-section h2 {
+        font-size: 1.3rem;
+      }
+      
+      .agreement-section h3 {
+        font-size: 1.05rem;
+      }
+      
+      .submit-btn {
+        width: 100%;
+        padding: 16px 30px;
       }
     }
   </style>
@@ -170,19 +343,124 @@
     <div class="form-header">
       <h1>הסכם טיפול, הצהרת בריאות וטופס הסכמה מדעת</h1>
       <p>
-        כדי להתחיל את התהליך הטיפולי בצורה המיטבית, אנא מלא/י את הטופס הבא.
-        המידע שתספק/י יישאר חסוי ומאובטח, ויעזור לי להתאים את הטיפול באופן אישי עבורך.
+        כדי להתחיל את התהליך הטיפולי בצורה המיטבית, אנא קרא/י בעיון את ההסכם הבא ומלא/י את הפרטים.
+        המידע שתספק/י יישאר חסוי ומאובטח.
       </p>
     </div>
 
     <div class="form-wrapper">
-      <iframe 
-        class="form-iframe"
-        src="https://docs.google.com/forms/d/e/1FAIpQLSfIHrKnElAWgAZqSZdik_a-ly5VnFGqwPWvvIWuhkJV0VxdHw/viewform?embedded=true"
-        title="טופס הסכם טיפול והצהרת בריאות"
-        loading="lazy">
-        טוען טופס...
-      </iframe>
+      <!-- הסכם הטיפול -->
+      <div class="agreement-section">
+        <h2>1. מהות הטיפול</h2>
+        <ol>
+          <li>הטיפול מתבסס על גישה הוליסטית ומטרתו לסייע באיזון גוף-נפש, צמיחה מודעת והעצמה.</li>
+          <li><strong>הבהרה משפטית:</strong> ידוע לי כי הטיפול <strong>אינו מהווה טיפול רפואי</strong>, ייעוץ פסיכולוגי או אבחון קליני, ואינו מחליף בדיקות או טיפול רפואי/נפשי קונבנציונלי.</li>
+          <li>ידוע לי כי המטפלת אינה מתחייבת לתוצאות ספציפיות ("הבטחת ריפוי") שכן הדבר תלוי במשתנים אישיים ובתהליך האינדיבידואלי.</li>
+        </ol>
+      </div>
+
+      <div class="agreement-section">
+        <h2>2. הצהרת בריאות ונפש</h2>
+        <p>הנני מצהיר/ה בזאת כי:</p>
+        <ol>
+          <li>איני סובל/ת מבעיה נפשית כלשהי, ואינני נוטל/ת תרופות פסיכיאטריות או תרופות אחרות שעלולות למנוע ממני לעבור את הטיפול בצורה מלאה ובריאה.</li>
+          <li>מצבי הבריאותי מאפשר לי להשתתף בטיפול, ובכל מקרה של ספק או שינוי במצב בריאותי (פיזי או נפשי), חובתי לעדכן את המטפלת מיידית.</li>
+          <li>לא הונחיתי להפסיק טיפול תרופתי קונבנציונלי, וכל שינוי כזה ייעשה רק בהתייעצות עם הרופא המטפל שלי.</li>
+        </ol>
+      </div>
+
+      <div class="agreement-section">
+        <h2>3. אחריות והגבלת אחריות</h2>
+        <ol>
+          <li>אני מבין/ה ומסכים/ה כי המטפלת אינה יכולה לפקח על כל פעולותיי מחוץ לקליניקה, והיא <strong>אינה אחראית</strong> מבחינה משפטית, רפואית, מוסרית או אקדמית לכל אירוע, תהליך או תגובה שיתרחשו במהלך תקופת הטיפול, לפניו או אחריו.</li>
+          <li>האחריות ליישום התובנות ולפנייה לעזרה רפואית/נפשית במידת הצורך, מוטלת עליי בלבד.</li>
+        </ol>
+      </div>
+
+      <div class="agreement-section">
+        <h2>4. מדיניות ביטולים, איחורים ותשלומים</h2>
+        <ol>
+          <li>אורך המפגש הינו כפי שנקבע מראש. איחור מצד המטופל לא יגרור הארכה של זמן המפגש, והחיוב יהיה מלא.</li>
+          <li>יש להודיע על ביטול או דחיית מפגש עד <strong>24 שעות</strong> מראש.</li>
+          <li>ביטול שייעשה פחות מ-24 שעות ממועד המפגש, או אי-הגעה (No Show), <strong>יחויב בתשלום מלא</strong> (למעט מקרי חירום חריגים בשיקול דעת המטפלת).</li>
+          <li>התשלום יוסדר בסיום כל מפגש או מראש (במקרה של סדרת טיפולים).</li>
+        </ol>
+      </div>
+
+      <div class="agreement-section">
+        <h2>5. סודיות ופרטיות</h2>
+        <ol>
+          <li>המטפלת מתחייבת לשמור על סודיות מלאה לגבי כל מידע שיעלה בטיפול ולא להעבירו לצד שלישי, למעט במקרים בהם קיים חשש לפגיעה בחיי אדם או על פי צו בית משפט.</li>
+        </ol>
+      </div>
+
+      <div class="agreement-section">
+        <h2>6. סיום ההתקשרות</h2>
+        <ol>
+          <li>המטופל רשאי להפסיק את הטיפול בכל עת.</li>
+          <li>המטפלת שומרת לעצמה את הזכות להפסיק את הטיפול מטעמים של חוסר התאמה מקצועית, סיכון, או אי-ציות לנהלי הקליניקה, ע"פ שיקול דעתה הבלעדי.</li>
+        </ol>
+      </div>
+
+      <!-- טופס מילוי פרטים -->
+      <form id="consentForm" class="form-fields">
+        <div class="form-group">
+          <label for="email">
+            <span class="required">*</span>
+            כתובת דוא"ל
+          </label>
+          <input type="email" id="email" name="email" required 
+                 placeholder="your@email.com">
+          <div class="error-message" id="emailError">נא להזין כתובת דוא"ל תקינה</div>
+        </div>
+
+        <div class="form-group">
+          <label for="date">
+            <span class="required">*</span>
+            תאריך חתימה על טופס ההצהרה
+          </label>
+          <input type="date" id="date" name="date" required>
+          <div class="error-message" id="dateError">נא לבחור תאריך</div>
+        </div>
+
+        <div class="form-group">
+          <label for="fullName">
+            <span class="required">*</span>
+            פרטי המטופל/ת (שם פרטי ושם משפחה)
+          </label>
+          <input type="text" id="fullName" name="fullName" required 
+                 placeholder="שם מלא">
+          <div class="error-message" id="nameError">נא להזין שם מלא</div>
+        </div>
+
+        <!-- הצהרות -->
+        <div class="checkbox-group">
+          <h3 style="margin-top: 0; margin-bottom: 20px; font-size: 1.1rem;">הצהרות נדרשות</h3>
+          
+          <div class="checkbox-item">
+            <input type="checkbox" id="healthDeclaration" name="healthDeclaration" required>
+            <label for="healthDeclaration">
+              <span class="required">*</span>
+              <strong>הצהרת בריאות ונפש:</strong> אני מצהיר/ה שאיני נוטל/ת תרופות פסיכיאטריות ואין מניעה נפשית לטיפול. אני מתחייב/ת לדווח על כל שינוי רפואי. ידוע לי שהטיפול אינו מחליף ייעוץ רפואי.
+            </label>
+          </div>
+
+          <div class="checkbox-item">
+            <input type="checkbox" id="agreementConfirmation" name="agreementConfirmation" required>
+            <label for="agreementConfirmation">
+              <span class="required">*</span>
+              <strong>אישור הסכם וחתימה:</strong> אני מאשר/ת כי קראתי את ההסכם, הבנתי את תוכנו ואני מסכים/ה לכל תנאיו (כולל מדיניות הביטולים והצהרת הבריאות) מרצוני החופשי.
+            </label>
+          </div>
+        </div>
+
+        <div class="submit-section">
+          <button type="submit" class="submit-btn">שליחת הטופס</button>
+          <div class="success-message" id="successMessage">
+            ✓ הטופס נשלח בהצלחה! העתק נשלח לכתובת הדוא"ל שלך.
+          </div>
+        </div>
+      </form>
     </div>
   </main>
 
@@ -212,5 +490,137 @@
       <path d="M13.601 2.326A7.854 7.854 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.933 7.933 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.898 7.898 0 0 0 13.6 2.326zM7.994 14.521a6.573 6.573 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.557 6.557 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592zm3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.729.729 0 0 0-.529.247c-.182.198-.691.677-.691 1.654 0 .977.71 1.916.81 2.049.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232z"/>
     </svg>
   </a>
+
+  <script>
+    // ═══════════════════════════════════════════════════════════════
+    // 🔧 הגדרות - שני את ה-URL הזה ל-Web App URL שתקבלי מ-Google Apps Script
+    // ═══════════════════════════════════════════════════════════════
+    const GOOGLE_SCRIPT_URL = 'YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE';
+    // ⬆️ החליפי את הטקסט הזה ב-URL שתקבלי אחרי ה-Deploy!
+    // ═══════════════════════════════════════════════════════════════
+
+    // Form validation and submission
+    document.getElementById('consentForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      // Get form values
+      const email = document.getElementById('email').value;
+      const date = document.getElementById('date').value;
+      const fullName = document.getElementById('fullName').value;
+      const healthDeclaration = document.getElementById('healthDeclaration').checked;
+      const agreementConfirmation = document.getElementById('agreementConfirmation').checked;
+      
+      // Validate
+      let isValid = true;
+      
+      // Email validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!email || !emailRegex.test(email)) {
+        document.getElementById('emailError').style.display = 'block';
+        isValid = false;
+      } else {
+        document.getElementById('emailError').style.display = 'none';
+      }
+      
+      // Date validation
+      if (!date) {
+        document.getElementById('dateError').style.display = 'block';
+        isValid = false;
+      } else {
+        document.getElementById('dateError').style.display = 'none';
+      }
+      
+      // Name validation
+      if (!fullName || fullName.trim().length < 2) {
+        document.getElementById('nameError').style.display = 'block';
+        isValid = false;
+      } else {
+        document.getElementById('nameError').style.display = 'none';
+      }
+      
+      // Checkboxes validation
+      if (!healthDeclaration || !agreementConfirmation) {
+        alert('נא לאשר את כל ההצהרות הנדרשות');
+        isValid = false;
+      }
+      
+      if (isValid) {
+        // Show loading state
+        const submitBtn = document.querySelector('.submit-btn');
+        const originalText = submitBtn.textContent;
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'שולח...';
+        
+        try {
+          // Prepare data to send
+          const formData = {
+            email: email,
+            date: date,
+            fullName: fullName,
+            healthDeclaration: healthDeclaration,
+            agreementConfirmation: agreementConfirmation,
+            timestamp: new Date().toISOString(),
+            userAgent: navigator.userAgent,
+            // Note: IP address will be captured by Google Apps Script
+          };
+          
+          // Send to Google Sheets via Apps Script
+          const response = await fetch(GOOGLE_SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors', // Important for Google Apps Script
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData)
+          });
+          
+          // Track with Google Analytics
+          gtag('event', 'form_submit', {
+            'event_category': 'consent_form',
+            'event_label': 'submission_success'
+          });
+          
+          // Show success message
+          document.getElementById('successMessage').style.display = 'block';
+          submitBtn.textContent = 'הטופס נשלח ✓';
+          
+          // Scroll to success message
+          document.getElementById('successMessage').scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'center' 
+          });
+          
+          // Reset form after 3 seconds (optional)
+          // setTimeout(() => {
+          //   document.getElementById('consentForm').reset();
+          // }, 3000);
+          
+        } catch (error) {
+          console.error('Error submitting form:', error);
+          
+          // Track error with Google Analytics
+          gtag('event', 'form_submit', {
+            'event_category': 'consent_form',
+            'event_label': 'submission_error'
+          });
+          
+          // Show error message
+          alert('אירעה שגיאה בשליחת הטופס. אנא נסה שוב או צור קשר בטלפון: 0507-883-883');
+          
+          // Restore button
+          submitBtn.disabled = false;
+          submitBtn.textContent = originalText;
+        }
+      }
+    });
+    
+    // ═══════════════════════════════════════════════════════════════
+    // 💡 טיפ: בדיקה אם ה-URL מוגדר נכון
+    // ═══════════════════════════════════════════════════════════════
+    if (GOOGLE_SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE') {
+      console.warn('⚠️ שים לב! עדיין לא הגדרת את ה-Google Apps Script URL!');
+      console.warn('📝 עקוב אחר ההוראות בקובץ setup-instructions.md');
+    }
+  </script>
 </body>
 </html>
