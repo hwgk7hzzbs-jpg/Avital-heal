@@ -51,10 +51,14 @@ export async function handleLogin(request, env) {
       return errorResponse('נדרש אימייל וסיסמה', 400);
     }
     const user = await env.DB.prepare(
-      'SELECT id, email, name, role, password_hash FROM users WHERE email = ?'
+      'SELECT id, email, name, role, password_hash, active FROM users WHERE email = ?'
     ).bind(email.toLowerCase().trim()).first();
     if (!user) {
       return errorResponse('אימייל או סיסמה שגויים', 401);
+    }
+    // Block inactive users
+    if (user.active === 0) {
+      return errorResponse('החשבון אינו פעיל — פנה למנהל המערכת', 403);
     }
     const valid = await verifyPassword(password, user.password_hash);
     if (!valid) {
@@ -91,7 +95,7 @@ export async function handleRequestReset(request, env) {
     const { email } = await request.json();
     if (!email) return errorResponse('נדרש אימייל', 400);
     const user = await env.DB.prepare(
-      'SELECT id, name FROM users WHERE email = ?'
+      'SELECT id, name FROM users WHERE email = ? AND active = 1'
     ).bind(email.toLowerCase().trim()).first();
     // Always return success (prevent email enumeration)
     if (!user) {

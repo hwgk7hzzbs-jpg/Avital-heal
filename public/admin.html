@@ -7,7 +7,7 @@
   <title>Avital Heal CRM</title>
   <link rel="icon" href="logo-favicon.webp" type="image/webp">
   <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=8">
+  <link rel="stylesheet" href="admin.css?v=9">
 </head>
 <body>
 
@@ -72,6 +72,7 @@
     </button>
     <button class="tab-btn" onclick="switchTab('clients')">לקוחות</button>
     <button class="tab-btn" onclick="switchTab('sessions')">טיפולים</button>
+    <button class="tab-btn" onclick="switchTab('users')" id="usersTab" style="display:none">משתמשים</button>
   </div>
 
   <!-- CONTENT AREA -->
@@ -186,6 +187,18 @@
       </table>
     </div>
 
+    <!-- USERS PAGE (admin only) -->
+    <div id="page-users" class="page hidden">
+      <div class="page-header">
+        <h2>ניהול משתמשים</h2>
+        <button onclick="showUserFormModal()" class="btn btn-primary">+ משתמש חדש</button>
+      </div>
+      <table class="table">
+        <thead><tr><th>שם</th><th>אימייל</th><th>תפקיד</th><th>סטטוס</th><th>תאריך יצירה</th><th>פעולות</th></tr></thead>
+        <tbody id="usersTable"></tbody>
+      </table>
+    </div>
+
   </div>
 </div>
 
@@ -258,6 +271,25 @@
   </div>
 </div>
 
+<!-- USER FORM MODAL -->
+<div id="userFormModal" class="modal hidden">
+  <div class="modal-content">
+    <span class="modal-close" onclick="closeUserFormModal()">&times;</span>
+    <h2 id="userFormTitle">משתמש חדש</h2>
+    <input type="hidden" id="uf_id">
+    <input type="text" id="uf_name" placeholder="שם מלא" class="input-field">
+    <input type="email" id="uf_email" placeholder="אימייל" class="input-field">
+    <input type="password" id="uf_password" placeholder="סיסמה (לפחות 8 תווים, אות גדולה+קטנה+מספר)" class="input-field">
+    <select id="uf_role" class="input-field">
+      <option value="admin">מנהל (admin)</option>
+      <option value="therapist" selected>מטפל (therapist)</option>
+      <option value="viewer">צופה (viewer)</option>
+    </select>
+    <label class="checkbox-label"><input type="checkbox" id="uf_active" checked> פעיל</label>
+    <button onclick="saveUser()" class="btn btn-primary">שמור</button>
+  </div>
+</div>
+
 <!-- CHANGE PASSWORD MODAL -->
 <div id="changePasswordModal" class="modal hidden">
   <div class="modal-content">
@@ -271,11 +303,12 @@
   </div>
 </div>
 
-<script src="js/admin-app.js?v=8"></script>
-<script src="js/admin-dashboard.js?v=8"></script>
-<script src="js/admin-clients.js?v=8"></script>
-<script src="js/admin-sessions.js?v=8"></script>
-<script src="js/admin-contacts.js?v=8"></script>
+<script src="js/admin-app.js?v=9"></script>
+<script src="js/admin-dashboard.js?v=9"></script>
+<script src="js/admin-clients.js?v=9"></script>
+<script src="js/admin-sessions.js?v=9"></script>
+<script src="js/admin-contacts.js?v=9"></script>
+<script src="js/admin-users.js?v=9"></script>
 
 </body>
 </html>

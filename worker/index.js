@@ -14,6 +14,23 @@ import { handleContactSubmission, handleGetContacts, handleUpdateContact, handle
 import { handleGetClients, handleGetClient, handleCreateClient, handleUpdateClient, handleDeleteClient, handleExportClients } from './clients.js';
 import { handleGetSessions, handleGetClientSessions, handleCreateSession, handleUpdateSession, handleDeleteSession } from './sessions.js';
 import { handleStats } from './dashboard.js';
+import { handleGetUsers, handleCreateUser, handleUpdateUser, handleDeleteUser, handleAdminResetPassword } from './users.js';
+
+// ─── One-time DB migration ───
+async function runMigrations(env) {
+  try {
+    // Add 'active' column to users if not exists
+    const cols = await env.DB.prepare("PRAGMA table_info(users)").all();
+    const hasActive = cols.results.some(c => c.name === 'active');
+    if (!hasActive) {
+      await env.DB.prepare("ALTER TABLE users ADD COLUMN active BOOLEAN DEFAULT 1").run();
+      // Set all existing users as active
+      await env.DB.prepare("UPDATE users SET active = 1 WHERE active IS NULL").run();
+    }
+  } catch (e) {
+    console.error('Migration error:', e);
+  }
+}
 
 export default {
   async fetch(request, env) {
@@ -27,6 +44,12 @@ export default {
         status: 204,
         headers: { ...CORS_HEADERS, ...SECURITY_HEADERS },
       });
+    }
+
+    // Run migrations on first request (idempotent)
+    if (!env._migrated) {
+      await runMigrations(env);
+      env._migrated = true;
     }
 
     // ─── Public endpoints (no auth required) ───
@@ -112,6 +135,24 @@ export default {
     // Export
     if (path === '/api/export/clients' && method === 'GET') {
       return handleExportClients(env);
+    }
+
+    // Users (admin only — role check inside handlers)
+    if (path === '/api/users' && method === 'GET') {
+      return handleGetUsers(request, env);
+    }
+    if (path === '/api/users' && method === 'POST') {
+      return handleCreateUser(request, env);
+    }
+    if (path.match(/^\/api\/users\/\d+$/) && method === 'PUT') {
+      return handleUpdateUser(request, env, path.split('/').pop());
+    }
+    if (path.match(/^\/api\/users\/\d+$/) && method === 'DELETE') {
+      return handleDeleteUser(request, env, path.split('/').pop());
+    }
+    if (path.match(/^\/api\/users\/\d+\/reset-password$/) && method === 'POST') {
+      const parts = path.split('/');
+      return handleAdminResetPassword(request, env, parts[3]);
     }
 
     return errorResponse('Not found', 404);

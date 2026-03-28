@@ -80,11 +80,20 @@ async function showApp() {
     const ui = document.getElementById('userInfo');
     if (ui) ui.textContent = currentUser.name || currentUser.email;
   }
+  // Show/hide users tab based on role
+  const usersTab = document.getElementById('usersTab');
+  if (usersTab) {
+    usersTab.style.display = (currentUser && currentUser.role === 'admin') ? '' : 'none';
+  }
   switchTab('dashboard');
   loadDashboard();
   loadContacts();
   loadClients();
   loadSessions();
+  // Load users for admins
+  if (currentUser && currentUser.role === 'admin' && typeof loadUsers === 'function') {
+    loadUsers();
+  }
 }
 
 // ─── Password reset request ───
@@ -194,10 +203,17 @@ function switchTab(name) {
   document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
   const page = document.getElementById(`page-${name}`);
   if (page) { page.classList.remove('hidden'); page.classList.add('active'); }
-  const pages = ['dashboard', 'contacts', 'clients', 'sessions'];
-  const idx = pages.indexOf(name);
-  const tabs = document.querySelectorAll('.tab-btn');
-  if (tabs[idx]) tabs[idx].classList.add('active');
+
+  // Handle tab button activation
+  if (name === 'users') {
+    const usersTab = document.getElementById('usersTab');
+    if (usersTab) usersTab.classList.add('active');
+  } else {
+    const pages = ['dashboard', 'contacts', 'clients', 'sessions'];
+    const idx = pages.indexOf(name);
+    const tabs = document.querySelectorAll('.tab-btn');
+    if (tabs[idx]) tabs[idx].classList.add('active');
+  }
 }
 
 // Alias for backward compatibility
