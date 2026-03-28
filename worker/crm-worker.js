@@ -69,17 +69,18 @@ export default {
       return handleConsentSubmission(request, env);
     }
 
-    // ─── Auth check for all /api/* routes ───
+    // ─── Login / token validation (public — before auth check) ───
+    if (path === '/api/login' && method === 'POST') {
+      return handleLogin(request, env);
+    }
+    // ─── Auth check for all other /api/* routes ───
     if (path.startsWith('/api/')) {
       if (!isAuthorized(request, env)) {
         return errorResponse('Unauthorized', 401);
       }
     }
 
-    // ─── Login / token validation ───
-    if (path === '/api/login' && method === 'POST') {
-      return handleLogin(request, env);
-    }
+    // ─── Token verification (requires auth) ───
     if (path === '/api/verify' && method === 'GET') {
       return jsonResponse({ valid: true });
     }
