@@ -106,4 +106,85 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   }
+
+  /* -----------------------
+     Contact form submission → CRM
+  ----------------------- */
+  const contactForm = document.getElementById("contactForm");
+  if (contactForm) {
+    const CRM_CONTACT_URL = "https://avital-heal-crm.tgthf7frmp.workers.dev/api/contact";
+    let contactTurnstileToken = "";
+
+    // Turnstile callback
+    window.onContactTurnstile = function (token) {
+      contactTurnstileToken = token;
+    };
+
+    contactForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const msgEl = document.getElementById("contactFormMsg");
+      const submitBtn = document.getElementById("contactSubmitBtn");
+      const nameVal = document.getElementById("contactName").value.trim();
+      const phoneVal = document.getElementById("contactPhone").value.trim();
+      const emailVal = document.getElementById("contactEmail").value.trim();
+      const messageVal = document.getElementById("contactMessage").value.trim();
+
+      // Validation
+      if (!nameVal) {
+        msgEl.textContent = "יש למלא שם מלא";
+        msgEl.className = "form-message error";
+        msgEl.style.display = "block";
+        return;
+      }
+      if (!phoneVal && !emailVal) {
+        msgEl.textContent = "יש למלא טלפון או דוא\"ל ליצירת קשר";
+        msgEl.className = "form-message error";
+        msgEl.style.display = "block";
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = "שולח...";
+
+      try {
+        const resp = await fetch(CRM_CONTACT_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            fullName: nameVal,
+            phone: phoneVal || null,
+            email: emailVal || null,
+            message: messageVal || null,
+            turnstileToken: contactTurnstileToken,
+          }),
+        });
+
+        if (resp.ok) {
+          msgEl.textContent = "✓ הפנייה נשלחה בהצלחה! אחזור אליך בהקדם.";
+          msgEl.className = "form-message success";
+          msgEl.style.display = "block";
+          contactForm.reset();
+          submitBtn.textContent = "נשלח ✓";
+
+          if (typeof gtag === "function") {
+            gtag("event", "contact_form_submit", { event_category: "contact" });
+          }
+        } else {
+          const errData = await resp.json().catch(() => ({}));
+          msgEl.textContent = errData.error || "שגיאה בשליחה, נסו שוב";
+          msgEl.className = "form-message error";
+          msgEl.style.display = "block";
+          submitBtn.disabled = false;
+          submitBtn.textContent = "שליחה";
+        }
+      } catch (err) {
+        msgEl.textContent = "שגיאה בשליחה, נסו שוב מאוחר יותר";
+        msgEl.className = "form-message error";
+        msgEl.style.display = "block";
+        submitBtn.disabled = false;
+        submitBtn.textContent = "שליחה";
+      }
+    });
+  }
 });

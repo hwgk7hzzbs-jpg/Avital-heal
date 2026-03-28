@@ -484,7 +484,35 @@
 
       <div class="contact-action">
         <h3>צרו קשר</h3>
-        <p>מוזמנים לשלוח הודעה ישירה בוואטסאפ לתיאום פגישה</p>
+        <p>מלאו את הפרטים ואחזור אליכם בהקדם, או שלחו הודעה ישירה בוואטסאפ</p>
+
+        <form id="contactForm" class="contact-form" novalidate>
+          <div class="form-group">
+            <label for="contactName">שם מלא *</label>
+            <input type="text" id="contactName" name="fullName" required placeholder="השם שלך">
+          </div>
+          <div class="form-group">
+            <label for="contactPhone">טלפון</label>
+            <input type="tel" id="contactPhone" name="phone" placeholder="050-000-0000" dir="ltr">
+          </div>
+          <div class="form-group">
+            <label for="contactEmail">דוא"ל</label>
+            <input type="email" id="contactEmail" name="email" placeholder="your@email.com" dir="ltr">
+          </div>
+          <div class="form-group">
+            <label for="contactMessage">הודעה</label>
+            <textarea id="contactMessage" name="message" rows="3" placeholder="במה אוכל לעזור?"></textarea>
+          </div>
+
+          <div class="cf-turnstile" data-sitekey="0x4AAAAAABDDIPOCOwDDfWbE" data-callback="onContactTurnstile" data-theme="light"></div>
+
+          <button type="submit" class="btn contact-submit-btn" id="contactSubmitBtn">שליחה</button>
+          <div id="contactFormMsg" class="form-message" style="display:none;"></div>
+        </form>
+
+        <div class="contact-divider">
+          <span>או</span>
+        </div>
 
         <a href="https://wa.me/972507883883?text=%D7%94%D7%99%D7%99%20%D7%90%D7%91%D7%99%D7%98%D7%9C%2C%20%D7%90%D7%A9%D7%9E%D7%97%20%D7%9C%D7%AA%D7%90%D7%9D%20%D7%A9%D7%99%D7%97%D7%AA%20%D7%94%D7%99%D7%9B%D7%A8%D7%95%D7%AA.%20%D7%9E%D7%AA%D7%99%20%D7%A0%D7%97%20%D7%9C%D7%9A%3F"
            class="whatsapp-btn-large"
