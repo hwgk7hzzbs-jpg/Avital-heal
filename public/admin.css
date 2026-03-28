@@ -77,6 +77,11 @@ body {
 .app { display: none; }
 .app.active { display: block; }
 .login-screen.hidden { display: none; }
+.hidden { display: none !important; }
+.page.hidden { display: none !important; }
+.page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; gap: 12px; flex-wrap: wrap; }
+.filter-bar { margin-bottom: 16px; }
+.filter-select { padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; font-family: inherit; }
 
 /* Top bar */
 .topbar {
@@ -196,10 +201,29 @@ tr:hover td { background: #f7fafc; }
 }
 .modal-overlay.active { display: flex; }
 .modal {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1000; padding: 20px;
+}
+.modal.hidden { display: none; }
+.modal .modal-content {
   background: white; border-radius: var(--radius); width: 100%;
   max-width: 600px; max-height: 90vh; overflow-y: auto;
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--shadow-lg); padding: 24px; position: relative;
 }
+.modal .modal-content h2 { font-size: 1.1rem; margin-bottom: 16px; }
+.modal .modal-close {
+  position: absolute; top: 12px; left: 12px;
+  background: none; border: none; font-size: 1.5rem; cursor: pointer;
+  color: var(--text-light); line-height: 1;
+}
+.modal .input-field {
+  width: 100%; padding: 10px 12px; border: 1px solid var(--border);
+  border-radius: 8px; font-family: inherit; font-size: 0.9rem;
+  margin-bottom: 12px; display: block;
+}
+.modal .input-field:focus { outline: none; border-color: var(--primary); }
+.modal textarea.input-field { min-height: 70px; resize: vertical; }
 .modal-header {
   padding: 16px 20px; border-bottom: 1px solid var(--border);
   display: flex; align-items: center; justify-content: space-between;
