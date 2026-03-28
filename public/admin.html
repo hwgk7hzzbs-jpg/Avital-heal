@@ -7,7 +7,7 @@
   <title>Avital Heal CRM</title>
   <link rel="icon" href="logo-favicon.webp" type="image/webp">
   <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=7">
+  <link rel="stylesheet" href="admin.css?v=8">
 </head>
 <body>
 
@@ -60,7 +60,7 @@
       <span id="userInfo" class="user-info"></span>
       <button onclick="exportCSV()" class="btn btn-sm">ייצוא CSV</button>
       <button onclick="showChangePasswordModal()" class="btn btn-sm">שינוי סיסמה</button>
-      <button onclick="logout()" class="btn btn-sm btn-danger">התנתקות</button>
+      <button onclick="logout()" class="btn btn-sm btn-logout">🚪 התנתקות</button>
     </div>
   </div>
 
@@ -79,30 +79,65 @@
 
     <!-- DASHBOARD PAGE -->
     <div id="page-dashboard" class="page">
-      <h2>דשבורד</h2>
+      <div class="dashboard-header">
+        <h2>דשבורד</h2>
+        <p class="dashboard-subtitle" id="dashboardDate"></p>
+      </div>
       <div class="stats-grid">
-        <div class="stat-card"><strong>סה"כ לקוחות</strong><div id="stat-total-clients" class="stat-value">0</div></div>
-        <div class="stat-card"><strong>לקוחות פעילים</strong><div id="stat-active-clients" class="stat-value">0</div></div>
-        <div class="stat-card"><strong>טיפולים החודש</strong><div id="stat-sessions-month" class="stat-value">0</div></div>
-        <div class="stat-card"><strong>הכנסות החודש</strong><div id="stat-revenue-month" class="stat-value">₪0</div></div>
-        <div class="stat-card"><strong>חובות פתוחים</strong><div id="stat-open-debts" class="stat-value">₪0</div></div>
-        <div class="stat-card"><strong>הסכמות חתומות</strong><div id="stat-signed-consents" class="stat-value">0</div></div>
-        <div class="stat-card" style="border-color: #ff9800;"><strong>פניות חדשות</strong><div id="stat-new-contacts" class="stat-value" style="color: #ff9800;">0</div></div>
+        <div class="stat-card stat-card--primary">
+          <div class="stat-icon">👥</div>
+          <div class="stat-info"><div class="stat-label">סה"כ לקוחות</div><div id="stat-total" class="stat-value">0</div></div>
+        </div>
+        <div class="stat-card stat-card--success">
+          <div class="stat-icon">✅</div>
+          <div class="stat-info"><div class="stat-label">לקוחות פעילים</div><div id="stat-active" class="stat-value">0</div></div>
+        </div>
+        <div class="stat-card stat-card--info">
+          <div class="stat-icon">🗓️</div>
+          <div class="stat-info"><div class="stat-label">טיפולים החודש</div><div id="stat-month-sessions" class="stat-value">0</div></div>
+        </div>
+        <div class="stat-card stat-card--green">
+          <div class="stat-icon">💰</div>
+          <div class="stat-info"><div class="stat-label">הכנסות החודש</div><div id="stat-month-revenue" class="stat-value">₪0</div></div>
+        </div>
+        <div class="stat-card stat-card--danger">
+          <div class="stat-icon">⚠️</div>
+          <div class="stat-info"><div class="stat-label">חובות פתוחים</div><div id="stat-unpaid" class="stat-value">₪0</div></div>
+        </div>
+        <div class="stat-card stat-card--purple">
+          <div class="stat-icon">📝</div>
+          <div class="stat-info"><div class="stat-label">הסכמות חתומות</div><div id="stat-consent" class="stat-value">0</div></div>
+        </div>
+        <div class="stat-card stat-card--warning">
+          <div class="stat-icon">📩</div>
+          <div class="stat-info"><div class="stat-label">פניות חדשות</div><div id="stat-new-contacts" class="stat-value">0</div></div>
+        </div>
       </div>
-      <div class="card">
-        <h3>פניות אחרונות</h3>
-        <table class="table">
-          <thead><tr><th>שם</th><th>טלפון</th><th>אימייל</th><th>הודעה</th><th>תאריך</th><th>סטטוס</th></tr></thead>
-          <tbody id="recentContactsTable"></tbody>
-        </table>
-        <button onclick="switchTab('contacts')" class="btn btn-sm">צפה בהכל</button>
-      </div>
-      <div class="card">
-        <h3>לקוחות אחרונים</h3>
-        <table class="table">
-          <thead><tr><th>שם</th><th>אימייל</th><th>הצטרפות</th><th>הסכמה</th></tr></thead>
-          <tbody id="recentClientsTable"></tbody>
-        </table>
+      <div class="dashboard-tables">
+        <div class="card">
+          <div class="card-header">
+            <h3>📬 פניות אחרונות</h3>
+            <button onclick="switchTab('contacts')" class="btn btn-outline btn-sm">צפה בהכל →</button>
+          </div>
+          <div class="card-body">
+            <table class="table">
+              <thead><tr><th>שם</th><th>טלפון</th><th>אימייל</th><th>הודעה</th><th>תאריך</th><th>סטטוס</th></tr></thead>
+              <tbody id="recentContactsTable"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <h3>👤 לקוחות אחרונים</h3>
+            <button onclick="switchTab('clients')" class="btn btn-outline btn-sm">צפה בהכל →</button>
+          </div>
+          <div class="card-body">
+            <table class="table">
+              <thead><tr><th>שם</th><th>אימייל</th><th>הצטרפות</th><th>הסכמה</th></tr></thead>
+              <tbody id="recentClientsTable"></tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -236,11 +271,11 @@
   </div>
 </div>
 
-<script src="js/admin-app.js?v=7"></script>
-<script src="js/admin-dashboard.js?v=7"></script>
-<script src="js/admin-clients.js?v=7"></script>
-<script src="js/admin-sessions.js?v=7"></script>
-<script src="js/admin-contacts.js?v=7"></script>
+<script src="js/admin-app.js?v=8"></script>
+<script src="js/admin-dashboard.js?v=8"></script>
+<script src="js/admin-clients.js?v=8"></script>
+<script src="js/admin-sessions.js?v=8"></script>
+<script src="js/admin-contacts.js?v=8"></script>
 
 </body>
 </html>

@@ -98,8 +98,11 @@ body {
   font-family: inherit; transition: all 0.2s;
 }
 .topbar .btn-sm:hover { background: var(--bg); }
-.topbar .btn-logout { color: var(--danger); border-color: var(--danger); }
-.topbar .btn-logout:hover { background: #fff5f5; }
+.topbar .btn-logout {
+  color: white; background: var(--danger); border-color: var(--danger);
+  font-weight: 600;
+}
+.topbar .btn-logout:hover { background: #e53e3e; color: white; }
 
 /* Navigation tabs */
 .nav-tabs {
@@ -119,20 +122,42 @@ body {
 .page { display: none; }
 .page.active { display: block; }
 
+/* ─── Dashboard ─── */
+.dashboard-header { margin-bottom: 24px; }
+.dashboard-header h2 { font-size: 1.5rem; font-weight: 700; color: var(--text); }
+.dashboard-subtitle { font-size: 0.9rem; color: var(--text-light); margin-top: 4px; }
+.dashboard-tables { display: grid; gap: 20px; }
+
 /* ─── Stats Cards ─── */
 .stats-grid {
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 16px; margin-bottom: 24px;
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px; margin-bottom: 28px;
 }
 .stat-card {
   background: var(--card-bg); padding: 20px; border-radius: var(--radius);
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadow); display: flex; align-items: center; gap: 14px;
+  border-right: 4px solid transparent; transition: transform 0.15s, box-shadow 0.15s;
 }
-.stat-card .stat-label { font-size: 0.8rem; color: var(--text-light); margin-bottom: 4px; }
-.stat-card .stat-value { font-size: 1.8rem; font-weight: 700; }
-.stat-card .stat-value.green { color: var(--success); }
-.stat-card .stat-value.blue { color: var(--info); }
-.stat-card .stat-value.orange { color: var(--warning); }
+.stat-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+.stat-icon { font-size: 1.8rem; flex-shrink: 0; }
+.stat-info { flex: 1; min-width: 0; }
+.stat-card .stat-label { font-size: 0.78rem; color: var(--text-light); margin-bottom: 2px; font-weight: 500; }
+.stat-card .stat-value { font-size: 1.6rem; font-weight: 700; }
+
+.stat-card--primary { border-right-color: #667eea; }
+.stat-card--primary .stat-value { color: #667eea; }
+.stat-card--success { border-right-color: #48bb78; }
+.stat-card--success .stat-value { color: #48bb78; }
+.stat-card--info { border-right-color: #4299e1; }
+.stat-card--info .stat-value { color: #4299e1; }
+.stat-card--green { border-right-color: #38a169; }
+.stat-card--green .stat-value { color: #38a169; }
+.stat-card--danger { border-right-color: #f56565; }
+.stat-card--danger .stat-value { color: #f56565; }
+.stat-card--purple { border-right-color: #9f7aea; }
+.stat-card--purple .stat-value { color: #9f7aea; }
+.stat-card--warning { border-right-color: #ed8936; }
+.stat-card--warning .stat-value { color: #ed8936; }
 
 /* ─── Cards & Tables ─── */
 .card {

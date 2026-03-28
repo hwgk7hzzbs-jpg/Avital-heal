@@ -15,6 +15,14 @@ function contactStatusBadge(status) {
 }
 
 async function loadDashboard() {
+  // Show current date
+  const dateEl = document.getElementById('dashboardDate');
+  if (dateEl) {
+    dateEl.textContent = new Date().toLocaleDateString('he-IL', {
+      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+    });
+  }
+
   const stats = await api('/api/stats');
   if (!stats) return;
 
