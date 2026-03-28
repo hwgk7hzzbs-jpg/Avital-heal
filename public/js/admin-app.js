@@ -80,6 +80,7 @@ async function showApp() {
     const ui = document.getElementById('userInfo');
     if (ui) ui.textContent = currentUser.name || currentUser.email;
   }
+  switchTab('dashboard');
   loadDashboard();
   loadContacts();
   loadClients();
