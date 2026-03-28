@@ -77,8 +77,8 @@ body {
 .app { display: none; }
 .app.active { display: block; }
 .login-screen.hidden { display: none; }
-.hidden { display: none !important; }
-.page.hidden { display: none !important; }
+.modal.hidden { display: none !important; }
+.page.hidden { display: none; }
 .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; gap: 12px; flex-wrap: wrap; }
 .filter-bar { margin-bottom: 16px; }
 .filter-select { padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; font-family: inherit; }
