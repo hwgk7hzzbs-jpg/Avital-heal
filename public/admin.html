@@ -259,6 +259,7 @@
   <!-- Navigation -->
   <div class="nav-tabs">
     <div class="nav-tab active" onclick="showPage('dashboard')">דשבורד</div>
+    <div class="nav-tab" onclick="showPage('contacts')">פניות <span class="badge badge-red" id="contactsBadge" style="display:none;margin-right:4px;">0</span></div>
     <div class="nav-tab" onclick="showPage('clients')">לקוחות</div>
     <div class="nav-tab" onclick="showPage('sessions')">טיפולים</div>
   </div>
@@ -273,6 +274,17 @@
         <div class="stat-card"><div class="stat-label">הכנסות החודש</div><div class="stat-value green" id="stat-month-revenue">—</div></div>
         <div class="stat-card"><div class="stat-label">חובות פתוחים</div><div class="stat-value orange" id="stat-unpaid">—</div></div>
         <div class="stat-card"><div class="stat-label">הסכמות חתומות</div><div class="stat-value" id="stat-consent">—</div></div>
+        <div class="stat-card"><div class="stat-label">פניות חדשות</div><div class="stat-value orange" id="stat-new-contacts">—</div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><h2>פניות אחרונות</h2><button class="btn btn-outline" onclick="showPage('contacts')" style="font-size:0.8rem;">צפה בהכל</button></div>
+        <div class="card-body">
+          <table>
+            <thead><tr><th>שם</th><th>טלפון</th><th>אימייל</th><th>הודעה</th><th>תאריך</th><th>סטטוס</th></tr></thead>
+            <tbody id="recentContactsTable"><tr><td colspan="6" class="loading">טוען...</td></tr></tbody>
+          </table>
+        </div>
       </div>
 
       <div class="card">
@@ -281,6 +293,27 @@
           <table>
             <thead><tr><th>שם</th><th>אימייל</th><th>הצטרפות</th><th>הסכמה</th></tr></thead>
             <tbody id="recentClientsTable"><tr><td colspan="4" class="loading">טוען...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════ Contacts (Inquiries) Page ═══════ -->
+    <div class="page" id="page-contacts">
+      <div class="search-bar">
+        <select id="contactStatusFilter" onchange="filterContacts()" style="padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:0.9rem;">
+          <option value="">כל הפניות</option>
+          <option value="new">חדשות</option>
+          <option value="contacted">נוצר קשר</option>
+          <option value="converted">הפך ללקוח</option>
+          <option value="closed">סגור</option>
+        </select>
+      </div>
+      <div class="card">
+        <div class="card-body">
+          <table>
+            <thead><tr><th>שם</th><th>טלפון</th><th>אימייל</th><th>הודעה</th><th>תאריך</th><th>סטטוס</th><th>פעולות</th></tr></thead>
+            <tbody id="contactsTable"><tr><td colspan="7" class="loading">טוען...</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -450,6 +483,7 @@ const API_BASE = 'https://avital-heal-crm.tgthf7frmp.workers.dev';
 let authToken = null;
 let currentClientId = null;
 let allClients = [];
+let allContacts = [];
 
 // ─── Auth ───
 async function login() {
@@ -489,6 +523,7 @@ async function showApp() {
   document.getElementById('loginScreen').classList.add('hidden');
   document.getElementById('app').classList.add('active');
   loadDashboard();
+  loadContacts();
   loadClients();
   loadSessions();
 }
@@ -533,7 +568,7 @@ function showPage(name) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
   document.getElementById(`page-${name}`).classList.add('active');
-  document.querySelectorAll('.nav-tab')[['dashboard','clients','sessions'].indexOf(name)].classList.add('active');
+  document.querySelectorAll('.nav-tab')[['dashboard','contacts','clients','sessions'].indexOf(name)].classList.add('active');
 }
 
 function closeModal(id) {
@@ -550,6 +585,33 @@ async function loadDashboard() {
   document.getElementById('stat-month-revenue').textContent = '₪' + (stats.monthRevenue || 0).toLocaleString();
   document.getElementById('stat-unpaid').textContent = '₪' + (stats.unpaidTotal || 0).toLocaleString();
   document.getElementById('stat-consent').textContent = stats.consentSigned;
+  document.getElementById('stat-new-contacts').textContent = stats.newContacts || 0;
+
+  // Update contacts badge
+  const badge = document.getElementById('contactsBadge');
+  if (stats.newContacts > 0) {
+    badge.textContent = stats.newContacts;
+    badge.style.display = 'inline-block';
+  } else {
+    badge.style.display = 'none';
+  }
+
+  // Recent contacts
+  const ctbody = document.getElementById('recentContactsTable');
+  if (stats.recentContacts && stats.recentContacts.length) {
+    ctbody.innerHTML = stats.recentContacts.map(c => `
+      <tr>
+        <td><strong>${c.full_name}</strong></td>
+        <td>${c.phone || '—'}</td>
+        <td>${c.email || '—'}</td>
+        <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${c.message || '—'}</td>
+        <td>${c.created_at ? new Date(c.created_at).toLocaleDateString('he-IL') : '—'}</td>
+        <td>${contactStatusBadge(c.status)}</td>
+      </tr>
+    `).join('');
+  } else {
+    ctbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-light);">אין פניות</td></tr>';
+  }
 
   // Recent clients
   const tbody = document.getElementById('recentClientsTable');
@@ -783,6 +845,65 @@ async function saveSession() {
 
   closeModal('sessionFormModal');
   loadSessions();
+  loadDashboard();
+}
+
+// ─── Contacts (Inquiries) ───
+function contactStatusBadge(status) {
+  const map = {
+    'new': '<span class="badge badge-red">חדש</span>',
+    'contacted': '<span class="badge badge-blue">נוצר קשר</span>',
+    'converted': '<span class="badge badge-green">הפך ללקוח</span>',
+    'closed': '<span class="badge badge-gray">סגור</span>',
+  };
+  return map[status] || '<span class="badge badge-gray">' + (status || '—') + '</span>';
+}
+
+async function loadContacts() {
+  const contacts = await api('/api/contacts');
+  if (!contacts) return;
+  allContacts = contacts;
+  renderContacts(contacts);
+}
+
+function renderContacts(contacts) {
+  const tbody = document.getElementById('contactsTable');
+  if (!contacts.length) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-light);">אין פניות</td></tr>';
+    return;
+  }
+  tbody.innerHTML = contacts.map(c => `
+    <tr>
+      <td><strong>${c.full_name}</strong></td>
+      <td>${c.phone ? '<a href="tel:' + c.phone + '">' + c.phone + '</a>' : '—'}</td>
+      <td>${c.email || '—'}</td>
+      <td style="max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${c.message || '—'}</td>
+      <td>${c.created_at ? new Date(c.created_at).toLocaleDateString('he-IL') : '—'}</td>
+      <td>${contactStatusBadge(c.status)}</td>
+      <td>
+        <select onchange="updateContactStatus(${c.id}, this.value)" style="padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-family:inherit;font-size:0.8rem;">
+          <option value="new" ${c.status === 'new' ? 'selected' : ''}>חדש</option>
+          <option value="contacted" ${c.status === 'contacted' ? 'selected' : ''}>נוצר קשר</option>
+          <option value="converted" ${c.status === 'converted' ? 'selected' : ''}>הפך ללקוח</option>
+          <option value="closed" ${c.status === 'closed' ? 'selected' : ''}>סגור</option>
+        </select>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function filterContacts() {
+  const status = document.getElementById('contactStatusFilter').value;
+  if (!status) {
+    renderContacts(allContacts);
+  } else {
+    renderContacts(allContacts.filter(c => c.status === status));
+  }
+}
+
+async function updateContactStatus(id, status) {
+  await api(`/api/contacts/${id}`, { method: 'PUT', body: JSON.stringify({ status }) });
+  loadContacts();
   loadDashboard();
 }
 
