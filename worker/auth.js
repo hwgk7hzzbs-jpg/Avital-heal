@@ -71,7 +71,7 @@ export async function handleLogin(request, env) {
     return jsonResponse({ token, user: { id: user.id, email: user.email, name: user.name, role: user.role } });
   } catch (e) {
     console.error('Login error:', e);
-    return errorResponse('שגיאת כניסה', 500);
+    return errorResponse('שגיאת כניסה: ' + (e.message || String(e)), 500);
   }
 }
 

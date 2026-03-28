@@ -212,7 +212,7 @@ async function handleLogin(request, env) {
     return jsonResponse({ token, user: { id: user.id, email: user.email, name: user.name, role: user.role } });
   } catch (e) {
     console.error("Login error:", e);
-    return errorResponse("\u05E9\u05D2\u05D9\u05D0\u05EA \u05DB\u05E0\u05D9\u05E1\u05D4", 500);
+    return errorResponse("\u05E9\u05D2\u05D9\u05D0\u05EA \u05DB\u05E0\u05D9\u05E1\u05D4: " + (e.message || String(e)), 500);
   }
 }
 async function handleVerify(request, env) {
