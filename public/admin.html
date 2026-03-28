@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>ניהול לקוחות — Avital Heal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/webp" href="logo-favicon.webp">
+  <style>
+    :root {
+      --primary: #9DC8B0;
+      --primary-dark: #7ab094;
+      --bg: #f5f7fa;
+      --card-bg: #ffffff;
+      --text: #2d3748;
+      --text-light: #718096;
+      --border: #e2e8f0;
+      --success: #48bb78;
+      --warning: #ed8936;
+      --danger: #f56565;
+      --info: #4299e1;
+      --shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.06);
+      --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+      --radius: 12px;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Rubik', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ─── Login Screen ─── */
+    .login-screen {
+      display: flex; align-items: center; justify-content: center;
+      min-height: 100vh; padding: 20px;
+      background: linear-gradient(135deg, #0f0f10 0%, #1a2332 100%);
+    }
+    .login-box {
+      background: var(--card-bg); border-radius: var(--radius);
+      padding: 40px; width: 100%; max-width: 400px;
+      box-shadow: var(--shadow-lg); text-align: center;
+    }
+    .login-box h1 { font-size: 1.5rem; margin-bottom: 8px; color: var(--primary-dark); }
+    .login-box p { color: var(--text-light); margin-bottom: 24px; font-size: 0.9rem; }
+    .login-box input {
+      width: 100%; padding: 12px 16px; border: 1px solid var(--border);
+      border-radius: 8px; font-family: inherit; font-size: 1rem;
+      margin-bottom: 16px; text-align: center;
+    }
+    .login-box input:focus { outline: none; border-color: var(--primary); }
+    .login-box button {
+      width: 100%; padding: 12px; background: var(--primary);
+      color: white; border: none; border-radius: 8px;
+      font-family: inherit; font-size: 1rem; font-weight: 600;
+      cursor: pointer; transition: background 0.2s;
+    }
+    .login-box button:hover { background: var(--primary-dark); }
+    .login-error { color: var(--danger); font-size: 0.85rem; margin-top: 12px; display: none; }
+
+    /* ─── App Layout ─── */
+    .app { display: none; }
+    .app.active { display: block; }
+    .login-screen.hidden { display: none; }
+
+    /* Top bar */
+    .topbar {
+      background: white; padding: 12px 24px;
+      display: flex; align-items: center; justify-content: space-between;
+      box-shadow: var(--shadow); position: sticky; top: 0; z-index: 100;
+    }
+    .topbar-right { display: flex; align-items: center; gap: 12px; }
+    .topbar h1 { font-size: 1.1rem; color: var(--primary-dark); }
+    .topbar-left { display: flex; align-items: center; gap: 8px; }
+    .topbar .btn-sm {
+      padding: 6px 14px; border-radius: 8px; font-size: 0.85rem;
+      border: 1px solid var(--border); background: white; cursor: pointer;
+      font-family: inherit; transition: all 0.2s;
+    }
+    .topbar .btn-sm:hover { background: var(--bg); }
+    .topbar .btn-logout { color: var(--danger); border-color: var(--danger); }
+    .topbar .btn-logout:hover { background: #fff5f5; }
+
+    /* Navigation tabs */
+    .nav-tabs {
+      display: flex; gap: 0; background: white; padding: 0 24px;
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-tab {
+      padding: 12px 20px; cursor: pointer; font-size: 0.9rem;
+      color: var(--text-light); border-bottom: 2px solid transparent;
+      transition: all 0.2s; font-weight: 500;
+    }
+    .nav-tab:hover { color: var(--text); }
+    .nav-tab.active { color: var(--primary-dark); border-bottom-color: var(--primary); }
+
+    /* Content area */
+    .content { padding: 24px; max-width: 1200px; margin: 0 auto; }
+    .page { display: none; }
+    .page.active { display: block; }
+
+    /* ─── Stats Cards ─── */
+    .stats-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px; margin-bottom: 24px;
+    }
+    .stat-card {
+      background: var(--card-bg); padding: 20px; border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .stat-card .stat-label { font-size: 0.8rem; color: var(--text-light); margin-bottom: 4px; }
+    .stat-card .stat-value { font-size: 1.8rem; font-weight: 700; }
+    .stat-card .stat-value.green { color: var(--success); }
+    .stat-card .stat-value.blue { color: var(--info); }
+    .stat-card .stat-value.orange { color: var(--warning); }
+
+    /* ─── Cards & Tables ─── */
+    .card {
+      background: var(--card-bg); border-radius: var(--radius);
+      box-shadow: var(--shadow); margin-bottom: 20px; overflow: hidden;
+    }
+    .card-header {
+      padding: 16px 20px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .card-header h2 { font-size: 1rem; font-weight: 600; }
+    .card-body { padding: 20px; }
+
+    table { width: 100%; border-collapse: collapse; }
+    th { text-align: right; padding: 10px 12px; font-size: 0.8rem; color: var(--text-light); border-bottom: 1px solid var(--border); font-weight: 500; }
+    td { padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #f7fafc; }
+    .clickable-row { cursor: pointer; }
+
+    /* ─── Buttons ─── */
+    .btn {
+      padding: 8px 18px; border-radius: 8px; font-family: inherit;
+      font-size: 0.9rem; cursor: pointer; border: none;
+      font-weight: 500; transition: all 0.2s; display: inline-flex;
+      align-items: center; gap: 6px;
+    }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:hover { background: var(--primary-dark); }
+    .btn-danger { background: var(--danger); color: white; }
+    .btn-danger:hover { background: #e53e3e; }
+    .btn-outline {
+      background: white; border: 1px solid var(--border); color: var(--text);
+    }
+    .btn-outline:hover { background: var(--bg); }
+
+    /* ─── Badge ─── */
+    .badge {
+      display: inline-block; padding: 2px 10px; border-radius: 12px;
+      font-size: 0.75rem; font-weight: 600;
+    }
+    .badge-green { background: #c6f6d5; color: #276749; }
+    .badge-red { background: #fed7d7; color: #9b2c2c; }
+    .badge-gray { background: #e2e8f0; color: #4a5568; }
+    .badge-blue { background: #bee3f8; color: #2a4365; }
+
+    /* ─── Forms ─── */
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 0.85rem; color: var(--text-light); margin-bottom: 4px; font-weight: 500; }
+    .form-group input, .form-group select, .form-group textarea {
+      width: 100%; padding: 10px 12px; border: 1px solid var(--border);
+      border-radius: 8px; font-family: inherit; font-size: 0.9rem;
+    }
+    .form-group textarea { min-height: 80px; resize: vertical; }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+      outline: none; border-color: var(--primary);
+    }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+
+    /* ─── Modal ─── */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+      display: none; align-items: center; justify-content: center;
+      z-index: 1000; padding: 20px;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal {
+      background: white; border-radius: var(--radius); width: 100%;
+      max-width: 600px; max-height: 90vh; overflow-y: auto;
+      box-shadow: var(--shadow-lg);
+    }
+    .modal-header {
+      padding: 16px 20px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .modal-header h2 { font-size: 1.1rem; }
+    .modal-close {
+      background: none; border: none; font-size: 1.5rem; cursor: pointer;
+      color: var(--text-light); line-height: 1;
+    }
+    .modal-body { padding: 20px; }
+    .modal-footer {
+      padding: 16px 20px; border-top: 1px solid var(--border);
+      display: flex; justify-content: flex-start; gap: 8px;
+    }
+
+    /* Search bar */
+    .search-bar {
+      display: flex; gap: 12px; margin-bottom: 16px; align-items: center;
+    }
+    .search-bar input {
+      flex: 1; padding: 10px 14px; border: 1px solid var(--border);
+      border-radius: 8px; font-family: inherit; font-size: 0.9rem;
+    }
+    .search-bar input:focus { outline: none; border-color: var(--primary); }
+
+    /* Loading spinner */
+    .loading { text-align: center; padding: 40px; color: var(--text-light); }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .content { padding: 16px; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .form-row, .form-row-3 { grid-template-columns: 1fr; }
+      .nav-tabs { overflow-x: auto; padding: 0 16px; }
+      .nav-tab { white-space: nowrap; padding: 12px 14px; font-size: 0.85rem; }
+      .topbar { padding: 12px 16px; }
+      table { font-size: 0.8rem; }
+      th, td { padding: 8px 6px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════ Login Screen ═══════ -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-box">
+    <h1>Avital Heal CRM</h1>
+    <p>ניהול לקוחות וטיפולים</p>
+    <input type="password" id="loginPassword" placeholder="סיסמה" autofocus>
+    <button onclick="login()">כניסה</button>
+    <div class="login-error" id="loginError">סיסמה שגויה</div>
+  </div>
+</div>
+
+<!-- ═══════ Main App ═══════ -->
+<div class="app" id="app">
+  <!-- Top Bar -->
+  <div class="topbar">
+    <div class="topbar-right">
+      <h1>🌿 Avital Heal CRM</h1>
+    </div>
+    <div class="topbar-left">
+      <button class="btn-sm" onclick="exportClients()">📥 ייצוא CSV</button>
+      <button class="btn-sm btn-logout" onclick="logout()">יציאה</button>
+    </div>
+  </div>
+
+  <!-- Navigation -->
+  <div class="nav-tabs">
+    <div class="nav-tab active" onclick="showPage('dashboard')">דשבורד</div>
+    <div class="nav-tab" onclick="showPage('clients')">לקוחות</div>
+    <div class="nav-tab" onclick="showPage('sessions')">טיפולים</div>
+  </div>
+
+  <div class="content">
+    <!-- ═══════ Dashboard Page ═══════ -->
+    <div class="page active" id="page-dashboard">
+      <div class="stats-grid" id="statsGrid">
+        <div class="stat-card"><div class="stat-label">סה״כ לקוחות</div><div class="stat-value" id="stat-total">—</div></div>
+        <div class="stat-card"><div class="stat-label">לקוחות פעילים</div><div class="stat-value green" id="stat-active">—</div></div>
+        <div class="stat-card"><div class="stat-label">טיפולים החודש</div><div class="stat-value blue" id="stat-month-sessions">—</div></div>
+        <div class="stat-card"><div class="stat-label">הכנסות החודש</div><div class="stat-value green" id="stat-month-revenue">—</div></div>
+        <div class="stat-card"><div class="stat-label">חובות פתוחים</div><div class="stat-value orange" id="stat-unpaid">—</div></div>
+        <div class="stat-card"><div class="stat-label">הסכמות חתומות</div><div class="stat-value" id="stat-consent">—</div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><h2>לקוחות אחרונים</h2></div>
+        <div class="card-body">
+          <table>
+            <thead><tr><th>שם</th><th>אימייל</th><th>הצטרפות</th><th>הסכמה</th></tr></thead>
+            <tbody id="recentClientsTable"><tr><td colspan="4" class="loading">טוען...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════ Clients Page ═══════ -->
+    <div class="page" id="page-clients">
+      <div class="search-bar">
+        <input type="text" id="clientSearch" placeholder="חיפוש לפי שם, אימייל או טלפון..." oninput="searchClients()">
+        <button class="btn btn-primary" onclick="openNewClientModal()">+ לקוח חדש</button>
+      </div>
+      <div class="card">
+        <div class="card-body">
+          <table>
+            <thead><tr><th>שם</th><th>טלפון</th><th>סוג טיפול</th><th>טיפולים</th><th>הסכמה</th><th>סטטוס</th></tr></thead>
+            <tbody id="clientsTable"><tr><td colspan="6" class="loading">טוען...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════ Sessions Page ═══════ -->
+    <div class="page" id="page-sessions">
+      <div class="search-bar">
+        <button class="btn btn-primary" onclick="openNewSessionModal()">+ טיפול חדש</button>
+      </div>
+      <div class="card">
+        <div class="card-body">
+          <table>
+            <thead><tr><th>תאריך</th><th>לקוח</th><th>סוג</th><th>משך</th><th>סכום</th><th>שולם</th></tr></thead>
+            <tbody id="sessionsTable"><tr><td colspan="6" class="loading">טוען...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ Client Detail Modal ═══════ -->
+<div class="modal-overlay" id="clientDetailModal">
+  <div class="modal" style="max-width: 750px;">
+    <div class="modal-header">
+      <h2 id="clientDetailName">פרטי לקוח</h2>
+      <button class="modal-close" onclick="closeModal('clientDetailModal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div id="clientDetailContent"></div>
+      <h3 style="margin: 20px 0 12px; font-size: 1rem;">היסטוריית טיפולים</h3>
+      <table>
+        <thead><tr><th>תאריך</th><th>סוג</th><th>משך</th><th>סכום</th><th>שולם</th><th>סיכום</th></tr></thead>
+        <tbody id="clientSessionsTable"></tbody>
+      </table>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" onclick="openNewSessionForClient()">+ הוסף טיפול</button>
+      <button class="btn btn-outline" onclick="openEditClientModal()">עריכה</button>
+      <button class="btn btn-danger" onclick="deleteCurrentClient()">מחיקה</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ New/Edit Client Modal ═══════ -->
+<div class="modal-overlay" id="clientFormModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="clientFormTitle">לקוח חדש</h2>
+      <button class="modal-close" onclick="closeModal('clientFormModal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="clientFormId">
+      <div class="form-row">
+        <div class="form-group"><label>שם מלא *</label><input type="text" id="cf_name"></div>
+        <div class="form-group"><label>אימייל</label><input type="email" id="cf_email"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>טלפון</label><input type="tel" id="cf_phone"></div>
+        <div class="form-group"><label>תאריך לידה</label><input type="date" id="cf_birth"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>סוג טיפול</label>
+          <select id="cf_type">
+            <option value="">— בחירה —</option>
+            <option value="טיפול רגשי">טיפול רגשי</option>
+            <option value="טיפול רוחני">טיפול רוחני</option>
+            <option value="טיפול משולב">טיפול משולב</option>
+            <option value="אחר">אחר</option>
+          </select>
+        </div>
+        <div class="form-group"><label>סטטוס</label>
+          <select id="cf_status">
+            <option value="active">פעיל</option>
+            <option value="inactive">לא פעיל</option>
+            <option value="completed">הסתיים</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group"><label>כתובת</label><input type="text" id="cf_address"></div>
+      <div class="form-group"><label>הערות</label><textarea id="cf_notes"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" onclick="saveClient()">שמירה</button>
+      <button class="btn btn-outline" onclick="closeModal('clientFormModal')">ביטול</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ New/Edit Session Modal ═══════ -->
+<div class="modal-overlay" id="sessionFormModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="sessionFormTitle">טיפול חדש</h2>
+      <button class="modal-close" onclick="closeModal('sessionFormModal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="sf_id">
+      <div class="form-row">
+        <div class="form-group"><label>לקוח *</label>
+          <select id="sf_client"></select>
+        </div>
+        <div class="form-group"><label>תאריך *</label><input type="date" id="sf_date"></div>
+      </div>
+      <div class="form-row-3">
+        <div class="form-group"><label>סוג טיפול</label>
+          <select id="sf_type">
+            <option value="">— בחירה —</option>
+            <option value="טיפול רגשי">טיפול רגשי</option>
+            <option value="טיפול רוחני">טיפול רוחני</option>
+            <option value="טיפול משולב">טיפול משולב</option>
+            <option value="שיחת היכרות">שיחת היכרות</option>
+          </select>
+        </div>
+        <div class="form-group"><label>משך (דקות)</label><input type="number" id="sf_duration" value="50"></div>
+        <div class="form-group"><label>סכום (₪)</label><input type="number" id="sf_amount" value="0"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>שולם</label>
+          <select id="sf_paid">
+            <option value="0">לא</option>
+            <option value="1">כן</option>
+          </select>
+        </div>
+        <div class="form-group"><label>אמצעי תשלום</label>
+          <select id="sf_payment_method">
+            <option value="">— בחירה —</option>
+            <option value="מזומן">מזומן</option>
+            <option value="העברה">העברה</option>
+            <option value="ביט">ביט</option>
+            <option value="אשראי">אשראי</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group"><label>סיכום הטיפול</label><textarea id="sf_summary" placeholder="מה קרה בטיפול? נושאים שעלו, תובנות..."></textarea></div>
+      <div class="form-group"><label>הערות לטיפול הבא</label><textarea id="sf_next_notes" placeholder="על מה לעבוד בפעם הבאה..."></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" onclick="saveSession()">שמירה</button>
+      <button class="btn btn-outline" onclick="closeModal('sessionFormModal')">ביטול</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// Configuration
+// ═══════════════════════════════════════════════════════════════
+const API_BASE = 'https://avital-heal-crm.tgthf7frmp.workers.dev';
+let authToken = null;
+let currentClientId = null;
+let allClients = [];
+
+// ─── Auth ───
+async function login() {
+  const password = document.getElementById('loginPassword').value;
+  const errEl = document.getElementById('loginError');
+  errEl.style.display = 'none';
+
+  try {
+    const res = await fetch(`${API_BASE}/api/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password }),
+    });
+    const data = await res.json();
+    if (data.token) {
+      authToken = data.token;
+      sessionStorage.setItem('crm_token', authToken);
+      showApp();
+    } else {
+      errEl.style.display = 'block';
+    }
+  } catch (e) {
+    errEl.textContent = 'שגיאת חיבור לשרת';
+    errEl.style.display = 'block';
+  }
+}
+
+function logout() {
+  authToken = null;
+  sessionStorage.removeItem('crm_token');
+  document.getElementById('loginScreen').classList.remove('hidden');
+  document.getElementById('app').classList.remove('active');
+  document.getElementById('loginPassword').value = '';
+}
+
+async function showApp() {
+  document.getElementById('loginScreen').classList.add('hidden');
+  document.getElementById('app').classList.add('active');
+  loadDashboard();
+  loadClients();
+  loadSessions();
+}
+
+// Check for existing session
+document.addEventListener('DOMContentLoaded', async () => {
+  const token = sessionStorage.getItem('crm_token');
+  if (token) {
+    try {
+      const res = await fetch(`${API_BASE}/api/verify`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (res.ok) {
+        authToken = token;
+        showApp();
+      }
+    } catch (e) { /* stay on login */ }
+  }
+
+  // Enter key on password field
+  document.getElementById('loginPassword').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') login();
+  });
+});
+
+// ─── API helper ───
+async function api(path, options = {}) {
+  const res = await fetch(`${API_BASE}${path}`, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${authToken}`,
+      ...(options.headers || {}),
+    },
+  });
+  if (res.status === 401) { logout(); return null; }
+  return res.json();
+}
+
+// ─── Navigation ───
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(`page-${name}`).classList.add('active');
+  document.querySelectorAll('.nav-tab')[['dashboard','clients','sessions'].indexOf(name)].classList.add('active');
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('active');
+}
+
+// ─── Dashboard ───
+async function loadDashboard() {
+  const stats = await api('/api/stats');
+  if (!stats) return;
+  document.getElementById('stat-total').textContent = stats.totalClients;
+  document.getElementById('stat-active').textContent = stats.activeClients;
+  document.getElementById('stat-month-sessions').textContent = stats.monthSessions;
+  document.getElementById('stat-month-revenue').textContent = '₪' + (stats.monthRevenue || 0).toLocaleString();
+  document.getElementById('stat-unpaid').textContent = '₪' + (stats.unpaidTotal || 0).toLocaleString();
+  document.getElementById('stat-consent').textContent = stats.consentSigned;
+
+  // Recent clients
+  const tbody = document.getElementById('recentClientsTable');
+  if (stats.recentClients && stats.recentClients.length) {
+    tbody.innerHTML = stats.recentClients.map(c => `
+      <tr class="clickable-row" onclick="openClientDetail(${c.id})">
+        <td>${c.full_name}</td>
+        <td>${c.email || '—'}</td>
+        <td>${c.join_date || '—'}</td>
+        <td>${c.consent_signed ? '<span class="badge badge-green">חתום</span>' : '<span class="badge badge-gray">לא</span>'}</td>
+      </tr>
+    `).join('');
+  } else {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-light);">אין לקוחות עדיין</td></tr>';
+  }
+}
+
+// ─── Clients ───
+async function loadClients() {
+  const clients = await api('/api/clients');
+  if (!clients) return;
+  allClients = clients;
+  renderClients(clients);
+}
+
+function renderClients(clients) {
+  const tbody = document.getElementById('clientsTable');
+  if (!clients.length) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-light);">אין לקוחות</td></tr>';
+    return;
+  }
+  tbody.innerHTML = clients.map(c => `
+    <tr class="clickable-row" onclick="openClientDetail(${c.id})">
+      <td><strong>${c.full_name}</strong></td>
+      <td>${c.phone || '—'}</td>
+      <td>${c.treatment_type || '—'}</td>
+      <td>${c.session_count || 0}</td>
+      <td>${c.consent_signed ? '<span class="badge badge-green">חתום</span>' : '<span class="badge badge-gray">לא</span>'}</td>
+      <td>${c.status === 'active' ? '<span class="badge badge-green">פעיל</span>' : c.status === 'completed' ? '<span class="badge badge-blue">הסתיים</span>' : '<span class="badge badge-gray">לא פעיל</span>'}</td>
+    </tr>
+  `).join('');
+}
+
+function searchClients() {
+  const q = document.getElementById('clientSearch').value.toLowerCase();
+  const filtered = allClients.filter(c =>
+    (c.full_name || '').toLowerCase().includes(q) ||
+    (c.email || '').toLowerCase().includes(q) ||
+    (c.phone || '').includes(q)
+  );
+  renderClients(filtered);
+}
+
+// ─── Client Detail ───
+async function openClientDetail(id) {
+  currentClientId = id;
+  const data = await api(`/api/clients/${id}`);
+  if (!data) return;
+
+  document.getElementById('clientDetailName').textContent = data.full_name;
+  document.getElementById('clientDetailContent').innerHTML = `
+    <div class="form-row" style="margin-bottom:12px;">
+      <div><strong>אימייל:</strong> ${data.email || '—'}</div>
+      <div><strong>טלפון:</strong> ${data.phone || '—'}</div>
+    </div>
+    <div class="form-row" style="margin-bottom:12px;">
+      <div><strong>סוג טיפול:</strong> ${data.treatment_type || '—'}</div>
+      <div><strong>סטטוס:</strong> ${data.status || '—'}</div>
+    </div>
+    <div class="form-row" style="margin-bottom:12px;">
+      <div><strong>תאריך הצטרפות:</strong> ${data.join_date || '—'}</div>
+      <div><strong>הסכמה:</strong> ${data.consent_signed ? '✅ חתום (' + (data.consent_date || '') + ')' : '❌ לא חתום'}</div>
+    </div>
+    ${data.notes ? `<div style="margin-bottom:12px;"><strong>הערות:</strong> ${data.notes}</div>` : ''}
+  `;
+
+  const stbody = document.getElementById('clientSessionsTable');
+  if (data.sessions && data.sessions.length) {
+    stbody.innerHTML = data.sessions.map(s => `
+      <tr>
+        <td>${s.session_date}</td>
+        <td>${s.session_type || '—'}</td>
+        <td>${s.duration_minutes} דק׳</td>
+        <td>₪${s.amount || 0}</td>
+        <td>${s.paid ? '<span class="badge badge-green">שולם</span>' : '<span class="badge badge-red">לא שולם</span>'}</td>
+        <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${s.summary || '—'}</td>
+      </tr>
+    `).join('');
+  } else {
+    stbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-light);">אין טיפולים</td></tr>';
+  }
+
+  document.getElementById('clientDetailModal').classList.add('active');
+}
+
+// ─── New/Edit Client ───
+function openNewClientModal() {
+  document.getElementById('clientFormTitle').textContent = 'לקוח חדש';
+  document.getElementById('clientFormId').value = '';
+  document.getElementById('cf_name').value = '';
+  document.getElementById('cf_email').value = '';
+  document.getElementById('cf_phone').value = '';
+  document.getElementById('cf_birth').value = '';
+  document.getElementById('cf_type').value = '';
+  document.getElementById('cf_status').value = 'active';
+  document.getElementById('cf_address').value = '';
+  document.getElementById('cf_notes').value = '';
+  document.getElementById('clientFormModal').classList.add('active');
+}
+
+function openEditClientModal() {
+  const c = allClients.find(x => x.id === currentClientId);
+  if (!c) return;
+  closeModal('clientDetailModal');
+  document.getElementById('clientFormTitle').textContent = 'עריכת לקוח';
+  document.getElementById('clientFormId').value = c.id;
+  document.getElementById('cf_name').value = c.full_name || '';
+  document.getElementById('cf_email').value = c.email || '';
+  document.getElementById('cf_phone').value = c.phone || '';
+  document.getElementById('cf_birth').value = c.birth_date || '';
+  document.getElementById('cf_type').value = c.treatment_type || '';
+  document.getElementById('cf_status').value = c.status || 'active';
+  document.getElementById('cf_address').value = c.address || '';
+  document.getElementById('cf_notes').value = c.notes || '';
+  document.getElementById('clientFormModal').classList.add('active');
+}
+
+async function saveClient() {
+  const id = document.getElementById('clientFormId').value;
+  const body = {
+    full_name: document.getElementById('cf_name').value,
+    email: document.getElementById('cf_email').value,
+    phone: document.getElementById('cf_phone').value,
+    birth_date: document.getElementById('cf_birth').value,
+    treatment_type: document.getElementById('cf_type').value,
+    status: document.getElementById('cf_status').value,
+    address: document.getElementById('cf_address').value,
+    notes: document.getElementById('cf_notes').value,
+  };
+
+  if (!body.full_name) { alert('שם מלא הוא שדה חובה'); return; }
+
+  if (id) {
+    await api(`/api/clients/${id}`, { method: 'PUT', body: JSON.stringify(body) });
+  } else {
+    await api('/api/clients', { method: 'POST', body: JSON.stringify(body) });
+  }
+
+  closeModal('clientFormModal');
+  loadClients();
+  loadDashboard();
+}
+
+async function deleteCurrentClient() {
+  if (!confirm('למחוק את הלקוח? כל הטיפולים שלו יימחקו גם.')) return;
+  await api(`/api/clients/${currentClientId}`, { method: 'DELETE' });
+  closeModal('clientDetailModal');
+  loadClients();
+  loadDashboard();
+}
+
+// ─── Sessions ───
+async function loadSessions() {
+  const sessions = await api('/api/sessions');
+  if (!sessions) return;
+  const tbody = document.getElementById('sessionsTable');
+  if (!sessions.length) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-light);">אין טיפולים</td></tr>';
+    return;
+  }
+  tbody.innerHTML = sessions.map(s => `
+    <tr>
+      <td>${s.session_date}</td>
+      <td>${s.client_name || '—'}</td>
+      <td>${s.session_type || '—'}</td>
+      <td>${s.duration_minutes} דק׳</td>
+      <td>₪${s.amount || 0}</td>
+      <td>${s.paid ? '<span class="badge badge-green">שולם</span>' : '<span class="badge badge-red">לא שולם</span>'}</td>
+    </tr>
+  `).join('');
+}
+
+function openNewSessionModal() {
+  document.getElementById('sessionFormTitle').textContent = 'טיפול חדש';
+  document.getElementById('sf_id').value = '';
+  document.getElementById('sf_date').value = new Date().toISOString().slice(0, 10);
+  document.getElementById('sf_type').value = '';
+  document.getElementById('sf_duration').value = '50';
+  document.getElementById('sf_amount').value = '0';
+  document.getElementById('sf_paid').value = '0';
+  document.getElementById('sf_payment_method').value = '';
+  document.getElementById('sf_summary').value = '';
+  document.getElementById('sf_next_notes').value = '';
+
+  // Populate client dropdown
+  const sel = document.getElementById('sf_client');
+  sel.innerHTML = '<option value="">— בחירת לקוח —</option>' +
+    allClients.map(c => `<option value="${c.id}">${c.full_name}</option>`).join('');
+
+  document.getElementById('sessionFormModal').classList.add('active');
+}
+
+function openNewSessionForClient() {
+  closeModal('clientDetailModal');
+  openNewSessionModal();
+  document.getElementById('sf_client').value = currentClientId;
+}
+
+async function saveSession() {
+  const id = document.getElementById('sf_id').value;
+  const body = {
+    client_id: parseInt(document.getElementById('sf_client').value),
+    session_date: document.getElementById('sf_date').value,
+    session_type: document.getElementById('sf_type').value,
+    duration_minutes: parseInt(document.getElementById('sf_duration').value) || 50,
+    amount: parseFloat(document.getElementById('sf_amount').value) || 0,
+    paid: document.getElementById('sf_paid').value === '1',
+    payment_method: document.getElementById('sf_payment_method').value,
+    summary: document.getElementById('sf_summary').value,
+    next_session_notes: document.getElementById('sf_next_notes').value,
+  };
+
+  if (!body.client_id) { alert('יש לבחור לקוח'); return; }
+  if (!body.session_date) { alert('יש לבחור תאריך'); return; }
+
+  if (id) {
+    await api(`/api/sessions/${id}`, { method: 'PUT', body: JSON.stringify(body) });
+  } else {
+    await api('/api/sessions', { method: 'POST', body: JSON.stringify(body) });
+  }
+
+  closeModal('sessionFormModal');
+  loadSessions();
+  loadDashboard();
+}
+
+// ─── Export ───
+async function exportClients() {
+  try {
+    const res = await fetch(`${API_BASE}/api/export/clients`, {
+      headers: { 'Authorization': `Bearer ${authToken}` },
+    });
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'clients-export.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  } catch (e) {
+    alert('שגיאה בייצוא');
+  }
+}
+</script>
+</body>
+</html>

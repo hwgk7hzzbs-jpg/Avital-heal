@@ -531,6 +531,8 @@
     // ═══════════════════════════════════════════════════════════════
     // הגדרות
     // ═══════════════════════════════════════════════════════════════
+    // CRM Worker API (primary) + Google Sheets backup
+    const CRM_API_URL = 'https://avital-heal-crm.tgthf7frmp.workers.dev/api/consent';
     const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyrwywGtqchdRmZ1wmgCLS_VfXJbWOEhMbPAByKdNUYthZL4P4cQFChCwiKaKLVrLIpXQ/exec';
 
     // ═══════════════════════════════════════════════════════════════
@@ -609,41 +611,42 @@
       submitBtn.textContent = 'שולח...';
 
       try {
-        // Prepare data as URL-encoded form (avoids CORS preflight)
+        const formTimestamp = new Date().toISOString();
+        const formUserAgent = navigator.userAgent;
+
+        // Prepare data as URL-encoded form
         const params = new URLSearchParams();
         params.append('email', email);
         params.append('date', date);
         params.append('fullName', fullName);
         params.append('healthDeclaration', healthDeclaration);
         params.append('agreementConfirmation', agreementConfirmation);
-        params.append('timestamp', new Date().toISOString());
-        params.append('userAgent', navigator.userAgent);
+        params.append('timestamp', formTimestamp);
+        params.append('userAgent', formUserAgent);
         params.append('cf-turnstile-response', turnstileToken);
 
-        // Send to Google Sheets via Apps Script
-        // Using redirect:'follow' so fetch follows GAS redirect and returns the real response
-        const response = await fetch(GOOGLE_SCRIPT_URL, {
+        // 1. Send to CRM Worker API (primary — saves to D1 database)
+        const crmResponse = await fetch(CRM_API_URL, {
+          method: 'POST',
+          body: params,
+        });
+
+        if (!crmResponse.ok) {
+          const crmErr = await crmResponse.json().catch(() => ({}));
+          throw new Error(crmErr.error || 'Server returned ' + crmResponse.status);
+        }
+
+        const crmResult = await crmResponse.json();
+        if (crmResult.error) {
+          throw new Error(crmResult.error);
+        }
+
+        // 2. Also send to Google Sheets (backup — fire and forget)
+        fetch(GOOGLE_SCRIPT_URL, {
           method: 'POST',
           body: params,
           redirect: 'follow'
-        });
-
-        if (!response.ok) {
-          throw new Error('Server returned ' + response.status);
-        }
-
-        // Try to parse response for real success/error feedback
-        let result;
-        try {
-          result = await response.json();
-        } catch (parseErr) {
-          // If response isn't JSON, treat as success if status was OK
-          result = { status: 'success' };
-        }
-
-        if (result.status === 'error') {
-          throw new Error(result.message || 'שגיאה בשרת');
-        }
+        }).catch(() => { /* backup — ignore errors */ });
 
         // Track with Google Analytics
         if (typeof gtag === 'function') {
