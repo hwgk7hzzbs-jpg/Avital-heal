@@ -1,0 +1,255 @@
+/* =========================
+   style-layout.css
+   Global Layout, Section Titles, Buttons, Hero, About text, Services
+========================= */
+
+/* =========================
+   5) GLOBAL LAYOUT
+========================= */
+section{ padding: 0; background: transparent; }
+
+.container{
+  max-width: 1100px;
+  margin: auto;
+}
+
+/* Outer wrappers are transparent (no big white "glass" blocks) */
+section.container{
+  margin: 60px auto;
+  padding: 70px 28px;
+
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+
+/* Airy inner box */
+.content-box{
+  background: rgba(255,255,255,0.97);
+  border: 1px solid rgba(0,0,0,0.06);
+  border-radius: 16px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.06);
+  padding: 30px 32px;
+}
+
+/* =========================
+   6) SECTION TITLES
+========================= */
+.section-title{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  text-align: center;
+  margin-bottom: 42px;
+}
+
+.section-title-box{
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+
+  background: rgba(255,255,255,0.18);
+  border: 1px solid rgba(255,255,255,0.25);
+  border-radius: 999px;
+  padding: 10px 26px;
+
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+
+  box-shadow: 0 10px 24px rgba(0,0,0,0.08);
+}
+
+.section-title-box h2{
+  color: #fff;
+}
+
+.section-subtitle{
+  display: inline-block;
+  margin: 0;
+  background: rgba(255,255,255,0.18);
+  padding: 6px 22px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.25);
+
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+/* Bubble subtitle for all sections EXCEPT hero */
+section:not(.hero) .section-title p{
+  display: inline-block;
+  background: rgba(255,255,255,0.55);
+  padding: 6px 22px;
+  border-radius: 999px;
+  border: 1px solid var(--glass-border-soft);
+  backdrop-filter: blur(6px);
+  box-shadow: 0 10px 24px rgba(0,0,0,0.08);
+}
+
+/* =========================
+   7) BUTTONS
+========================= */
+.btn{
+  background: var(--primary-color);
+  padding: 12px 30px;
+  border-radius: 999px;
+  color: #fff;
+  font-weight: 800;
+  display: inline-block;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease, background 0.2s ease;
+  box-shadow: 0 10px 24px rgba(0,0,0,0.10);
+}
+.btn:hover{ transform: translateY(-1px); }
+
+.waze-btn{ background: var(--waze-blue); }
+.waze-btn:hover{ background: var(--waze-blue-dark); }
+
+/* WhatsApp large button */
+.whatsapp-btn-large{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  background: var(--wa-green);
+  color: #fff;
+
+  padding: 16px 32px;
+  border-radius: 999px;
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1;
+
+  box-shadow: 0 10px 24px rgba(0,0,0,0.14);
+  transition: transform .2s ease, box-shadow .2s ease, background .2s ease;
+
+  text-decoration: none;
+}
+.whatsapp-btn-large:hover{
+  background: var(--wa-green-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 14px 34px rgba(0,0,0,0.18);
+}
+
+/* =========================
+   8) HERO (keep glass here)
+========================= */
+.hero{
+  height: 80vh;
+  min-height: 80vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: #ffffff;
+  padding: 0 20px;
+  background: rgba(157, 200, 176, 0.12);
+}
+
+.hero-content{
+  background: rgba(255, 255, 255, 0.18);
+  padding: 26px 22px;
+  border-radius: 18px;
+  max-width: 820px;
+
+  backdrop-filter: blur(7px);
+  -webkit-backdrop-filter: blur(7px);
+  border: 1px solid rgba(255,255,255,0.22);
+}
+
+.hero-name{
+  font-size: 1.7rem;
+  margin-bottom: 16px;
+  letter-spacing: 0.03em;
+  font-weight: 700;
+  color: #ffffff;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.35), 0 0 18px rgba(255, 255, 255, 0.35);
+  opacity: 0.98;
+  min-height: 2.5em;
+}
+
+.hero-title{
+  font-size: 2.0rem;
+  margin-bottom: 10px;
+  font-weight: 700;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+.hero-name,
+.hero-title{
+  line-height: 1.25;
+}
+
+.hero-content > p:first-of-type{ font-weight: 800; }
+
+.hero p{
+  max-width: 740px;
+  margin: 0 auto 1.2rem;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.2);
+  line-height: 1.85;
+}
+
+.hero-meta{
+  margin-top: -4px;
+  margin-bottom: 10px;
+  font-weight: 900;
+  opacity: 0.95;
+  text-shadow: 0 1px 6px rgba(0,0,0,0.2);
+}
+
+.hero .btn{ margin-top: 18px; opacity: 0.95; }
+
+/* =========================
+   9) ABOUT
+========================= */
+.about-text{ text-align: right; }
+
+/* =========================
+   10) SERVICES
+========================= */
+.services{ background: transparent; padding: 0; }
+
+.services .container{
+  max-width: 1100px;
+  margin: 60px auto;
+  padding: 70px 28px;
+
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+
+.services-grid{
+  display: grid;
+  gap: 18px;
+  align-items: stretch;
+}
+
+@media (min-width: 769px){
+  .services-grid{ grid-template-columns: repeat(3, 1fr); }
+}
+
+.service-card{
+  background: rgba(255,255,255,0.97);
+  border: 1px solid rgba(0,0,0,0.06);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+
+  padding: 22px 20px;
+  text-align: center;
+
+  min-height: 220px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.service-card h3{ margin-bottom: 10px; font-weight: 900; }
+.service-card p{ font-weight: 400; }
+
+@media (min-width: 769px){
+  .service-card--combined{
+    grid-column: 1 / -1;
+    min-height: 220px;
+  }
+}

@@ -1,0 +1,232 @@
+/* =========================
+   style-base.css
+   Variables, Reset, Typography, Background, Links, Accessibility, Top Nav
+========================= */
+
+/* =========================
+   1) VARIABLES + RESET
+========================= */
+:root{
+  --primary-color: #9DC8B0;
+  --text-color: #4A4A4A;
+
+  --bg-overlay-strong: rgba(0, 0, 0, 0.45);
+  --bg-overlay-mobile: rgba(0, 0, 0, 0.35);
+
+  --glass-border: rgba(255, 255, 255, 0.28);
+  --glass-border-soft: rgba(255, 255, 255, 0.22);
+
+  --shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  --shadow-strong: 0 18px 50px rgba(0, 0, 0, 0.10);
+
+  --wa-green: #25D366;
+  --wa-green-dark: #1ebe5d;
+
+  --waze-blue: #2D9CDB;
+  --waze-blue-dark: #1B79B5;
+}
+
+*{ box-sizing: border-box; margin: 0; padding: 0; }
+html{ scroll-behavior: smooth; }
+
+img{
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* =========================
+   2) TYPOGRAPHY
+========================= */
+body{
+  font-family: 'Rubik', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 18px;
+  line-height: 1.85;
+  color: var(--text-color);
+  font-weight: 400;
+  padding-top: 74px; /* space for sticky nav */
+}
+
+p, li, a, button, input, textarea, label, span{
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  font-weight: 400;
+}
+
+h1{ font-size: 2.6rem; line-height: 1.2; font-weight: 800; }
+h2{ font-size: 2.0rem; line-height: 1.25; font-weight: 800; }
+h3{ font-size: 1.25rem; line-height: 1.35; font-weight: 800; }
+
+/* =========================
+   3) BACKGROUND + LINKS + ACCESSIBILITY
+========================= */
+body::before{
+  content:"";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(var(--bg-overlay-strong), var(--bg-overlay-strong)),
+    url("../bg-desktop-1600w.webp")
+      center / cover no-repeat;
+  transform: translateZ(0);
+}
+
+a{ color: inherit; text-decoration: none; }
+
+:focus-visible{
+  outline: 3px solid rgba(157, 200, 176, 0.95);
+  outline-offset: 3px;
+  border-radius: 10px;
+}
+
+.skip-link{
+  position:absolute;
+  top:10px;
+  right:-999px;
+  background:#fff;
+  color:#000;
+  padding:10px 14px;
+  border-radius:10px;
+  z-index:99999;
+  box-shadow:0 10px 24px rgba(0,0,0,.15);
+}
+.skip-link:focus{ right:10px; }
+
+/* =========================
+   4) TOP NAV (Sticky)
+========================= */
+.top-nav{
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: 0;
+  z-index: 10000;
+
+  height: 74px;
+  background: rgba(255,255,255,0.55);
+  border-bottom: 1px solid rgba(255,255,255,0.28);
+
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.top-nav-inner{
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 12px 18px;
+
+  height: 74px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+
+  overflow: visible;
+}
+
+/* Brand */
+.brand{
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  white-space: nowrap;
+  font-weight: 900;
+  line-height: 1;
+
+  background: transparent;
+  border: 0;
+  padding: 0;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.brand-logo{
+  height: 60px;
+  width: auto;
+  max-height: 60px;
+  max-width: 190px;
+  object-fit: contain;
+  flex: 0 0 auto;
+
+  background: transparent;
+  border: 0;
+  padding: 0;
+  border-radius: 0;
+
+  filter: drop-shadow(0 6px 14px rgba(0,0,0,0.22)) contrast(1.1) saturate(1.05);
+}
+
+.brand-logo:hover{
+  transform: translateY(-1px);
+}
+
+.brand-text{
+  font-weight: 900;
+  font-size: 16px;
+  opacity: 0.95;
+  line-height: 1.1;
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Desktop nav links */
+.nav-links{
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.nav-links a{
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  padding: 0;
+
+  transition: opacity .15s ease, transform .15s ease;
+  flex: 0 0 auto;
+  white-space: nowrap;
+  font-size: 16px;
+  font-weight: 700;
+}
+.nav-links a:hover{
+  transform: translateY(-1px);
+  opacity: 0.85;
+}
+
+/* Desktop overflow scroll */
+@media (min-width: 769px){
+  .nav-links{
+    min-width: 0;
+    flex: 1 1 auto;
+    flex-wrap: nowrap;
+    white-space: nowrap;
+
+    overflow-x: auto;
+    overflow-y: hidden;
+
+    justify-content: flex-start;
+    width: 100%;
+    max-width: 100%;
+
+    padding-inline: 10px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .nav-links::-webkit-scrollbar{ display: none; }
+}
+
+/* Burger */
+.nav-toggle{
+  display: none;
+  border: 0;
+  background: rgba(255,255,255,0.45);
+  border: 1px solid rgba(255,255,255,0.22);
+  border-radius: 12px;
+  padding: 8px 12px;
+  font-size: 18px;
+  cursor: pointer;
+}
