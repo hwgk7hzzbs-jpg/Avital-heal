@@ -1,10 +1,10 @@
 /* =========================
-   script.js (FINAL - matches your HTML)
+   script.js
    ✅ Smooth scroll for #anchors
    ✅ Mobile nav toggle (.nav-toggle + .nav-links)
    ✅ Close mobile nav on link click
-   ✅ Lightbox modal (optional)
    ✅ FAQ accordion (robust, works with your .faq-item structure)
+   ✅ Analytics tracking via data-track attributes
 ========================= */
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -47,29 +47,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   /* -----------------------
-     Lightbox (optional)
-  ----------------------- */
-  const modal = document.getElementById("imageModal");
-  const modalImg = document.getElementById("img01");
-
-  window.openModal = function (src) {
-    if (!modal || !modalImg) return;
-    modal.style.display = "flex";
-    modalImg.src = src;
-  };
-
-  window.closeModal = function () {
-    if (!modal) return;
-    modal.style.display = "none";
-  };
-
-  if (modal) {
-    window.addEventListener("click", (event) => {
-      if (event.target === modal) modal.style.display = "none";
-    });
-  }
-
-  /* -----------------------
      FAQ Accordion (robust)
      expects:
      .faq-item
@@ -92,4 +69,41 @@ document.addEventListener("DOMContentLoaded", () => {
       if (icon) icon.textContent = nextExpanded ? "−" : "+";
     });
   });
+
+  /* -----------------------
+     Analytics tracking (data-track attributes)
+     Replaces inline onclick handlers for better CSP compliance
+  ----------------------- */
+  document.querySelectorAll("[data-track]").forEach((el) => {
+    el.addEventListener("click", () => {
+      const trackId = el.getAttribute("data-track");
+      if (typeof gtag === "function") {
+        switch (trackId) {
+          case "click_phone":
+            gtag("event", "click_phone", { event_category: "contact" });
+            break;
+          case "click_whatsapp_big":
+            gtag("event", "click_whatsapp", { event_label: "big_button" });
+            break;
+          case "click_whatsapp_float":
+            gtag("event", "click_whatsapp", { event_label: "floating_button" });
+            break;
+        }
+      }
+    });
+  });
+
+  /* -----------------------
+     Back-to-top button visibility
+  ----------------------- */
+  const backToTop = document.querySelector(".back-to-top");
+  if (backToTop) {
+    window.addEventListener("scroll", () => {
+      if (window.scrollY > 600) {
+        backToTop.classList.add("visible");
+      } else {
+        backToTop.classList.remove("visible");
+      }
+    });
+  }
 });
