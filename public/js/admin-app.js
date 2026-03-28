@@ -185,17 +185,97 @@ async function changePassword() {
 
 // ─── Navigation ───
 
-function showPage(name) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-  document.getElementById(`page-${name}`).classList.add('active');
+function switchTab(name) {
+  document.querySelectorAll('.page').forEach(p => {
+    p.classList.add('hidden');
+    p.classList.remove('active');
+  });
+  document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+  const page = document.getElementById(`page-${name}`);
+  if (page) { page.classList.remove('hidden'); page.classList.add('active'); }
   const pages = ['dashboard', 'contacts', 'clients', 'sessions'];
-  document.querySelectorAll('.nav-tab')[pages.indexOf(name)].classList.add('active');
+  const idx = pages.indexOf(name);
+  const tabs = document.querySelectorAll('.tab-btn');
+  if (tabs[idx]) tabs[idx].classList.add('active');
 }
 
-function closeModal(id) {
-  document.getElementById(id).classList.remove('active');
+// Alias for backward compatibility
+function showPage(name) { switchTab(name); }
+
+// ─── Modal helpers ───
+function openModal(id) {
+  document.getElementById(id).classList.remove('hidden');
 }
+function closeModal(id) {
+  document.getElementById(id).classList.add('hidden');
+}
+function showClientFormModal(clientData) {
+  if (clientData) {
+    document.getElementById('cf_id').value = clientData.id || '';
+    document.getElementById('cf_fullName').value = clientData.full_name || '';
+    document.getElementById('cf_email').value = clientData.email || '';
+    document.getElementById('cf_phone').value = clientData.phone || '';
+    document.getElementById('cf_dob').value = clientData.date_of_birth || '';
+    document.getElementById('cf_serviceType').value = clientData.service_type || '';
+    document.getElementById('cf_status').value = clientData.status || 'active';
+    document.getElementById('cf_address').value = clientData.address || '';
+    document.getElementById('cf_notes').value = clientData.notes || '';
+  } else {
+    document.getElementById('cf_id').value = '';
+    document.getElementById('cf_fullName').value = '';
+    document.getElementById('cf_email').value = '';
+    document.getElementById('cf_phone').value = '';
+    document.getElementById('cf_dob').value = '';
+    document.getElementById('cf_serviceType').value = '';
+    document.getElementById('cf_status').value = 'active';
+    document.getElementById('cf_address').value = '';
+    document.getElementById('cf_notes').value = '';
+  }
+  openModal('clientFormModal');
+}
+function closeClientFormModal() { closeModal('clientFormModal'); }
+function showSessionFormModal(sessionData) {
+  if (sessionData) {
+    document.getElementById('sf_id').value = sessionData.id || '';
+    document.getElementById('sf_clientId').value = sessionData.client_id || '';
+    document.getElementById('sf_date').value = sessionData.session_date ? sessionData.session_date.slice(0,16) : '';
+    document.getElementById('sf_serviceType').value = sessionData.service_type || '';
+    document.getElementById('sf_duration').value = sessionData.duration_minutes || '';
+    document.getElementById('sf_amount').value = sessionData.amount || '';
+    document.getElementById('sf_paid').checked = !!sessionData.paid;
+    document.getElementById('sf_paymentMethod').value = sessionData.payment_method || '';
+    document.getElementById('sf_summary').value = sessionData.summary || '';
+    document.getElementById('sf_nextNotes').value = sessionData.next_session_notes || '';
+  } else {
+    document.getElementById('sf_id').value = '';
+    document.getElementById('sf_date').value = '';
+    document.getElementById('sf_serviceType').value = '';
+    document.getElementById('sf_duration').value = '';
+    document.getElementById('sf_amount').value = '500';
+    document.getElementById('sf_paid').checked = false;
+    document.getElementById('sf_paymentMethod').value = '';
+    document.getElementById('sf_summary').value = '';
+    document.getElementById('sf_nextNotes').value = '';
+  }
+  openModal('sessionFormModal');
+}
+function closeSessionFormModal() { closeModal('sessionFormModal'); }
+function showClientDetailModal(client) {
+  document.getElementById('clientDetailName').textContent = client.full_name || 'פרטי לקוח';
+  const content = document.getElementById('clientDetailContent');
+  content.innerHTML = `
+    <p><strong>אימייל:</strong> ${client.email || '—'}</p>
+    <p><strong>טלפון:</strong> ${client.phone || '—'}</p>
+    <p><strong>סוג טיפול:</strong> ${client.service_type || '—'}</p>
+    <p><strong>סטטוס:</strong> ${client.status || '—'}</p>
+    <p><strong>כתובת:</strong> ${client.address || '—'}</p>
+    <p><strong>הערות:</strong> ${client.notes || '—'}</p>
+  `;
+  openModal('clientDetailModal');
+}
+function closeClientDetailModal() { closeModal('clientDetailModal'); }
+function showChangePasswordModal() { openModal('changePasswordModal'); }
+function closeChangePasswordModal() { closeModal('changePasswordModal'); }
 
 // ─── Init ───
 
