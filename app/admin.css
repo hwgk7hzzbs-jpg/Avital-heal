@@ -73,6 +73,22 @@ body {
 .login-box button:active { transform: translateY(0); }
 .login-error { color: var(--danger); font-size: 0.85rem; margin-top: 12px; display: none; }
 
+/* ─── Password Toggle ─── */
+.password-wrapper {
+  position: relative; width: 100%;
+}
+.password-wrapper .input-field {
+  padding-left: 48px; width: 100%; margin-bottom: 14px;
+}
+.toggle-password {
+  position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+  background: none; border: none; cursor: pointer; padding: 4px;
+  color: var(--text-light); width: 28px; height: 28px; margin-top: -7px;
+}
+.toggle-password:hover { color: var(--primary-dark); }
+.toggle-password svg { width: 20px; height: 20px; display: block; }
+.toggle-password .hidden { display: none; }
+
 /* ─── App Layout ─── */
 .app { display: none; }
 .app.active { display: block; }

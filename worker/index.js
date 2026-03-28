@@ -5,7 +5,7 @@
  * @security Auth check applied before protected routes.
  */
 
-import { CORS_HEADERS, SECURITY_HEADERS } from './utils.js';
+import { CORS_HEADERS, SECURITY_HEADERS, getCorsHeaders } from './utils.js';
 import { errorResponse } from './utils.js';
 import { isAuthorized, handleLogin, handleVerify } from './auth.js';
 import { handleRequestReset, handleExecuteReset, handleChangePassword } from './auth.js';
@@ -42,7 +42,7 @@ export default {
     if (method === 'OPTIONS') {
       return new Response(null, {
         status: 204,
-        headers: { ...CORS_HEADERS, ...SECURITY_HEADERS },
+        headers: { ...getCorsHeaders(request), ...SECURITY_HEADERS },
       });
     }
 

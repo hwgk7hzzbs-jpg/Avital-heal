@@ -18,7 +18,13 @@
     <h1>Avital Heal CRM</h1>
     <p class="subtitle">ניהול לקוחות וטיפולים</p>
     <input type="email" id="loginEmail" placeholder="אימייל" class="input-field">
-    <input type="password" id="loginPassword" placeholder="סיסמה" class="input-field">
+    <div class="password-wrapper">
+      <input type="password" id="loginPassword" placeholder="סיסמה" class="input-field">
+      <button type="button" class="toggle-password" onclick="togglePasswordVisibility('loginPassword', this)" aria-label="הצג סיסמה">
+        <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        <svg class="eye-off-icon hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+      </button>
+    </div>
     <button onclick="login()" class="btn btn-primary">כניסה</button>
     <div id="loginError" class="login-error"></div>
     <div class="reset-link" onclick="showResetForm()">שכחתי סיסמה</div>

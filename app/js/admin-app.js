@@ -25,6 +25,23 @@ async function api(path, options = {}) {
   return res.json();
 }
 
+// ─── Password toggle ───
+
+function togglePasswordVisibility(inputId, btn) {
+  const input = document.getElementById(inputId);
+  const eyeOn = btn.querySelector('.eye-icon');
+  const eyeOff = btn.querySelector('.eye-off-icon');
+  if (input.type === 'password') {
+    input.type = 'text';
+    eyeOn.classList.add('hidden');
+    eyeOff.classList.remove('hidden');
+  } else {
+    input.type = 'password';
+    eyeOn.classList.remove('hidden');
+    eyeOff.classList.add('hidden');
+  }
+}
+
 // ─── Login (email + password) ───
 
 async function login() {
@@ -161,7 +178,7 @@ async function executeReset() {
       msgEl.textContent = 'הסיסמה עודכנה! מעביר לכניסה...';
       msgEl.className = 'reset-msg success';
       setTimeout(() => {
-        window.location.href = '/admin';
+        window.location.href = '/';
       }, 2000);
     } else {
       msgEl.textContent = data.error || 'שגיאה באיפוס';
