@@ -15,6 +15,14 @@ import { handleGetClients, handleGetClient, handleCreateClient, handleUpdateClie
 import { handleGetSessions, handleGetClientSessions, handleCreateSession, handleUpdateSession, handleDeleteSession } from './sessions.js';
 import { handleStats } from './dashboard.js';
 import { handleGetUsers, handleCreateUser, handleUpdateUser, handleDeleteUser, handleAdminResetPassword } from './users.js';
+import {
+  handleWorkshopRegister,
+  handleGetWorkshops,
+  handleGetWorkshop,
+  handleGetWorkshopRegistrations,
+  handleUpdateRegistration,
+  handleDeleteRegistration,
+} from './workshops.js';
 
 // ─── One-time DB migration ───
 async function runMigrations(env) {
@@ -27,6 +35,72 @@ async function runMigrations(env) {
       // Set all existing users as active
       await env.DB.prepare("UPDATE users SET active = 1 WHERE active IS NULL").run();
     }
+
+    // Create workshops table
+    await env.DB.prepare(`
+      CREATE TABLE IF NOT EXISTS workshops (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        description TEXT,
+        dates TEXT,
+        price REAL,
+        sessions_count INTEGER,
+        duration_minutes INTEGER,
+        location TEXT,
+        active INTEGER DEFAULT 1,
+        created_at DATETIME DEFAULT (datetime('now')),
+        updated_at DATETIME DEFAULT (datetime('now'))
+      )
+    `).run();
+
+    // Create workshop_registrations table
+    await env.DB.prepare(`
+      CREATE TABLE IF NOT EXISTS workshop_registrations (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        workshop_id TEXT NOT NULL,
+        full_name TEXT NOT NULL,
+        phone TEXT,
+        email TEXT,
+        date_option TEXT,
+        status TEXT DEFAULT 'new',
+        notes TEXT,
+        created_at DATETIME DEFAULT (datetime('now')),
+        FOREIGN KEY (workshop_id) REFERENCES workshops(id)
+      )
+    `).run();
+
+    // Add consent columns to workshop_registrations if missing
+    const regCols = await env.DB.prepare("PRAGMA table_info(workshop_registrations)").all();
+    const hasConsent = regCols.results.some(c => c.name === 'consent_agreed');
+    if (!hasConsent) {
+      await env.DB.prepare("ALTER TABLE workshop_registrations ADD COLUMN consent_agreed BOOLEAN DEFAULT 0").run();
+      await env.DB.prepare("ALTER TABLE workshop_registrations ADD COLUMN consent_date DATETIME").run();
+      await env.DB.prepare("ALTER TABLE workshop_registrations ADD COLUMN consent_ip TEXT").run();
+    }
+
+    // Seed default workshop if missing
+    const existing = await env.DB.prepare(
+      "SELECT id FROM workshops WHERE id = ?"
+    ).bind('mirpaa-shel-atzmi').first();
+
+    if (!existing) {
+      const dates = JSON.stringify([
+        { id: 'june-3-1730', label: '3 ביוני, 17:30', date: '2026-06-03T17:30:00' },
+      ]);
+      await env.DB.prepare(`
+        INSERT INTO workshops (id, name, description, dates, price, sessions_count, duration_minutes, location, active)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)
+      `).bind(
+        'mirpaa-shel-atzmi',
+        'להיות המרפאה של עצמי',
+        'סדנת נשים אינטימית — 5 מפגשים, פעם בשבוע, בשיטת מסע הנשמה',
+        dates,
+        1000,
+        5,
+        120,
+        'מורדכי רומנו 27, תל אביב'
+      ).run();
+    }
   } catch (e) {
     console.error('Migration error:', e);
   }
@@ -37,12 +111,13 @@ export default {
     const url = new URL(request.url);
     const path = url.pathname;
     const method = request.method;
+    const corsHeaders = getCorsHeaders(request);
 
     // CORS preflight
     if (method === 'OPTIONS') {
       return new Response(null, {
         status: 204,
-        headers: { ...getCorsHeaders(request), ...SECURITY_HEADERS },
+        headers: { ...corsHeaders, ...SECURITY_HEADERS },
       });
     }
 
@@ -52,109 +127,143 @@ export default {
       env._migrated = true;
     }
 
+    // Helper: ensure every response has correct CORS for this origin
+    function withCors(response) {
+      const newHeaders = new Headers(response.headers);
+      for (const [k, v] of Object.entries(corsHeaders)) {
+        newHeaders.set(k, v);
+      }
+      return new Response(response.body, {
+        status: response.status,
+        statusText: response.statusText,
+        headers: newHeaders,
+      });
+    }
+
     // ─── Public endpoints (no auth required) ───
     if (path === '/api/consent' && method === 'POST') {
-      return handleConsentSubmission(request, env);
+      return withCors(await handleConsentSubmission(request, env));
     }
     if (path === '/api/contact' && method === 'POST') {
-      return handleContactSubmission(request, env);
+      return withCors(await handleContactSubmission(request, env));
     }
     if (path === '/api/login' && method === 'POST') {
-      return handleLogin(request, env);
+      return withCors(await handleLogin(request, env));
     }
     if (path === '/api/reset-request' && method === 'POST') {
-      return handleRequestReset(request, env);
+      return withCors(await handleRequestReset(request, env));
     }
     if (path === '/api/reset-execute' && method === 'POST') {
-      return handleExecuteReset(request, env);
+      return withCors(await handleExecuteReset(request, env));
+    }
+    if (path === '/api/workshop-register' && method === 'POST') {
+      return withCors(await handleWorkshopRegister(request, env));
     }
 
     // ─── Auth check for all /api/* routes below ───
     if (path.startsWith('/api/')) {
       if (!(await isAuthorized(request, env))) {
-        return errorResponse('Unauthorized', 401);
+        return withCors(errorResponse('Unauthorized', 401));
       }
     }
 
     // ─── Protected endpoints ───
     if (path === '/api/verify' && method === 'GET') {
-      return handleVerify(request, env);
+      return withCors(await handleVerify(request, env));
     }
     if (path === '/api/change-password' && method === 'POST') {
-      return handleChangePassword(request, env);
+      return withCors(await handleChangePassword(request, env));
     }
     if (path === '/api/stats' && method === 'GET') {
-      return handleStats(env);
+      return withCors(await handleStats(env));
     }
 
     // Clients
     if (path === '/api/clients' && method === 'GET') {
-      return handleGetClients(url, env);
+      return withCors(await handleGetClients(url, env));
     }
     if (path === '/api/clients' && method === 'POST') {
-      return handleCreateClient(request, env);
+      return withCors(await handleCreateClient(request, env));
     }
     if (path.match(/^\/api\/clients\/\d+$/) && method === 'GET') {
-      return handleGetClient(path.split('/').pop(), env);
+      return withCors(await handleGetClient(path.split('/').pop(), env));
     }
     if (path.match(/^\/api\/clients\/\d+$/) && method === 'PUT') {
-      return handleUpdateClient(path.split('/').pop(), request, env);
+      return withCors(await handleUpdateClient(path.split('/').pop(), request, env));
     }
     if (path.match(/^\/api\/clients\/\d+$/) && method === 'DELETE') {
-      return handleDeleteClient(path.split('/').pop(), env);
+      return withCors(await handleDeleteClient(path.split('/').pop(), env));
     }
 
     // Sessions
     if (path === '/api/sessions' && method === 'GET') {
-      return handleGetSessions(url, env);
+      return withCors(await handleGetSessions(url, env));
     }
     if (path === '/api/sessions' && method === 'POST') {
-      return handleCreateSession(request, env);
+      return withCors(await handleCreateSession(request, env));
     }
     if (path.match(/^\/api\/sessions\/\d+$/) && method === 'PUT') {
-      return handleUpdateSession(path.split('/').pop(), request, env);
+      return withCors(await handleUpdateSession(path.split('/').pop(), request, env));
     }
     if (path.match(/^\/api\/sessions\/\d+$/) && method === 'DELETE') {
-      return handleDeleteSession(path.split('/').pop(), env);
+      return withCors(await handleDeleteSession(path.split('/').pop(), env));
     }
     if (path.match(/^\/api\/clients\/\d+\/sessions$/) && method === 'GET') {
-      return handleGetClientSessions(path.split('/')[3], env);
+      return withCors(await handleGetClientSessions(path.split('/')[3], env));
     }
 
     // Contacts
     if (path === '/api/contacts' && method === 'GET') {
-      return handleGetContacts(url, env);
+      return withCors(await handleGetContacts(url, env));
     }
     if (path.match(/^\/api\/contacts\/\d+$/) && method === 'PUT') {
-      return handleUpdateContact(path.split('/').pop(), request, env);
+      return withCors(await handleUpdateContact(path.split('/').pop(), request, env));
     }
     if (path.match(/^\/api\/contacts\/\d+$/) && method === 'DELETE') {
-      return handleDeleteContact(path.split('/').pop(), env);
+      return withCors(await handleDeleteContact(path.split('/').pop(), env));
     }
 
     // Export
     if (path === '/api/export/clients' && method === 'GET') {
-      return handleExportClients(env);
+      return withCors(await handleExportClients(env));
     }
 
     // Users (admin only — role check inside handlers)
     if (path === '/api/users' && method === 'GET') {
-      return handleGetUsers(request, env);
+      return withCors(await handleGetUsers(request, env));
     }
     if (path === '/api/users' && method === 'POST') {
-      return handleCreateUser(request, env);
+      return withCors(await handleCreateUser(request, env));
     }
     if (path.match(/^\/api\/users\/\d+$/) && method === 'PUT') {
-      return handleUpdateUser(request, env, path.split('/').pop());
+      return withCors(await handleUpdateUser(request, env, path.split('/').pop()));
     }
     if (path.match(/^\/api\/users\/\d+$/) && method === 'DELETE') {
-      return handleDeleteUser(request, env, path.split('/').pop());
+      return withCors(await handleDeleteUser(request, env, path.split('/').pop()));
     }
     if (path.match(/^\/api\/users\/\d+\/reset-password$/) && method === 'POST') {
       const parts = path.split('/');
-      return handleAdminResetPassword(request, env, parts[3]);
+      return withCors(await handleAdminResetPassword(request, env, parts[3]));
     }
 
-    return errorResponse('Not found', 404);
+    // Workshops (protected)
+    if (path === '/api/workshops' && method === 'GET') {
+      return withCors(await handleGetWorkshops(env));
+    }
+    if (path.match(/^\/api\/workshops\/[\w-]+$/) && method === 'GET') {
+      return withCors(await handleGetWorkshop(path.split('/').pop(), env));
+    }
+    if (path.match(/^\/api\/workshops\/[\w-]+\/registrations$/) && method === 'GET') {
+      const parts = path.split('/');
+      return withCors(await handleGetWorkshopRegistrations(parts[3], env));
+    }
+    if (path.match(/^\/api\/workshop-registrations\/\d+$/) && method === 'PUT') {
+      return withCors(await handleUpdateRegistration(path.split('/').pop(), request, env));
+    }
+    if (path.match(/^\/api\/workshop-registrations\/\d+$/) && method === 'DELETE') {
+      return withCors(await handleDeleteRegistration(path.split('/').pop(), env));
+    }
+
+    return withCors(errorResponse('Not found', 404));
   },
 };

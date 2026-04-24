@@ -25,7 +25,7 @@
         <svg class="eye-off-icon hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
       </button>
     </div>
-    <button onclick="login()" class="btn btn-primary">כניסה</button>
+    <button onclick="login()" class="btn btn-primary login-btn">כניסה</button>
     <div id="loginError" class="login-error"></div>
     <div class="reset-link" onclick="showResetForm()">שכחתי סיסמה</div>
   </div>
@@ -78,6 +78,7 @@
     </button>
     <button class="tab-btn" onclick="switchTab('clients')">לקוחות</button>
     <button class="tab-btn" onclick="switchTab('sessions')">טיפולים</button>
+    <button class="tab-btn" onclick="switchTab('workshops')">סדנאות</button>
     <button class="tab-btn" onclick="switchTab('users')" id="usersTab" style="display:none">משתמשים</button>
   </div>
 
@@ -193,6 +194,30 @@
       </table>
     </div>
 
+    <!-- WORKSHOPS PAGE -->
+    <div id="page-workshops" class="page hidden">
+      <div class="page-header">
+        <h2>סדנאות</h2>
+      </div>
+      <div id="workshopsList"></div>
+      <div id="workshopDetails" style="display:none; margin-top:20px;">
+        <div class="card">
+          <div class="card-header">
+            <h3 id="workshopDetailsTitle"></h3>
+            <button onclick="closeWorkshopDetails()" class="btn btn-outline btn-sm">סגור</button>
+          </div>
+          <div class="card-body">
+            <div id="workshopDetailsInfo" style="margin-bottom:16px;"></div>
+            <h4 style="margin-bottom:10px;">נרשמים</h4>
+            <table class="table">
+              <thead><tr><th>שם</th><th>טלפון</th><th>אימייל</th><th>מועד שנבחר</th><th>תאריך הרשמה</th><th>סטטוס</th><th>פעולות</th></tr></thead>
+              <tbody id="workshopRegistrationsTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- USERS PAGE (admin only) -->
     <div id="page-users" class="page hidden">
       <div class="page-header">
@@ -209,6 +234,21 @@
 </div>
 
 <!-- MODALS -->
+
+<!-- CONTACT DETAIL MODAL -->
+<div id="contactDetailModal" class="modal hidden">
+  <div class="modal-content">
+    <span class="modal-close" onclick="closeContactDetailModal()">&times;</span>
+    <h2 id="contactDetailName">פרטי פנייה</h2>
+    <div id="contactDetailContent"></div>
+    <div style="display:flex; gap:8px; margin-top:16px; flex-wrap:wrap;">
+      <a id="contactDetailWhatsApp" href="#" target="_blank" class="btn btn-primary" style="background:#25D366; border-color:#25D366;">שלח WhatsApp</a>
+      <a id="contactDetailPhone" href="#" class="btn btn-secondary">חייג</a>
+      <a id="contactDetailEmail" href="#" class="btn btn-secondary">שלח אימייל</a>
+      <button onclick="deleteContact()" class="btn" style="background:var(--danger); color:#fff; border-color:var(--danger);">מחק</button>
+    </div>
+  </div>
+</div>
 
 <!-- CLIENT DETAIL MODAL -->
 <div id="clientDetailModal" class="modal hidden">
@@ -309,12 +349,13 @@
   </div>
 </div>
 
-<script src="js/admin-app.js?v=9"></script>
-<script src="js/admin-dashboard.js?v=9"></script>
-<script src="js/admin-clients.js?v=9"></script>
-<script src="js/admin-sessions.js?v=9"></script>
-<script src="js/admin-contacts.js?v=9"></script>
-<script src="js/admin-users.js?v=9"></script>
+<script src="js/admin-app.js?v=13"></script>
+<script src="js/admin-dashboard.js?v=13"></script>
+<script src="js/admin-clients.js?v=13"></script>
+<script src="js/admin-sessions.js?v=13"></script>
+<script src="js/admin-contacts.js?v=13"></script>
+<script src="js/admin-users.js?v=13"></script>
+<script src="js/admin-workshops.js?v=13"></script>
 
 </body>
 </html>

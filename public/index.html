@@ -17,6 +17,10 @@
   
   <title>אביטל הוכברג | טיפול רגשי ורוחני בתל אביב | אונליין</title>
   <meta name="description" content="אביטל הוכברג – מטפלת רגשית ורוחנית. שילוב NLP, מסע הנשמה וביואורגונומי לתהליכי עומק פרקטיים ורכים. מפגשים בתל אביב ובאונליין, עם זמינות גם לאזור המרכז והשפלה." />
+  <meta name="keywords" content="טיפול רגשי תל אביב, מטפלת רוחנית, מסע הנשמה, NLP, ביואורגונומי, דמיון מודרך, מטפלת הוליסטית, טיפול בחרדות, טיפול אונליין, אביטל הוכברג, Avital Heal, מטפלת תל אביב, ריפוי אנרגטי" />
+  <meta name="author" content="אביטל הוכברג" />
+  <meta name="geo.region" content="IL-TA" />
+  <meta name="geo.placename" content="תל אביב-יפו" />
   
   <style>
   body { background: #0f0f10; }
@@ -45,20 +49,123 @@
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
-    "@type": "LocalBusiness",
-    "name": "אביטל הוכברג",
-    "url": "https://avital-heal.com/",
-    "image": "https://avital-heal.com/avital-light.jpg",
-    "telephone": "+972507883883",
-    "address": {
-      "@type": "PostalAddress",
-      "streetAddress": "ישעיהו 19",
-      "addressLocality": "תל אביב",
-      "addressCountry": "IL"
-    },
-    "areaServed": "IL",
-    "sameAs": [
-      "https://wa.me/972507883883"
+    "@graph": [
+      {
+        "@type": "LocalBusiness",
+        "@id": "https://avital-heal.com/#business",
+        "name": "אביטל הוכברג — טיפול רגשי ורוחני",
+        "alternateName": "Avital Heal",
+        "description": "טיפול רגשי ורוחני בשילוב מסע הנשמה, NLP וביואורגונומי. מפגשים בתל אביב ואונליין.",
+        "url": "https://avital-heal.com/",
+        "logo": "https://avital-heal.com/logo-header.webp",
+        "image": [
+          "https://avital-heal.com/avital-light.jpg"
+        ],
+        "telephone": "+972-50-788-3883",
+        "email": "avital.ho@gmail.com",
+        "priceRange": "₪₪",
+        "currenciesAccepted": "ILS",
+        "paymentAccepted": "Cash, Bank transfer, Bit",
+        "address": {
+          "@type": "PostalAddress",
+          "streetAddress": "ישעיהו 19",
+          "addressLocality": "תל אביב-יפו",
+          "addressRegion": "תל אביב",
+          "postalCode": "6249416",
+          "addressCountry": "IL"
+        },
+        "areaServed": [
+          { "@type": "City", "name": "תל אביב" },
+          { "@type": "AdministrativeArea", "name": "גוש דן" },
+          { "@type": "AdministrativeArea", "name": "מרכז" },
+          { "@type": "Country", "name": "ישראל" }
+        ],
+        "openingHoursSpecification": [
+          {
+            "@type": "OpeningHoursSpecification",
+            "dayOfWeek": ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday"],
+            "opens": "09:00",
+            "closes": "19:00"
+          }
+        ],
+        "founder": { "@id": "https://avital-heal.com/#avital" },
+        "employee": { "@id": "https://avital-heal.com/#avital" },
+        "knowsLanguage": ["he", "en"],
+        "sameAs": [
+          "https://maps.app.goo.gl/hCUeRGTyEB66x6u5A",
+          "https://wa.me/972507883883"
+        ]
+      },
+      {
+        "@type": "Person",
+        "@id": "https://avital-heal.com/#avital",
+        "name": "אביטל הוכברג",
+        "alternateName": "Avital Hochberg",
+        "image": "https://avital-heal.com/avital-light.jpg",
+        "url": "https://avital-heal.com/",
+        "telephone": "+972-50-788-3883",
+        "email": "avital.ho@gmail.com",
+        "jobTitle": "מטפלת רגשית ורוחנית · מאסטר NLP · מנחת מסע הנשמה בשיטת אביחי אבוהב",
+        "worksFor": { "@id": "https://avital-heal.com/#business" },
+        "knowsAbout": [
+          "מסע הנשמה",
+          "ביואורגונומי",
+          "NLP",
+          "דמיון מודרך",
+          "טיפול רגשי",
+          "טיפול רוחני",
+          "ריפוי אנרגטי",
+          "הנחיית קבוצות"
+        ],
+        "knowsLanguage": ["he", "en"]
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://avital-heal.com/#website",
+        "url": "https://avital-heal.com/",
+        "name": "אביטל הוכברג — טיפול רגשי ורוחני",
+        "inLanguage": "he-IL",
+        "publisher": { "@id": "https://avital-heal.com/#business" }
+      },
+      {
+        "@type": "FAQPage",
+        "@id": "https://avital-heal.com/#faq",
+        "inLanguage": "he-IL",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "כמה זמן נמשך מפגש טיפולי?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "מפגש טיפולי נמשך עד שעה וחצי."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "האם אפשר לקיים מפגשים אונליין?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "כן. אפשר לקבוע מפגשים אונליין מלאים בצורה ממוקדת, רגישה ויעילה."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "מה ההבדל בין NLP, מסע הנשמה וביואורגונומי?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "NLP נותן כלים פרקטיים לשינוי דפוסים; מסע הנשמה עובד לעומק דרך דמיון מודרך ותובנות פנימיות; ביואורגונומי מסייע להבין השפעות מעץ המשפחה והמערכת האנרגטית כפי שהן באות לידי ביטוי ביום-יום."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "כמה מפגשים בדרך כלל צריך?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "זה תלוי בנושא ובמטרה. בשיחת היכרות נוכל להעריך כיוון ותדירות שמתאימים לך."
+            }
+          }
+        ]
+      }
     ]
   }
   </script>

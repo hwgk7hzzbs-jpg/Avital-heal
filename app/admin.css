@@ -62,30 +62,32 @@ body {
   outline: none; border-color: var(--primary);
   box-shadow: 0 0 0 3px rgba(157,200,176,0.25); background: #fff;
 }
-.login-box button {
+.login-box button.login-btn {
   width: 100%; padding: 14px; background: var(--primary);
   color: white; border: none; border-radius: 12px;
   font-family: inherit; font-size: 1.05rem; font-weight: 700;
   cursor: pointer; transition: background 0.2s, transform 0.1s;
   margin-top: 4px;
 }
-.login-box button:hover { background: var(--primary-dark); transform: translateY(-1px); }
-.login-box button:active { transform: translateY(0); }
+.login-box button.login-btn:hover { background: var(--primary-dark); transform: translateY(-1px); }
+.login-box button.login-btn:active { transform: translateY(0); }
 .login-error { color: var(--danger); font-size: 0.85rem; margin-top: 12px; display: none; }
 
 /* ─── Password Toggle ─── */
 .password-wrapper {
-  position: relative; width: 100%;
+  position: relative; width: 100%; margin-bottom: 14px;
 }
 .password-wrapper .input-field {
-  padding-left: 48px; width: 100%; margin-bottom: 14px;
+  padding-left: 48px; margin-bottom: 0;
 }
-.toggle-password {
+.login-box .toggle-password {
   position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
-  background: none; border: none; cursor: pointer; padding: 4px;
-  color: var(--text-light); width: 28px; height: 28px; margin-top: -7px;
+  background: none !important; border: none; cursor: pointer; padding: 4px;
+  color: var(--text-light); width: 28px; height: 28px;
+  margin: 0; border-radius: 0;
 }
-.toggle-password:hover { color: var(--primary-dark); }
+.login-box .toggle-password:hover { background: none !important; color: var(--primary-dark); transform: translateY(-50%); }
+.login-box .toggle-password:active { transform: translateY(-50%); }
 .toggle-password svg { width: 20px; height: 20px; display: block; }
 .toggle-password .hidden { display: none; }
 

@@ -8,6 +8,7 @@ const ALLOWED_ORIGINS = [
   'https://avital-heal.com',
   'https://app.avital-heal.com',
   'https://info.avital-heal.com',
+  'https://workshop.avital-heal.com',
 ];
 
 export function getCorsHeaders(request) {
@@ -66,4 +67,24 @@ export function csvResponse(csv, filename, request = null) {
       ...SECURITY_HEADERS,
     },
   });
+}
+
+/**
+ * Send a notification to Avital's Google Apps Script webhook.
+ * Fire-and-forget — failures are logged but never block the main flow.
+ *
+ * Apps Script receives: { type, ...payload }
+ * Types: 'password-reset' (existing), 'new-contact', 'new-workshop-registration'
+ */
+export async function sendNotification(env, type, payload) {
+  if (!env.RESET_EMAIL_SCRIPT_URL) return;
+  try {
+    await fetch(env.RESET_EMAIL_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type, ...payload }),
+    });
+  } catch (e) {
+    console.error(`Notification send error (type=${type}):`, e);
+  }
 }

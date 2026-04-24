@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://workshop.avital-heal.com/sitemap.xml

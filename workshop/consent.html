@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>הסכם סדנה והצהרת בריאות - להיות המרפאה של עצמי</title>
+  <meta name="description" content="הסכם סדנה, הצהרת בריאות וטופס הסכמה מדעת לסדנת 'להיות המרפאה של עצמי' עם אביטל הוכברג">
+  <link rel="canonical" href="https://workshop.avital-heal.com/consent.html">
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@200;300;400;500;700;900&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: linear-gradient(160deg, #1a0835 0%, #2a1260 50%, #130828 100%);
+      font-family: 'Heebo', 'Arial Hebrew', Arial, sans-serif;
+      direction: rtl;
+      min-height: 100vh;
+      color: #e8d8ff;
+      line-height: 1.7;
+    }
+
+    .container {
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 32px 22px 60px;
+    }
+
+    .header-wrap {
+      text-align: center;
+      padding: 24px 0 28px;
+    }
+
+    .label-top {
+      font-size: 12px;
+      font-weight: 400;
+      letter-spacing: 3px;
+      color: #C9A84C;
+      margin-bottom: 10px;
+    }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 800;
+      color: #D4AF37;
+      line-height: 1.25;
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      font-size: 15px;
+      font-weight: 300;
+      color: #c4b0e0;
+      letter-spacing: 1px;
+    }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin: 22px auto;
+    }
+    .divider-line {
+      width: 60px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, #C9A84C);
+    }
+    .divider-line.rev {
+      background: linear-gradient(90deg, #C9A84C, transparent);
+    }
+    .divider-gem { color: #C9A84C; font-size: 15px; }
+
+    .card {
+      background: rgba(26,8,53,0.45);
+      border: 1px solid rgba(201,168,76,0.28);
+      border-radius: 18px;
+      padding: 28px 24px;
+      margin-bottom: 20px;
+    }
+
+    h2 {
+      font-size: 20px;
+      font-weight: 700;
+      color: #D4AF37;
+      margin-bottom: 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(201,168,76,0.2);
+    }
+
+    h3 {
+      font-size: 16px;
+      font-weight: 600;
+      color: #e8d8ff;
+      margin: 18px 0 8px;
+    }
+
+    p { margin-bottom: 12px; font-size: 15px; color: #d5c8f0; }
+
+    ul, ol {
+      padding-inline-start: 22px;
+      margin-bottom: 12px;
+    }
+
+    li {
+      margin-bottom: 8px;
+      font-size: 15px;
+      color: #d5c8f0;
+    }
+
+    strong {
+      color: #f5eedc;
+      font-weight: 700;
+    }
+
+    .highlight {
+      background: rgba(212,175,55,0.10);
+      border-right: 3px solid #D4AF37;
+      padding: 14px 16px;
+      border-radius: 8px;
+      margin: 14px 0;
+    }
+
+    .important {
+      background: rgba(245,101,101,0.10);
+      border-right: 3px solid #f56565;
+      padding: 14px 16px;
+      border-radius: 8px;
+      margin: 14px 0;
+      color: #fbdbdb;
+    }
+
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 24px;
+      background: linear-gradient(135deg, #D4AF37, #b08d20);
+      color: #1a0835;
+      text-decoration: none;
+      border-radius: 50px;
+      font-weight: 700;
+      font-size: 15px;
+      margin-top: 20px;
+      transition: transform 0.15s;
+    }
+    .back-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 18px rgba(212,175,55,0.3);
+    }
+
+    .footer {
+      text-align: center;
+      padding: 30px 0 10px;
+      color: #b8a8d8;
+      font-size: 13px;
+      border-top: 1px solid rgba(201,168,76,0.15);
+      margin-top: 30px;
+    }
+
+    .footer a {
+      color: #C9A84C;
+      text-decoration: none;
+    }
+
+    @media (max-width: 600px) {
+      h1 { font-size: 24px; }
+      h2 { font-size: 18px; }
+      .card { padding: 22px 18px; }
+      .container { padding: 20px 16px 40px; }
+    }
+
+    /* ===== CONTACT MODAL ===== */
+    .email-link-btn {
+      background: none;
+      border: none;
+      color: #C9A84C;
+      font: inherit;
+      cursor: pointer;
+      padding: 0;
+      text-decoration: none;
+    }
+    .email-link-btn:hover { color: #f0d580; text-decoration: underline; }
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(10,5,20,0.78);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      display: none; align-items: center; justify-content: center;
+      z-index: 999; padding: 20px;
+    }
+    .modal-overlay.open { display: flex; animation: fadeIn 0.2s ease; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .modal-box {
+      background: linear-gradient(160deg, #1a0835 0%, #2a1260 100%);
+      border: 1px solid rgba(201,168,76,0.35);
+      border-radius: 18px;
+      padding: 28px 24px;
+      max-width: 420px; width: 100%;
+      max-height: 90vh; overflow-y: auto;
+      position: relative;
+      box-shadow: 0 30px 80px rgba(0,0,0,0.5);
+    }
+    .modal-close {
+      position: absolute; top: 12px; left: 14px;
+      background: none; border: none;
+      color: #b0a0d0; font-size: 24px;
+      cursor: pointer; line-height: 1;
+      padding: 4px 8px; border-radius: 6px;
+      transition: background 0.15s, color 0.15s;
+    }
+    .modal-close:hover { background: rgba(255,255,255,0.08); color: #f0eaff; }
+    .modal-title {
+      font-size: 20px; font-weight: 700;
+      color: #D4AF37; text-align: center; margin-bottom: 4px;
+    }
+    .modal-sub {
+      font-size: 13px; color: #b8a8d8;
+      text-align: center; margin-bottom: 18px;
+    }
+    .form-field { margin-bottom: 12px; }
+    .form-field input, .form-field textarea {
+      width: 100%;
+      padding: 12px 14px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(201,168,76,0.25);
+      border-radius: 10px;
+      color: #f0eaff;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 300;
+      direction: rtl;
+    }
+    .form-field input:focus, .form-field textarea:focus {
+      outline: none; border-color: #D4AF37;
+      background: rgba(255,255,255,0.1);
+    }
+    .form-field input::placeholder, .form-field textarea::placeholder {
+      color: rgba(200,180,230,0.5);
+    }
+    .form-field textarea { min-height: 80px; resize: vertical; }
+    .modal-submit {
+      width: 100%; padding: 14px;
+      background: linear-gradient(135deg, #D4AF37, #b08d20);
+      border: none; border-radius: 12px;
+      color: #1a0835; font-family: inherit;
+      font-size: 16px; font-weight: 700;
+      cursor: pointer; margin-top: 6px;
+      transition: transform 0.15s, box-shadow 0.2s;
+    }
+    .modal-submit:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(212,175,55,0.3);
+    }
+    .modal-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+    .modal-msg {
+      margin-top: 12px; padding: 10px;
+      border-radius: 8px; font-size: 13px;
+      text-align: center; display: none;
+    }
+    .modal-msg.success {
+      display: block;
+      background: rgba(72,187,120,0.15);
+      border: 1px solid rgba(72,187,120,0.4);
+      color: #a8e6b8;
+    }
+    .modal-msg.error {
+      display: block;
+      background: rgba(245,101,101,0.15);
+      border: 1px solid rgba(245,101,101,0.4);
+      color: #f5a5a5;
+    }
+    .turnstile-wrap {
+      display: flex; justify-content: center; margin: 10px 0;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header-wrap">
+    <div class="label-top">סדנת נשים אינטימית ✦ 5 מפגשים</div>
+    <h1>הסכם סדנה, הצהרת בריאות ותנאי השתתפות</h1>
+    <div class="subtitle">להיות המרפאה של עצמי · בשיטת מסע הנשמה</div>
+    <div class="divider">
+      <div class="divider-line"></div>
+      <div class="divider-gem">✦</div>
+      <div class="divider-line rev"></div>
+    </div>
+  </div>
+
+  <!-- Section 1: About the workshop -->
+  <div class="card">
+    <h2>1. אודות הסדנה</h2>
+    <p><strong>"להיות המרפאה של עצמי"</strong> היא סדנת נשים אינטימית בת 5 מפגשים שבועיים (שעתיים כל מפגש), המועברת בשיטת מסע הנשמה של אביחי אבוהב.</p>
+    <p>בסדנה נעסוק בריפוי פנימי, שחרור רגשות, חיבור לגוף, עבודה על דפוסים וייעוד אישי. התהליך משלב מדיטציה, תקשור, עבודה עם קלפים וכלים רוחניים-רגשיים.</p>
+    <div class="highlight">
+      <p><strong>חשוב להבהיר:</strong> הסדנה היא תהליך ריפוי רגשי-רוחני <strong>קבוצתי</strong>, ואינה מחליפה טיפול פסיכולוגי, פסיכיאטרי או רפואי מקצועי. המנחה אינה מתחייבת לתוצאות ספציפיות - התהליך אישי ותלוי בפתיחות ובעבודה של כל משתתפת.</p>
+    </div>
+  </div>
+
+  <!-- Section 2: Health declaration -->
+  <div class="card">
+    <h2>2. הצהרת בריאות</h2>
+    <p>בהרשמה לסדנה, את מצהירה כי:</p>
+    <ul>
+      <li>אין לך מגבלות בריאותיות פיזיות או נפשיות המונעות את השתתפותך בסדנה.</li>
+      <li>את מודעת לכך שהתהליך עלול להעלות רגשות ותחושות עזות, ואת מוכנה להתמודד עמן.</li>
+      <li>את נוטלת אחריות מלאה על מצבך הבריאותי וההחלטות שלך במהלך הסדנה.</li>
+      <li>את מודעת שהסדנה <strong>אינה מחליפה ייעוץ רפואי או טיפול תרופתי</strong>.</li>
+    </ul>
+    <div class="important">
+      <p><strong>⚠ טיפולים פסיכיאטריים פעילים:</strong> אם את נוטלת תרופות פסיכיאטריות או נמצאת בטיפול פסיכיאטרי פעיל - <strong>יש לתאם טלפונית עם אביטל לפני ההרשמה</strong>, כדי לוודא שהסדנה מתאימה לך בשלב זה.</p>
+      <p style="margin-top:8px;">טלפון לתיאום: <a href="tel:0507883883" style="color:#D4AF37;">050-7883883</a></p>
+    </div>
+  </div>
+
+  <!-- Section 3: Group confidentiality -->
+  <div class="card">
+    <h2>3. סודיות קבוצתית</h2>
+    <p>הסדנה מתקיימת במרחב קבוצתי אינטימי, המבוסס על אמון הדדי בין המשתתפות.</p>
+    <h3>התחייבות הדדית של כל המשתתפות:</h3>
+    <ul>
+      <li>מה שנאמר בסדנה - <strong>נשאר בסדנה</strong>. לא נשתף את תוכן השיתופים של משתתפות אחרות עם גורמים חיצוניים.</li>
+      <li>לא נצלם, נקליט או נעביר מידע על משתתפות אחרות ללא הסכמתן המפורשת.</li>
+      <li>נכבד את הקצב, הגבולות והבחירות של כל משתתפת.</li>
+    </ul>
+    <h3>התחייבות המנחה:</h3>
+    <ul>
+      <li>אביטל מתחייבת לשמור על סודיות מלאה לגבי כל מידע שיעלה במהלך הסדנה, למעט מקרים בהם קיים חשש ממשי לפגיעה בחיי אדם או על פי צו בית משפט.</li>
+    </ul>
+  </div>
+
+  <!-- Section 4: Cancellation policy -->
+  <div class="card">
+    <h2>4. מדיניות ביטול והחזרים</h2>
+    <div class="highlight">
+      <ul style="margin-bottom:0;">
+        <li><strong>ביטול עד 14 ימים</strong> לפני מועד המפגש הראשון → <strong>החזר מלא</strong>.</li>
+        <li><strong>ביטול פחות מ-14 ימים</strong> לפני מועד המפגש הראשון → <strong>ללא החזר</strong>.</li>
+        <li>לאחר תחילת הסדנה → אין החזרים.</li>
+      </ul>
+    </div>
+    <h3>החמצת מפגש</h3>
+    <p>הסדנה היא תהליך רציף ומתמשך. <strong>החמצת מפגש בודד אינה מזכה בהחזר כספי ואינה ניתנת להשלמה</strong> (אין מפגש חלופי). אני ממליצה להגיע לכל המפגשים כדי להפיק את המיטב מהתהליך.</p>
+    <h3>ביטול מצד המנחה</h3>
+    <p>במקרה של ביטול סדנה מצד המנחה (לדוגמה: כוח עליון, מחלה), יינתן החזר מלא של הסכום ששולם, או אפשרות לדחייה למועד חלופי לפי בחירת המשתתפת.</p>
+  </div>
+
+  <!-- Section 5: Workshop details -->
+  <div class="card">
+    <h2>5. פרטי הסדנה ועלות</h2>
+    <ul>
+      <li><strong>היקף:</strong> 5 מפגשים שבועיים, 2 שעות כל מפגש.</li>
+      <li><strong>מועד פתיחה:</strong> 3 ביוני 2026, 17:30.</li>
+      <li><strong>מיקום:</strong> מורדכי רומנו 27, תל אביב.</li>
+      <li><strong>עלות:</strong> ₪1,000 עבור כל הסדנה (התשלום מבטיח את מקומך).</li>
+    </ul>
+  </div>
+
+  <!-- Section 6: Declaration -->
+  <div class="card">
+    <h2>6. הצהרת הסכמה</h2>
+    <p>בסימון תיבת האישור בטופס ההרשמה, אני מצהירה כי:</p>
+    <ul>
+      <li>קראתי את המסמך הזה במלואו והבנתי את תוכנו.</li>
+      <li>אני מסכימה לכל התנאים המופיעים בו (כולל מדיניות הביטול, הצהרת הבריאות וההתחייבות לסודיות קבוצתית).</li>
+      <li>אני מצטרפת לסדנה <strong>מרצוני החופשי</strong>, מתוך אחריות אישית למצבי הנפשי והגופני.</li>
+      <li>מסרתי פרטים אמינים בטופס ההרשמה, ואני מתחייבת לעדכן את המנחה בכל שינוי מהותי במצב הבריאות שלי.</li>
+    </ul>
+  </div>
+
+  <div style="text-align:center;">
+    <a href="/" class="back-btn">
+      <span>→</span>
+      <span>חזרה לטופס ההרשמה</span>
+    </a>
+  </div>
+
+  <div class="footer">
+    <strong>אביטל הוכברג</strong> · מנחת קבוצות · מטפלת הוליסטית · מנחת מסע הנשמה בשיטת אביחי אבוהב<br>
+    📍 מורדכי רומנו 27, תל אביב · ✉ <button type="button" class="email-link-btn" onclick="openContactModal()">avital.ho@gmail.com</button> · 🌐 <a href="https://avital-heal.com">avital-heal.com</a>
+  </div>
+
+</div>
+
+<!-- ===== CONTACT MODAL ===== -->
+<div id="contactModal" class="modal-overlay" onclick="if(event.target===this)closeContactModal()">
+  <div class="modal-box">
+    <button type="button" class="modal-close" onclick="closeContactModal()" aria-label="סגור">&times;</button>
+    <div class="modal-title">יצירת קשר</div>
+    <div class="modal-sub">מלאי את פרטיך ואחזור אלייך בהקדם</div>
+    <form id="contactForm" onsubmit="submitContact(event)">
+      <div class="form-field"><input type="text" id="contact_name" placeholder="שם מלא" required></div>
+      <div class="form-field"><input type="tel" id="contact_phone" placeholder="טלפון"></div>
+      <div class="form-field"><input type="email" id="contact_email" placeholder="אימייל"></div>
+      <div class="form-field"><textarea id="contact_message" placeholder="איך אוכל לעזור? (שאלות / בקשות)" required></textarea></div>
+      <div class="turnstile-wrap">
+        <div class="cf-turnstile" data-sitekey="0x4AAAAAACxQXQewOnLqH3uM" data-theme="dark"></div>
+      </div>
+      <button type="submit" class="modal-submit" id="contactSubmitBtn">שליחה</button>
+      <div id="contactMsg" class="modal-msg"></div>
+    </form>
+  </div>
+</div>
+
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+<script>
+  const API_URL = 'https://avital-heal-crm.tgthf7frmp.workers.dev';
+
+  function openContactModal() {
+    document.getElementById('contactModal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeContactModal() {
+    document.getElementById('contactModal').classList.remove('open');
+    document.body.style.overflow = '';
+    const msg = document.getElementById('contactMsg');
+    msg.className = 'modal-msg';
+    msg.textContent = '';
+  }
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeContactModal(); });
+
+  async function submitContact(e) {
+    e.preventDefault();
+    const msg = document.getElementById('contactMsg');
+    const btn = document.getElementById('contactSubmitBtn');
+    msg.className = 'modal-msg';
+    msg.textContent = '';
+
+    const modal = document.getElementById('contactModal');
+    const tsEl = modal.querySelector('[name="cf-turnstile-response"]');
+    const turnstileToken = tsEl ? tsEl.value : '';
+    if (!turnstileToken) {
+      msg.className = 'modal-msg error';
+      msg.textContent = 'יש להשלים את אימות ה-CAPTCHA';
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'שולח...';
+    try {
+      const res = await fetch(API_URL + '/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fullName: document.getElementById('contact_name').value,
+          phone: document.getElementById('contact_phone').value,
+          email: document.getElementById('contact_email').value,
+          message: document.getElementById('contact_message').value,
+          turnstileToken,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'שגיאה בשליחה');
+      msg.className = 'modal-msg success';
+      msg.textContent = '✓ ' + (data.message || 'הפנייה נקלטה בהצלחה! אחזור אלייך בהקדם');
+      document.getElementById('contactForm').reset();
+      if (window.turnstile) window.turnstile.reset();
+      setTimeout(closeContactModal, 2500);
+    } catch (err) {
+      msg.className = 'modal-msg error';
+      msg.textContent = err.message || 'שגיאה בשליחה, נסי שוב';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'שליחה';
+    }
+  }
+</script>
+</body>
+</html>

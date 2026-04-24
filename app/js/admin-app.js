@@ -107,6 +107,7 @@ async function showApp() {
   loadContacts();
   loadClients();
   loadSessions();
+  if (typeof loadWorkshops === 'function') loadWorkshops();
   // Load users for admins
   if (currentUser && currentUser.role === 'admin' && typeof loadUsers === 'function') {
     loadUsers();
@@ -226,7 +227,7 @@ function switchTab(name) {
     const usersTab = document.getElementById('usersTab');
     if (usersTab) usersTab.classList.add('active');
   } else {
-    const pages = ['dashboard', 'contacts', 'clients', 'sessions'];
+    const pages = ['dashboard', 'contacts', 'clients', 'sessions', 'workshops'];
     const idx = pages.indexOf(name);
     const tabs = document.querySelectorAll('.tab-btn');
     if (tabs[idx]) tabs[idx].classList.add('active');

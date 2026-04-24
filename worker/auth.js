@@ -48,30 +48,30 @@ export async function handleLogin(request, env) {
   try {
     const { email, password } = await request.json();
     if (!email || !password) {
-      return errorResponse('נדרש אימייל וסיסמה', 400);
+      return errorResponse('נדרש אימייל וסיסמה', 400, request);
     }
     const user = await env.DB.prepare(
       'SELECT id, email, name, role, password_hash, active FROM users WHERE email = ?'
     ).bind(email.toLowerCase().trim()).first();
     if (!user) {
-      return errorResponse('אימייל או סיסמה שגויים', 401);
+      return errorResponse('אימייל או סיסמה שגויים', 401, request);
     }
     // Block inactive users
     if (user.active === 0) {
-      return errorResponse('החשבון אינו פעיל — פנה למנהל המערכת', 403);
+      return errorResponse('החשבון אינו פעיל — פנה למנהל המערכת', 403, request);
     }
     const valid = await verifyPassword(password, user.password_hash);
     if (!valid) {
-      return errorResponse('אימייל או סיסמה שגויים', 401);
+      return errorResponse('אימייל או סיסמה שגויים', 401, request);
     }
     const token = await createJWT(
       { userId: user.id, email: user.email, name: user.name, role: user.role },
       env.JWT_SECRET
     );
-    return jsonResponse({ token, user: { id: user.id, email: user.email, name: user.name, role: user.role } });
+    return jsonResponse({ token, user: { id: user.id, email: user.email, name: user.name, role: user.role } }, 200, request);
   } catch (e) {
     console.error('Login error:', e);
-    return errorResponse('שגיאת כניסה', 500);
+    return errorResponse('שגיאת כניסה', 500, request);
   }
 }
 
@@ -81,11 +81,11 @@ export async function handleVerify(request, env) {
   const authHeader = request.headers.get('Authorization');
   const token = authHeader?.slice(7);
   const payload = await verifyJWT(token, env.JWT_SECRET);
-  if (!payload) return errorResponse('Token expired', 401);
+  if (!payload) return errorResponse('Token expired', 401, request);
   return jsonResponse({
     valid: true,
     user: { id: payload.userId, email: payload.email, name: payload.name, role: payload.role },
-  });
+  }, 200, request);
 }
 
 // ─── Request password reset ───
@@ -93,13 +93,13 @@ export async function handleVerify(request, env) {
 export async function handleRequestReset(request, env) {
   try {
     const { email } = await request.json();
-    if (!email) return errorResponse('נדרש אימייל', 400);
+    if (!email) return errorResponse('נדרש אימייל', 400, request);
     const user = await env.DB.prepare(
       'SELECT id, name FROM users WHERE email = ? AND active = 1'
     ).bind(email.toLowerCase().trim()).first();
     // Always return success (prevent email enumeration)
     if (!user) {
-      return jsonResponse({ message: 'אם האימייל קיים במערכת, נשלח קישור לאיפוס' });
+      return jsonResponse({ message: 'אם האימייל קיים במערכת, נשלח קישור לאיפוס' }, 200, request);
     }
     const token = generateToken(32);
     const expiresAt = new Date(Date.now() + 3600 * 1000).toISOString();
@@ -120,10 +120,10 @@ export async function handleRequestReset(request, env) {
     } catch (emailErr) {
       console.error('Reset email send error:', emailErr);
     }
-    return jsonResponse({ message: 'אם האימייל קיים במערכת, נשלח קישור לאיפוס' });
+    return jsonResponse({ message: 'אם האימייל קיים במערכת, נשלח קישור לאיפוס' }, 200, request);
   } catch (e) {
     console.error('Reset request error:', e);
-    return errorResponse('שגיאה בבקשת איפוס', 500);
+    return errorResponse('שגיאה בבקשת איפוס', 500, request);
   }
 }
 
@@ -133,19 +133,19 @@ export async function handleExecuteReset(request, env) {
   try {
     const { token, newPassword } = await request.json();
     if (!token || !newPassword) {
-      return errorResponse('נדרש טוקן וסיסמה חדשה', 400);
+      return errorResponse('נדרש טוקן וסיסמה חדשה', 400, request);
     }
     if (newPassword.length < 8) {
-      return errorResponse('הסיסמה חייבת להכיל לפחות 8 תווים', 400);
+      return errorResponse('הסיסמה חייבת להכיל לפחות 8 תווים', 400, request);
     }
     const reset = await env.DB.prepare(
       "SELECT id, user_id, expires_at, used FROM password_resets WHERE token = ?"
     ).bind(token).first();
     if (!reset || reset.used) {
-      return errorResponse('קישור איפוס לא תקין או שפג תוקפו', 400);
+      return errorResponse('קישור איפוס לא תקין או שפג תוקפו', 400, request);
     }
     if (new Date(reset.expires_at) < new Date()) {
-      return errorResponse('קישור האיפוס פג תוקף', 400);
+      return errorResponse('קישור האיפוס פג תוקף', 400, request);
     }
     const passwordHash = await hashPassword(newPassword);
     await env.DB.prepare(
@@ -154,10 +154,10 @@ export async function handleExecuteReset(request, env) {
     await env.DB.prepare(
       'UPDATE password_resets SET used = 1 WHERE id = ?'
     ).bind(reset.id).run();
-    return jsonResponse({ message: 'הסיסמה עודכנה בהצלחה' });
+    return jsonResponse({ message: 'הסיסמה עודכנה בהצלחה' }, 200, request);
   } catch (e) {
     console.error('Reset execute error:', e);
-    return errorResponse('שגיאה באיפוס סיסמה', 500);
+    return errorResponse('שגיאה באיפוס סיסמה', 500, request);
   }
 }
 
@@ -167,27 +167,27 @@ export async function handleChangePassword(request, env) {
   try {
     const authHeader = request.headers.get('Authorization');
     const payload = await verifyJWT(authHeader?.slice(7), env.JWT_SECRET);
-    if (!payload) return errorResponse('Unauthorized', 401);
+    if (!payload) return errorResponse('Unauthorized', 401, request);
     const { currentPassword, newPassword } = await request.json();
     if (!currentPassword || !newPassword) {
-      return errorResponse('נדרשות סיסמה נוכחית וחדשה', 400);
+      return errorResponse('נדרשות סיסמה נוכחית וחדשה', 400, request);
     }
     if (newPassword.length < 8) {
-      return errorResponse('הסיסמה חייבת להכיל לפחות 8 תווים', 400);
+      return errorResponse('הסיסמה חייבת להכיל לפחות 8 תווים', 400, request);
     }
     const user = await env.DB.prepare(
       'SELECT password_hash FROM users WHERE id = ?'
     ).bind(payload.userId).first();
-    if (!user) return errorResponse('משתמש לא נמצא', 404);
+    if (!user) return errorResponse('משתמש לא נמצא', 404, request);
     const valid = await verifyPassword(currentPassword, user.password_hash);
-    if (!valid) return errorResponse('סיסמה נוכחית שגויה', 401);
+    if (!valid) return errorResponse('סיסמה נוכחית שגויה', 401, request);
     const hash = await hashPassword(newPassword);
     await env.DB.prepare(
       "UPDATE users SET password_hash = ?, updated_at = datetime('now') WHERE id = ?"
     ).bind(hash, payload.userId).run();
-    return jsonResponse({ message: 'הסיסמה עודכנה בהצלחה' });
+    return jsonResponse({ message: 'הסיסמה עודכנה בהצלחה' }, 200, request);
   } catch (e) {
     console.error('Change password error:', e);
-    return errorResponse('שגיאה בשינוי סיסמה', 500);
+    return errorResponse('שגיאה בשינוי סיסמה', 500, request);
   }
 }

@@ -4,7 +4,7 @@
  * @module Contacts
  */
 
-import { jsonResponse, errorResponse } from './utils.js';
+import { jsonResponse, errorResponse, sendNotification } from './utils.js';
 import { verifyTurnstile } from './auth.js';
 
 // ─── Contact form submission (public) ───
@@ -43,6 +43,15 @@ export async function handleContactSubmission(request, env) {
       email ? email.trim() : null,
       message ? message.trim() : null
     ).run();
+
+    // Notify Avital (fire & forget)
+    await sendNotification(env, 'new-contact', {
+      fullName: fullName.trim(),
+      phone: phone ? phone.trim() : '',
+      email: email ? email.trim() : '',
+      message: message ? message.trim() : '',
+      timestamp: new Date().toISOString(),
+    });
 
     return jsonResponse({ success: true, message: 'הפנייה נקלטה בהצלחה' });
   } catch (e) {
