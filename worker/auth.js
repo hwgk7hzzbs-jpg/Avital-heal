@@ -8,6 +8,7 @@
 
 import { jsonResponse, errorResponse } from './utils.js';
 import { hashPassword, verifyPassword, createJWT, verifyJWT, generateToken } from './crypto.js';
+import { recordAudit } from './auditLog.js';
 
 // ─── Turnstile CAPTCHA verification ───
 
@@ -112,20 +113,24 @@ export async function handleLogin(request, env) {
       'SELECT id, email, name, role, password_hash, active FROM users WHERE email = ?'
     ).bind(email.toLowerCase().trim()).first();
     if (!user) {
+      await recordAudit(env, { userEmail: email.toLowerCase().trim(), action: 'login', entityType: 'user', result: 'failure' });
       return errorResponse('אימייל או סיסמה שגויים', 401, request);
     }
     // Block inactive users
     if (user.active === 0) {
+      await recordAudit(env, { userId: user.id, userEmail: user.email, action: 'login', entityType: 'user', entityId: user.id, result: 'failure', metadata: { reason: 'inactive' } });
       return errorResponse('החשבון אינו פעיל — פנה למנהל המערכת', 403, request);
     }
     const valid = await verifyPassword(password, user.password_hash);
     if (!valid) {
+      await recordAudit(env, { userId: user.id, userEmail: user.email, action: 'login', entityType: 'user', entityId: user.id, result: 'failure' });
       return errorResponse('אימייל או סיסמה שגויים', 401, request);
     }
     const token = await createJWT(
       { userId: user.id, email: user.email, name: user.name, role: user.role },
       env.JWT_SECRET
     );
+    await recordAudit(env, { userId: user.id, userEmail: user.email, action: 'login', entityType: 'user', entityId: user.id, result: 'success' });
     return jsonResponse({ token, user: { id: user.id, email: user.email, name: user.name, role: user.role } }, 200, request);
   } catch (e) {
     console.error('Login error:', e);
@@ -227,6 +232,7 @@ export async function handleExecuteReset(request, env) {
     await env.DB.prepare(
       'UPDATE password_resets SET used = 1 WHERE id = ?'
     ).bind(reset.id).run();
+    await recordAudit(env, { userId: reset.user_id, action: 'password_reset', entityType: 'user', entityId: reset.user_id, result: 'success' });
     return jsonResponse({ message: 'הסיסמה עודכנה בהצלחה' }, 200, request);
   } catch (e) {
     console.error('Reset execute error:', e);
@@ -258,6 +264,7 @@ export async function handleChangePassword(request, env) {
     await env.DB.prepare(
       "UPDATE users SET password_hash = ?, updated_at = datetime('now') WHERE id = ?"
     ).bind(hash, payload.userId).run();
+    await recordAudit(env, { userId: payload.userId, userEmail: payload.email, action: 'password_change', entityType: 'user', entityId: payload.userId, result: 'success' });
     return jsonResponse({ message: 'הסיסמה עודכנה בהצלחה' }, 200, request);
   } catch (e) {
     console.error('Change password error:', e);

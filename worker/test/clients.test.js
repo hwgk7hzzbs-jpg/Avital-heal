@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { handleCreateClient, handleGetClient, handleUpdateClient, handleGetClients, handleExportClientData } from '../clients.js';
+import { handleCreateClient, handleGetClient, handleUpdateClient, handleGetClients, handleExportClientData, handleDeleteClient, handleGetDeletedClients, handleRestoreClient, handlePermanentDeleteClient } from '../clients.js';
 import { makeFakeD1 } from './testUtils.js';
 
 const env = { DB: null, ENCRYPTION_KEY: 'a'.repeat(64) };
@@ -96,5 +96,90 @@ describe('handleCreateClient / handleUpdateClient — RBAC', () => {
   it('blocks viewer from updating a client', async () => {
     const res = await handleUpdateClient('1', req({ notes: 'x' }), withDB(makeFakeD1()), { role: 'viewer' });
     expect(res.status).toBe(403);
+  });
+});
+
+describe('soft-delete recycle bin — clients', () => {
+  it('soft-deleted client disappears from the normal list and detail view, but appears in the recycle bin', async () => {
+    const db = makeFakeD1({ clients: [{ id: 1, full_name: 'X' }] });
+    const e = withDB(db);
+    const delRes = await handleDeleteClient('1', e, { role: 'admin', userId: 9, email: 'a@x.com' });
+    expect(delRes.status).toBe(200);
+
+    const listRes = await handleGetClients(new URL('https://x/api/clients'), e);
+    expect(await listRes.json()).toEqual([]);
+
+    const detailRes = await handleGetClient('1', e, { role: 'admin' });
+    expect(detailRes.status).toBe(404);
+
+    const binRes = await handleGetDeletedClients(e, { role: 'admin' });
+    const bin = await binRes.json();
+    expect(bin).toHaveLength(1);
+    expect(bin[0].id).toBe(1);
+
+    expect(db._state.auditLog.some(a => a.action === 'delete' && a.entity_type === 'client')).toBe(true);
+  });
+
+  it('does not cascade-delete the client\'s sessions', async () => {
+    const db = makeFakeD1({
+      clients: [{ id: 1, full_name: 'X' }],
+      sessions: [{ id: 5, client_id: 1, session_date: '2026-01-01' }],
+    });
+    const e = withDB(db);
+    await handleDeleteClient('1', e, { role: 'admin', userId: 9 });
+    expect(db._state.sessions).toHaveLength(1);
+  });
+
+  it('a second delete on an already-deleted client 404s', async () => {
+    const db = makeFakeD1({ clients: [{ id: 1, full_name: 'X' }] });
+    const e = withDB(db);
+    await handleDeleteClient('1', e, { role: 'admin', userId: 9 });
+    const res = await handleDeleteClient('1', e, { role: 'admin', userId: 9 });
+    expect(res.status).toBe(404);
+  });
+
+  it('restore brings a soft-deleted client back', async () => {
+    const db = makeFakeD1({ clients: [{ id: 1, full_name: 'X' }] });
+    const e = withDB(db);
+    await handleDeleteClient('1', e, { role: 'admin', userId: 9 });
+
+    const restoreRes = await handleRestoreClient('1', e, { role: 'admin', userId: 9 });
+    expect(restoreRes.status).toBe(200);
+
+    const detailRes = await handleGetClient('1', e, { role: 'admin' });
+    expect(detailRes.status).toBe(200);
+  });
+
+  it('restore 404s for a client that is not in the recycle bin', async () => {
+    const db = makeFakeD1({ clients: [{ id: 1, full_name: 'X' }] });
+    const res = await handleRestoreClient('1', withDB(db), { role: 'admin', userId: 9 });
+    expect(res.status).toBe(404);
+  });
+
+  it('permanent delete requires explicit confirm:true and only works on a soft-deleted client', async () => {
+    const db = makeFakeD1({ clients: [{ id: 1, full_name: 'X' }] });
+    const e = withDB(db);
+
+    const beforeDelete = await handlePermanentDeleteClient('1', new Request('https://x', { method: 'DELETE', body: JSON.stringify({ confirm: true }) }), e, { role: 'admin', userId: 9 });
+    expect(beforeDelete.status).toBe(404);
+
+    await handleDeleteClient('1', e, { role: 'admin', userId: 9 });
+
+    const noConfirm = await handlePermanentDeleteClient('1', new Request('https://x', { method: 'DELETE', body: JSON.stringify({}) }), e, { role: 'admin', userId: 9 });
+    expect(noConfirm.status).toBe(400);
+    expect(db._state.clients).toHaveLength(1);
+
+    const confirmed = await handlePermanentDeleteClient('1', new Request('https://x', { method: 'DELETE', body: JSON.stringify({ confirm: true }) }), e, { role: 'admin', userId: 9 });
+    expect(confirmed.status).toBe(200);
+    expect(db._state.clients).toHaveLength(0);
+    expect(db._state.auditLog.some(a => a.action === 'permanent_delete' && a.entity_type === 'client')).toBe(true);
+  });
+
+  it('blocks non-admin from the recycle bin, restore, and permanent delete', async () => {
+    const db = makeFakeD1({ clients: [{ id: 1, full_name: 'X' }] });
+    const e = withDB(db);
+    expect((await handleGetDeletedClients(e, { role: 'therapist' })).status).toBe(403);
+    expect((await handleRestoreClient('1', e, { role: 'therapist' })).status).toBe(403);
+    expect((await handlePermanentDeleteClient('1', new Request('https://x', { method: 'DELETE' }), e, { role: 'therapist' })).status).toBe(403);
   });
 });

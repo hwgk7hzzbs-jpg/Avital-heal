@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { handleCreateSession, handleGetSessions, handleGetClientSessions, handleUpdateSession } from '../sessions.js';
+import { handleCreateSession, handleGetSessions, handleGetClientSessions, handleUpdateSession, handleDeleteSession, handleGetDeletedSessions, handleRestoreSession, handlePermanentDeleteSession } from '../sessions.js';
 import { makeFakeD1 } from './testUtils.js';
 
 const env = { ENCRYPTION_KEY: 'a'.repeat(64) };
@@ -71,5 +71,60 @@ describe('handleCreateSession / handleUpdateSession — RBAC', () => {
   it('blocks viewer from creating a session', async () => {
     const res = await handleCreateSession(req({ client_id: 1, session_date: '2026-01-01' }), withDB(makeFakeD1()), { role: 'viewer' });
     expect(res.status).toBe(403);
+  });
+});
+
+describe('soft-delete recycle bin — sessions', () => {
+  it('soft-deleted session disappears from lists but appears in the recycle bin', async () => {
+    const db = makeFakeD1({
+      clients: [{ id: 1, full_name: 'Client' }],
+      sessions: [{ id: 5, client_id: 1, session_date: '2026-01-01', summary: null }],
+    });
+    const e = withDB(db);
+    const delRes = await handleDeleteSession('5', e, { role: 'admin', userId: 9, email: 'a@x.com' });
+    expect(delRes.status).toBe(200);
+
+    const clientSessions = await handleGetClientSessions(1, e);
+    expect(await clientSessions.json()).toEqual([]);
+
+    const binRes = await handleGetDeletedSessions(e, { role: 'admin' });
+    const bin = await binRes.json();
+    expect(bin).toHaveLength(1);
+    expect(bin[0].id).toBe(5);
+
+    expect(db._state.auditLog.some(a => a.action === 'delete' && a.entity_type === 'session')).toBe(true);
+  });
+
+  it('a second delete on an already-deleted session 404s', async () => {
+    const db = makeFakeD1({ sessions: [{ id: 5, client_id: 1, session_date: '2026-01-01' }] });
+    const e = withDB(db);
+    await handleDeleteSession('5', e, { role: 'admin', userId: 9 });
+    const res = await handleDeleteSession('5', e, { role: 'admin', userId: 9 });
+    expect(res.status).toBe(404);
+  });
+
+  it('restore brings a soft-deleted session back', async () => {
+    const db = makeFakeD1({ sessions: [{ id: 5, client_id: 1, session_date: '2026-01-01' }] });
+    const e = withDB(db);
+    await handleDeleteSession('5', e, { role: 'admin', userId: 9 });
+
+    const restoreRes = await handleRestoreSession('5', e, { role: 'admin', userId: 9 });
+    expect(restoreRes.status).toBe(200);
+
+    const clientSessions = await handleGetClientSessions(1, e);
+    expect(await clientSessions.json()).toHaveLength(1);
+  });
+
+  it('permanent delete requires explicit confirm:true and only works on a soft-deleted session', async () => {
+    const db = makeFakeD1({ sessions: [{ id: 5, client_id: 1, session_date: '2026-01-01' }] });
+    const e = withDB(db);
+
+    const beforeDelete = await handlePermanentDeleteSession('5', new Request('https://x', { method: 'DELETE', body: JSON.stringify({ confirm: true }) }), e, { role: 'admin', userId: 9 });
+    expect(beforeDelete.status).toBe(404);
+
+    await handleDeleteSession('5', e, { role: 'admin', userId: 9 });
+    const confirmed = await handlePermanentDeleteSession('5', new Request('https://x', { method: 'DELETE', body: JSON.stringify({ confirm: true }) }), e, { role: 'admin', userId: 9 });
+    expect(confirmed.status).toBe(200);
+    expect(db._state.sessions).toHaveLength(0);
   });
 });

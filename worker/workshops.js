@@ -7,6 +7,7 @@
 import { jsonResponse, errorResponse, sendNotification } from './utils.js';
 import { verifyTurnstile, checkRateLimit, requireRole } from './auth.js';
 import { recordConsent } from './consents.js';
+import { recordAudit } from './auditLog.js';
 
 const MAX_FIELD_LEN = 2000;
 const REGISTRATION_STATUSES = ['new', 'contacted', 'confirmed', 'cancelled'];
@@ -122,7 +123,7 @@ export async function handleGetWorkshops(env) {
   try {
     const { results } = await env.DB.prepare(
       `SELECT w.*,
-        (SELECT COUNT(*) FROM workshop_registrations WHERE workshop_id = w.id) as registration_count
+        (SELECT COUNT(*) FROM workshop_registrations WHERE workshop_id = w.id AND deleted_at IS NULL) as registration_count
        FROM workshops w
        ORDER BY w.created_at DESC`
     ).all();
@@ -144,7 +145,7 @@ export async function handleGetWorkshop(id, env) {
 
     const regs = await env.DB.prepare(
       `SELECT * FROM workshop_registrations
-       WHERE workshop_id = ?
+       WHERE workshop_id = ? AND deleted_at IS NULL
        ORDER BY created_at DESC`
     ).bind(id).all();
 
@@ -169,7 +170,7 @@ export async function handleGetWorkshopRegistrations(id, env) {
   try {
     const regs = await env.DB.prepare(
       `SELECT * FROM workshop_registrations
-       WHERE workshop_id = ?
+       WHERE workshop_id = ? AND deleted_at IS NULL
        ORDER BY created_at DESC`
     ).bind(id).all();
     return jsonResponse(regs.results || []);
@@ -204,8 +205,13 @@ export async function handleUpdateRegistration(id, request, env, payload) {
 
     values.push(id);
     await env.DB.prepare(
-      `UPDATE workshop_registrations SET ${fields.join(', ')} WHERE id = ?`
+      `UPDATE workshop_registrations SET ${fields.join(', ')} WHERE id = ? AND deleted_at IS NULL`
     ).bind(...values).run();
+
+    await recordAudit(env, {
+      userId: payload.userId, userEmail: payload.email,
+      action: 'update', entityType: 'workshop_registration', entityId: id, result: 'success',
+    });
 
     return jsonResponse({ message: 'ההרשמה עודכנה' });
   } catch (e) {
@@ -214,16 +220,97 @@ export async function handleUpdateRegistration(id, request, env, payload) {
   }
 }
 
-// ─── Protected: Delete registration ───
+// ─── Protected: Soft-delete registration ───
 
 export async function handleDeleteRegistration(id, env, payload) {
   const forbidden = requireRole(payload, 'admin');
   if (forbidden) return forbidden;
   try {
-    await env.DB.prepare('DELETE FROM workshop_registrations WHERE id = ?').bind(id).run();
-    return jsonResponse({ message: 'ההרשמה נמחקה' });
+    const result = await env.DB.prepare(
+      "UPDATE workshop_registrations SET deleted_at = datetime('now'), deleted_by = ? WHERE id = ? AND deleted_at IS NULL"
+    ).bind(payload.userId, id).run();
+    if (!result.meta.changes) return errorResponse('הרשמה לא נמצאה', 404);
+
+    await recordAudit(env, {
+      userId: payload.userId, userEmail: payload.email,
+      action: 'delete', entityType: 'workshop_registration', entityId: id, result: 'success',
+    });
+
+    return jsonResponse({ message: 'ההרשמה הועברה לסל המיחזור' });
   } catch (e) {
     console.error('Delete registration error:', e);
     return errorResponse('שגיאה במחיקת הרשמה', 500);
+  }
+}
+
+// ─── Recycle bin: list soft-deleted registrations ───
+
+export async function handleGetDeletedRegistrations(env, payload) {
+  const forbidden = requireRole(payload, 'admin');
+  if (forbidden) return forbidden;
+  try {
+    const result = await env.DB.prepare(
+      `SELECT r.*, w.name as workshop_name, u.name as deleted_by_name
+       FROM workshop_registrations r
+       LEFT JOIN workshops w ON w.id = r.workshop_id
+       LEFT JOIN users u ON u.id = r.deleted_by
+       WHERE r.deleted_at IS NOT NULL ORDER BY r.deleted_at DESC`
+    ).all();
+    return jsonResponse(result.results || []);
+  } catch (e) {
+    console.error('Get deleted registrations error:', e);
+    return errorResponse('שגיאה בטעינת סל המיחזור', 500);
+  }
+}
+
+// ─── Restore a soft-deleted registration ───
+
+export async function handleRestoreRegistration(id, env, payload) {
+  const forbidden = requireRole(payload, 'admin');
+  if (forbidden) return forbidden;
+  try {
+    const result = await env.DB.prepare(
+      "UPDATE workshop_registrations SET deleted_at = NULL, deleted_by = NULL WHERE id = ? AND deleted_at IS NOT NULL"
+    ).bind(id).run();
+    if (!result.meta.changes) return errorResponse('הרשמה לא נמצאה בסל המיחזור', 404);
+
+    await recordAudit(env, {
+      userId: payload.userId, userEmail: payload.email,
+      action: 'restore', entityType: 'workshop_registration', entityId: id, result: 'success',
+    });
+
+    return jsonResponse({ message: 'ההרשמה שוחזרה' });
+  } catch (e) {
+    console.error('Restore registration error:', e);
+    return errorResponse('שגיאה בשחזור הרשמה', 500);
+  }
+}
+
+// ─── Permanently delete a soft-deleted registration (admin, explicit confirmation) ───
+
+export async function handlePermanentDeleteRegistration(id, request, env, payload) {
+  const forbidden = requireRole(payload, 'admin');
+  if (forbidden) return forbidden;
+  try {
+    const { confirm } = await request.json().catch(() => ({}));
+    if (confirm !== true) {
+      return errorResponse('נדרש אישור מפורש למחיקה סופית', 400);
+    }
+    const reg = await env.DB.prepare(
+      'SELECT id FROM workshop_registrations WHERE id = ? AND deleted_at IS NOT NULL'
+    ).bind(id).first();
+    if (!reg) return errorResponse('הרשמה לא נמצאה בסל המיחזור', 404);
+
+    await env.DB.prepare('DELETE FROM workshop_registrations WHERE id = ?').bind(id).run();
+
+    await recordAudit(env, {
+      userId: payload.userId, userEmail: payload.email,
+      action: 'permanent_delete', entityType: 'workshop_registration', entityId: id, result: 'success',
+    });
+
+    return jsonResponse({ message: 'ההרשמה נמחקה לצמיתות' });
+  } catch (e) {
+    console.error('Permanent delete registration error:', e);
+    return errorResponse('שגיאה במחיקה סופית של הרשמה', 500);
   }
 }
