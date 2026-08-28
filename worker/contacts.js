@@ -6,6 +6,7 @@
 
 import { jsonResponse, errorResponse, sendNotification } from './utils.js';
 import { verifyTurnstile, checkRateLimit, requireRole } from './auth.js';
+import { recordAudit } from './auditLog.js';
 
 const MAX_FIELD_LEN = 2000;
 const CONTACT_STATUSES = ['new', 'contacted', 'converted', 'closed'];
@@ -81,10 +82,10 @@ export async function handleContactSubmission(request, env) {
 export async function handleGetContacts(url, env) {
   try {
     const status = url.searchParams.get('status');
-    let query = 'SELECT * FROM contacts';
+    let query = 'SELECT * FROM contacts WHERE deleted_at IS NULL';
     const params = [];
     if (status) {
-      query += ' WHERE status = ?';
+      query += ' AND status = ?';
       params.push(status);
     }
     query += ' ORDER BY created_at DESC';
@@ -123,8 +124,13 @@ export async function handleUpdateContact(id, request, env, payload) {
     values.push(id);
 
     await env.DB.prepare(
-      `UPDATE contacts SET ${fields.join(', ')} WHERE id = ?`
+      `UPDATE contacts SET ${fields.join(', ')} WHERE id = ? AND deleted_at IS NULL`
     ).bind(...values).run();
+
+    await recordAudit(env, {
+      userId: payload.userId, userEmail: payload.email,
+      action: 'update', entityType: 'contact', entityId: id, result: 'success',
+    });
 
     return jsonResponse({ message: 'Contact updated' });
   } catch (e) {
@@ -133,16 +139,95 @@ export async function handleUpdateContact(id, request, env, payload) {
   }
 }
 
-// ─── Delete contact (protected) ───
+// ─── Soft-delete contact (protected) ───
 
 export async function handleDeleteContact(id, env, payload) {
   const forbidden = requireRole(payload, 'admin');
   if (forbidden) return forbidden;
   try {
-    await env.DB.prepare('DELETE FROM contacts WHERE id = ?').bind(id).run();
-    return jsonResponse({ message: 'Contact deleted' });
+    const result = await env.DB.prepare(
+      "UPDATE contacts SET deleted_at = datetime('now'), deleted_by = ? WHERE id = ? AND deleted_at IS NULL"
+    ).bind(payload.userId, id).run();
+    if (!result.meta.changes) return errorResponse('Contact not found', 404);
+
+    await recordAudit(env, {
+      userId: payload.userId, userEmail: payload.email,
+      action: 'delete', entityType: 'contact', entityId: id, result: 'success',
+    });
+
+    return jsonResponse({ message: 'Contact moved to recycle bin' });
   } catch (e) {
     console.error('Delete contact error:', e);
     return errorResponse('Failed to delete contact', 500);
+  }
+}
+
+// ─── Recycle bin: list soft-deleted contacts ───
+
+export async function handleGetDeletedContacts(env, payload) {
+  const forbidden = requireRole(payload, 'admin');
+  if (forbidden) return forbidden;
+  try {
+    const result = await env.DB.prepare(
+      `SELECT c.*, u.name as deleted_by_name
+       FROM contacts c LEFT JOIN users u ON u.id = c.deleted_by
+       WHERE c.deleted_at IS NOT NULL ORDER BY c.deleted_at DESC`
+    ).all();
+    return jsonResponse(result.results || []);
+  } catch (e) {
+    console.error('Get deleted contacts error:', e);
+    return errorResponse('Failed to load recycle bin', 500);
+  }
+}
+
+// ─── Restore a soft-deleted contact ───
+
+export async function handleRestoreContact(id, env, payload) {
+  const forbidden = requireRole(payload, 'admin');
+  if (forbidden) return forbidden;
+  try {
+    const result = await env.DB.prepare(
+      "UPDATE contacts SET deleted_at = NULL, deleted_by = NULL WHERE id = ? AND deleted_at IS NOT NULL"
+    ).bind(id).run();
+    if (!result.meta.changes) return errorResponse('Contact not found in recycle bin', 404);
+
+    await recordAudit(env, {
+      userId: payload.userId, userEmail: payload.email,
+      action: 'restore', entityType: 'contact', entityId: id, result: 'success',
+    });
+
+    return jsonResponse({ message: 'Contact restored' });
+  } catch (e) {
+    console.error('Restore contact error:', e);
+    return errorResponse('Failed to restore contact', 500);
+  }
+}
+
+// ─── Permanently delete a soft-deleted contact (admin, explicit confirmation) ───
+
+export async function handlePermanentDeleteContact(id, request, env, payload) {
+  const forbidden = requireRole(payload, 'admin');
+  if (forbidden) return forbidden;
+  try {
+    const { confirm } = await request.json().catch(() => ({}));
+    if (confirm !== true) {
+      return errorResponse('נדרש אישור מפורש למחיקה סופית', 400);
+    }
+    const contact = await env.DB.prepare(
+      'SELECT id FROM contacts WHERE id = ? AND deleted_at IS NOT NULL'
+    ).bind(id).first();
+    if (!contact) return errorResponse('Contact not found in recycle bin', 404);
+
+    await env.DB.prepare('DELETE FROM contacts WHERE id = ?').bind(id).run();
+
+    await recordAudit(env, {
+      userId: payload.userId, userEmail: payload.email,
+      action: 'permanent_delete', entityType: 'contact', entityId: id, result: 'success',
+    });
+
+    return jsonResponse({ message: 'Contact permanently deleted' });
+  } catch (e) {
+    console.error('Permanent delete contact error:', e);
+    return errorResponse('Failed to permanently delete contact', 500);
   }
 }

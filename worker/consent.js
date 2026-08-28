@@ -67,9 +67,11 @@ export async function handleConsentSubmission(request, env) {
     // Signing time is set by the server — never trusted from the client.
     const signedAt = new Date().toISOString();
 
-    // Check if client already exists by email
+    // Check if client already exists by email (a soft-deleted client is left
+    // alone in the recycle bin — a new signature creates a fresh record
+    // rather than silently reviving one an admin deleted).
     const existing = await env.DB.prepare(
-      'SELECT id FROM clients WHERE email = ?'
+      'SELECT id FROM clients WHERE email = ? AND deleted_at IS NULL'
     ).bind(email).first();
 
     let clientId;

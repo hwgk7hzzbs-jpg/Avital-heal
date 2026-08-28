@@ -7,6 +7,7 @@
 
 import { jsonResponse, errorResponse } from './utils.js';
 import { hashPassword, verifyJWT } from './crypto.js';
+import { recordAudit } from './auditLog.js';
 
 // ─── Helper: extract user from JWT ───
 
@@ -101,6 +102,12 @@ export async function handleCreateUser(request, env) {
        VALUES (?, ?, ?, ?, 1, datetime('now'), datetime('now'))`
     ).bind(name.trim(), email.toLowerCase().trim(), role, passwordHash).run();
 
+    await recordAudit(env, {
+      userId: payload.userId, userEmail: payload.email,
+      action: 'create', entityType: 'user', entityId: result.meta.last_row_id, result: 'success',
+      metadata: { role },
+    });
+
     return jsonResponse({
       id: result.meta.last_row_id,
       name: name.trim(),
@@ -183,6 +190,13 @@ export async function handleUpdateUser(request, env, userId) {
     const updated = await env.DB.prepare(
       'SELECT id, name, email, role, active, created_at, updated_at FROM users WHERE id = ?'
     ).bind(userId).first();
+
+    await recordAudit(env, {
+      userId: payload.userId, userEmail: payload.email,
+      action: 'update', entityType: 'user', entityId: userId, result: 'success',
+      metadata: { fields: [name, email, role, active].map((v, i) => v !== undefined ? ['name', 'email', 'role', 'active'][i] : null).filter(Boolean) },
+    });
+
     return jsonResponse(updated);
   } catch (e) {
     console.error('Update user error:', e);
@@ -217,6 +231,12 @@ export async function handleDeleteUser(request, env, userId) {
     }
 
     await env.DB.prepare('DELETE FROM users WHERE id = ?').bind(userId).run();
+
+    await recordAudit(env, {
+      userId: payload.userId, userEmail: payload.email,
+      action: 'delete', entityType: 'user', entityId: userId, result: 'success',
+    });
+
     return jsonResponse({ message: 'המשתמש נמחק בהצלחה' });
   } catch (e) {
     console.error('Delete user error:', e);
@@ -245,6 +265,12 @@ export async function handleAdminResetPassword(request, env, userId) {
     await env.DB.prepare(
       "UPDATE users SET password_hash = ?, updated_at = datetime('now') WHERE id = ?"
     ).bind(passwordHash, userId).run();
+
+    await recordAudit(env, {
+      userId: payload.userId, userEmail: payload.email,
+      action: 'password_reset', entityType: 'user', entityId: userId, result: 'success',
+      metadata: { by: 'admin' },
+    });
 
     return jsonResponse({ message: 'הסיסמה עודכנה בהצלחה' });
   } catch (e) {

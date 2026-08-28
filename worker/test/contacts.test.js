@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach } from 'vitest';
-import { handleContactSubmission, handleUpdateContact, handleDeleteContact } from '../contacts.js';
+import { handleContactSubmission, handleGetContacts, handleUpdateContact, handleDeleteContact, handleGetDeletedContacts, handleRestoreContact, handlePermanentDeleteContact } from '../contacts.js';
 import { makeFakeD1, mockFetchTurnstile } from './testUtils.js';
 import { vi } from 'vitest';
 
@@ -145,14 +145,89 @@ describe('handleUpdateContact — RBAC', () => {
 
 describe('handleDeleteContact — RBAC', () => {
   it('blocks non-admin roles', async () => {
-    const env = { DB: makeFakeD1() };
+    const env = { DB: makeFakeD1({ contacts: [{ id: 1, full_name: 'X' }] }) };
     const res = await handleDeleteContact('1', env, { role: 'therapist' });
     expect(res.status).toBe(403);
   });
 
   it('allows admin', async () => {
-    const env = { DB: makeFakeD1() };
-    const res = await handleDeleteContact('1', env, { role: 'admin' });
+    const env = { DB: makeFakeD1({ contacts: [{ id: 1, full_name: 'X' }] }) };
+    const res = await handleDeleteContact('1', env, { role: 'admin', userId: 9, email: 'a@x.com' });
     expect(res.status).toBe(200);
+  });
+
+  it('404s for a contact that does not exist', async () => {
+    const env = { DB: makeFakeD1() };
+    const res = await handleDeleteContact('999', env, { role: 'admin', userId: 9 });
+    expect(res.status).toBe(404);
+  });
+});
+
+describe('soft-delete recycle bin — contacts', () => {
+  it('soft-deleted contact disappears from the normal list and appears in the recycle bin', async () => {
+    const db = makeFakeD1({ contacts: [{ id: 1, full_name: 'X' }] });
+    const env = { DB: db };
+    await handleDeleteContact('1', env, { role: 'admin', userId: 9, email: 'a@x.com' });
+
+    const listRes = await handleGetContacts(new URL('https://x/api/contacts'), env);
+    expect(await listRes.json()).toEqual([]);
+
+    const binRes = await handleGetDeletedContacts(env, { role: 'admin' });
+    const bin = await binRes.json();
+    expect(bin).toHaveLength(1);
+    expect(bin[0].id).toBe(1);
+  });
+
+  it('a second delete on an already-deleted contact 404s', async () => {
+    const db = makeFakeD1({ contacts: [{ id: 1, full_name: 'X' }] });
+    const env = { DB: db };
+    await handleDeleteContact('1', env, { role: 'admin', userId: 9 });
+    const res = await handleDeleteContact('1', env, { role: 'admin', userId: 9 });
+    expect(res.status).toBe(404);
+  });
+
+  it('restore brings a soft-deleted contact back to the normal list', async () => {
+    const db = makeFakeD1({ contacts: [{ id: 1, full_name: 'X' }] });
+    const env = { DB: db };
+    await handleDeleteContact('1', env, { role: 'admin', userId: 9 });
+
+    const restoreRes = await handleRestoreContact('1', env, { role: 'admin', userId: 9 });
+    expect(restoreRes.status).toBe(200);
+
+    const listRes = await handleGetContacts(new URL('https://x/api/contacts'), env);
+    expect(await listRes.json()).toHaveLength(1);
+  });
+
+  it('restore 404s for a contact that is not in the recycle bin', async () => {
+    const db = makeFakeD1({ contacts: [{ id: 1, full_name: 'X' }] });
+    const env = { DB: db };
+    const res = await handleRestoreContact('1', env, { role: 'admin', userId: 9 });
+    expect(res.status).toBe(404);
+  });
+
+  it('permanent delete requires explicit confirm:true', async () => {
+    const db = makeFakeD1({ contacts: [{ id: 1, full_name: 'X' }] });
+    const env = { DB: db };
+    await handleDeleteContact('1', env, { role: 'admin', userId: 9 });
+
+    const noConfirm = await handlePermanentDeleteContact('1', new Request('https://x', { method: 'DELETE', body: JSON.stringify({}) }), env, { role: 'admin', userId: 9 });
+    expect(noConfirm.status).toBe(400);
+    expect(db._state.contacts).toHaveLength(1);
+
+    const confirmed = await handlePermanentDeleteContact('1', new Request('https://x', { method: 'DELETE', body: JSON.stringify({ confirm: true }) }), env, { role: 'admin', userId: 9 });
+    expect(confirmed.status).toBe(200);
+    expect(db._state.contacts).toHaveLength(0);
+  });
+
+  it('permanent delete 404s for a contact that is not soft-deleted', async () => {
+    const db = makeFakeD1({ contacts: [{ id: 1, full_name: 'X' }] });
+    const env = { DB: db };
+    const res = await handlePermanentDeleteContact('1', new Request('https://x', { method: 'DELETE', body: JSON.stringify({ confirm: true }) }), env, { role: 'admin', userId: 9 });
+    expect(res.status).toBe(404);
+  });
+
+  it('blocks non-admin from viewing the recycle bin', async () => {
+    const res = await handleGetDeletedContacts({ DB: makeFakeD1() }, { role: 'therapist' });
+    expect(res.status).toBe(403);
   });
 });

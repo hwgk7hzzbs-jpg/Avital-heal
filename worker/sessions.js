@@ -7,6 +7,7 @@
 import { jsonResponse, errorResponse } from './utils.js';
 import { requireRole } from './auth.js';
 import { encryptField, decryptField } from './crypto.js';
+import { recordAudit } from './auditLog.js';
 
 async function decryptSessionRow(env, row) {
   return {
@@ -16,7 +17,7 @@ async function decryptSessionRow(env, row) {
   };
 }
 
-// ─── Get sessions (with filters) ───
+// ─── Get sessions (with filters, excludes soft-deleted) ───
 
 export async function handleGetSessions(url, env) {
   try {
@@ -26,7 +27,8 @@ export async function handleGetSessions(url, env) {
     const limit = parseInt(url.searchParams.get('limit') || '50');
 
     let query = `SELECT s.*, c.full_name as client_name
-                 FROM sessions s JOIN clients c ON s.client_id = c.id WHERE 1=1`;
+                 FROM sessions s JOIN clients c ON s.client_id = c.id
+                 WHERE s.deleted_at IS NULL`;
     const bindings = [];
 
     if (clientId) { query += ' AND s.client_id = ?'; bindings.push(clientId); }
@@ -50,7 +52,7 @@ export async function handleGetSessions(url, env) {
 export async function handleGetClientSessions(clientId, env) {
   try {
     const result = await env.DB.prepare(
-      'SELECT * FROM sessions WHERE client_id = ? ORDER BY session_date DESC'
+      'SELECT * FROM sessions WHERE client_id = ? AND deleted_at IS NULL ORDER BY session_date DESC'
     ).bind(clientId).all();
     const rows = await Promise.all(result.results.map(row => decryptSessionRow(env, row)));
     return jsonResponse(rows);
@@ -77,7 +79,7 @@ export async function handleCreateSession(request, env, payload) {
     }
 
     const client = await env.DB.prepare(
-      'SELECT id FROM clients WHERE id = ?'
+      'SELECT id FROM clients WHERE id = ? AND deleted_at IS NULL'
     ).bind(client_id).first();
     if (!client) return errorResponse('Client not found', 404);
 
@@ -93,6 +95,12 @@ export async function handleCreateSession(request, env, payload) {
       await encryptField(env, next_session_notes || null),
       paid ? 1 : 0, amount || 0, payment_method || null, invoice_number || null
     ).run();
+
+    await recordAudit(env, {
+      userId: payload.userId, userEmail: payload.email,
+      action: 'create', entityType: 'session', entityId: result.meta.last_row_id, result: 'success',
+      metadata: { client_id },
+    });
 
     return jsonResponse({ id: result.meta.last_row_id, message: 'Session created' }, 201);
   } catch (e) {
@@ -130,8 +138,14 @@ export async function handleUpdateSession(id, request, env, payload) {
     values.push(id);
 
     await env.DB.prepare(
-      `UPDATE sessions SET ${fields.join(', ')} WHERE id = ?`
+      `UPDATE sessions SET ${fields.join(', ')} WHERE id = ? AND deleted_at IS NULL`
     ).bind(...values).run();
+
+    await recordAudit(env, {
+      userId: payload.userId, userEmail: payload.email,
+      action: 'update', entityType: 'session', entityId: id, result: 'success',
+      metadata: { fields: allowed.filter(f => data[f] !== undefined) },
+    });
 
     return jsonResponse({ message: 'Session updated' });
   } catch (e) {
@@ -140,16 +154,98 @@ export async function handleUpdateSession(id, request, env, payload) {
   }
 }
 
-// ─── Delete session ───
+// ─── Soft-delete session ───
 
 export async function handleDeleteSession(id, env, payload) {
   const forbidden = requireRole(payload, 'admin');
   if (forbidden) return forbidden;
   try {
-    await env.DB.prepare('DELETE FROM sessions WHERE id = ?').bind(id).run();
-    return jsonResponse({ message: 'Session deleted' });
+    const result = await env.DB.prepare(
+      "UPDATE sessions SET deleted_at = datetime('now'), deleted_by = ? WHERE id = ? AND deleted_at IS NULL"
+    ).bind(payload.userId, id).run();
+    if (!result.meta.changes) return errorResponse('Session not found', 404);
+
+    await recordAudit(env, {
+      userId: payload.userId, userEmail: payload.email,
+      action: 'delete', entityType: 'session', entityId: id, result: 'success',
+    });
+
+    return jsonResponse({ message: 'Session moved to recycle bin' });
   } catch (e) {
     console.error('Delete session error:', e);
     return errorResponse('Failed to delete session', 500);
+  }
+}
+
+// ─── Recycle bin: list soft-deleted sessions ───
+
+export async function handleGetDeletedSessions(env, payload) {
+  const forbidden = requireRole(payload, 'admin');
+  if (forbidden) return forbidden;
+  try {
+    const result = await env.DB.prepare(
+      `SELECT s.*, c.full_name as client_name, u.name as deleted_by_name
+       FROM sessions s
+       JOIN clients c ON s.client_id = c.id
+       LEFT JOIN users u ON u.id = s.deleted_by
+       WHERE s.deleted_at IS NOT NULL ORDER BY s.deleted_at DESC`
+    ).all();
+    const rows = await Promise.all(result.results.map(row => decryptSessionRow(env, row)));
+    return jsonResponse(rows);
+  } catch (e) {
+    console.error('Get deleted sessions error:', e);
+    return errorResponse('Failed to load recycle bin', 500);
+  }
+}
+
+// ─── Restore a soft-deleted session ───
+
+export async function handleRestoreSession(id, env, payload) {
+  const forbidden = requireRole(payload, 'admin');
+  if (forbidden) return forbidden;
+  try {
+    const result = await env.DB.prepare(
+      "UPDATE sessions SET deleted_at = NULL, deleted_by = NULL WHERE id = ? AND deleted_at IS NOT NULL"
+    ).bind(id).run();
+    if (!result.meta.changes) return errorResponse('Session not found in recycle bin', 404);
+
+    await recordAudit(env, {
+      userId: payload.userId, userEmail: payload.email,
+      action: 'restore', entityType: 'session', entityId: id, result: 'success',
+    });
+
+    return jsonResponse({ message: 'Session restored' });
+  } catch (e) {
+    console.error('Restore session error:', e);
+    return errorResponse('Failed to restore session', 500);
+  }
+}
+
+// ─── Permanently delete a soft-deleted session (admin, explicit confirmation) ───
+
+export async function handlePermanentDeleteSession(id, request, env, payload) {
+  const forbidden = requireRole(payload, 'admin');
+  if (forbidden) return forbidden;
+  try {
+    const { confirm } = await request.json().catch(() => ({}));
+    if (confirm !== true) {
+      return errorResponse('נדרש אישור מפורש למחיקה סופית', 400);
+    }
+    const session = await env.DB.prepare(
+      'SELECT id FROM sessions WHERE id = ? AND deleted_at IS NOT NULL'
+    ).bind(id).first();
+    if (!session) return errorResponse('Session not found in recycle bin', 404);
+
+    await env.DB.prepare('DELETE FROM sessions WHERE id = ?').bind(id).run();
+
+    await recordAudit(env, {
+      userId: payload.userId, userEmail: payload.email,
+      action: 'permanent_delete', entityType: 'session', entityId: id, result: 'success',
+    });
+
+    return jsonResponse({ message: 'Session permanently deleted' });
+  } catch (e) {
+    console.error('Permanent delete session error:', e);
+    return errorResponse('Failed to permanently delete session', 500);
   }
 }

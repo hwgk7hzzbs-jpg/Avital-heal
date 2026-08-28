@@ -11,9 +11,9 @@ import { getAuthPayload, handleLogin, handleVerify } from './auth.js';
 import { handleRequestReset, handleExecuteReset, handleChangePassword } from './auth.js';
 import { handleConsentSubmission } from './consent.js';
 import { handleGetClientConsents, handleRevokeConsent } from './consents.js';
-import { handleContactSubmission, handleGetContacts, handleUpdateContact, handleDeleteContact } from './contacts.js';
-import { handleGetClients, handleGetClient, handleCreateClient, handleUpdateClient, handleDeleteClient, handleExportClients, handleExportClientData } from './clients.js';
-import { handleGetSessions, handleGetClientSessions, handleCreateSession, handleUpdateSession, handleDeleteSession } from './sessions.js';
+import { handleContactSubmission, handleGetContacts, handleUpdateContact, handleDeleteContact, handleGetDeletedContacts, handleRestoreContact, handlePermanentDeleteContact } from './contacts.js';
+import { handleGetClients, handleGetClient, handleCreateClient, handleUpdateClient, handleDeleteClient, handleExportClients, handleExportClientData, handleGetDeletedClients, handleRestoreClient, handlePermanentDeleteClient } from './clients.js';
+import { handleGetSessions, handleGetClientSessions, handleCreateSession, handleUpdateSession, handleDeleteSession, handleGetDeletedSessions, handleRestoreSession, handlePermanentDeleteSession } from './sessions.js';
 import { handleStats } from './dashboard.js';
 import { handleGetUsers, handleCreateUser, handleUpdateUser, handleDeleteUser, handleAdminResetPassword } from './users.js';
 import {
@@ -23,7 +23,11 @@ import {
   handleGetWorkshopRegistrations,
   handleUpdateRegistration,
   handleDeleteRegistration,
+  handleGetDeletedRegistrations,
+  handleRestoreRegistration,
+  handlePermanentDeleteRegistration,
 } from './workshops.js';
+import { handleGetAuditLog } from './auditLog.js';
 
 // ─── One-time DB migration ───
 async function runMigrations(env) {
@@ -59,6 +63,37 @@ async function runMigrations(env) {
     `).run();
     await env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_consents_client ON consents(client_id)`).run();
     await env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_consents_workshop_reg ON consents(workshop_registration_id)`).run();
+
+    // Create audit_log table (append-only — see worker/auditLog.js)
+    await env.DB.prepare(`
+      CREATE TABLE IF NOT EXISTS audit_log (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        user_email TEXT,
+        action TEXT NOT NULL,
+        entity_type TEXT NOT NULL,
+        entity_id TEXT,
+        result TEXT NOT NULL DEFAULT 'success',
+        metadata TEXT,
+        created_at DATETIME DEFAULT (datetime('now'))
+      )
+    `).run();
+    await env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_audit_log_entity ON audit_log(entity_type, entity_id)`).run();
+    await env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_audit_log_created ON audit_log(created_at)`).run();
+
+    // Add soft-delete columns (deleted_at/deleted_by) to the entities that
+    // support a recycle bin. Deleting a client no longer cascades to her
+    // sessions (each entity's delete/restore is now independent).
+    for (const table of ['clients', 'sessions', 'contacts', 'workshop_registrations']) {
+      const tableCols = await env.DB.prepare(`PRAGMA table_info(${table})`).all();
+      const names = tableCols.results.map(c => c.name);
+      if (!names.includes('deleted_at')) {
+        await env.DB.prepare(`ALTER TABLE ${table} ADD COLUMN deleted_at DATETIME`).run();
+      }
+      if (!names.includes('deleted_by')) {
+        await env.DB.prepare(`ALTER TABLE ${table} ADD COLUMN deleted_by INTEGER`).run();
+      }
+    }
 
     // Create rate_limits table (fixed-window rate limiting for public endpoints)
     await env.DB.prepare(`
@@ -214,6 +249,9 @@ export default {
     }
 
     // Clients
+    if (path === '/api/clients/deleted' && method === 'GET') {
+      return withCors(await handleGetDeletedClients(env, authPayload));
+    }
     if (path === '/api/clients' && method === 'GET') {
       return withCors(await handleGetClients(url, env));
     }
@@ -221,7 +259,7 @@ export default {
       return withCors(await handleCreateClient(request, env, authPayload));
     }
     if (path.match(/^\/api\/clients\/\d+$/) && method === 'GET') {
-      return withCors(await handleGetClient(path.split('/').pop(), env));
+      return withCors(await handleGetClient(path.split('/').pop(), env, authPayload));
     }
     if (path.match(/^\/api\/clients\/\d+$/) && method === 'PUT') {
       return withCors(await handleUpdateClient(path.split('/').pop(), request, env, authPayload));
@@ -229,8 +267,17 @@ export default {
     if (path.match(/^\/api\/clients\/\d+$/) && method === 'DELETE') {
       return withCors(await handleDeleteClient(path.split('/').pop(), env, authPayload));
     }
+    if (path.match(/^\/api\/clients\/\d+\/restore$/) && method === 'POST') {
+      return withCors(await handleRestoreClient(path.split('/')[3], env, authPayload));
+    }
+    if (path.match(/^\/api\/clients\/\d+\/permanent$/) && method === 'DELETE') {
+      return withCors(await handlePermanentDeleteClient(path.split('/')[3], request, env, authPayload));
+    }
 
     // Sessions
+    if (path === '/api/sessions/deleted' && method === 'GET') {
+      return withCors(await handleGetDeletedSessions(env, authPayload));
+    }
     if (path === '/api/sessions' && method === 'GET') {
       return withCors(await handleGetSessions(url, env));
     }
@@ -242,6 +289,12 @@ export default {
     }
     if (path.match(/^\/api\/sessions\/\d+$/) && method === 'DELETE') {
       return withCors(await handleDeleteSession(path.split('/').pop(), env, authPayload));
+    }
+    if (path.match(/^\/api\/sessions\/\d+\/restore$/) && method === 'POST') {
+      return withCors(await handleRestoreSession(path.split('/')[3], env, authPayload));
+    }
+    if (path.match(/^\/api\/sessions\/\d+\/permanent$/) && method === 'DELETE') {
+      return withCors(await handlePermanentDeleteSession(path.split('/')[3], request, env, authPayload));
     }
     if (path.match(/^\/api\/clients\/\d+\/sessions$/) && method === 'GET') {
       return withCors(await handleGetClientSessions(path.split('/')[3], env));
@@ -259,6 +312,9 @@ export default {
     }
 
     // Contacts
+    if (path === '/api/contacts/deleted' && method === 'GET') {
+      return withCors(await handleGetDeletedContacts(env, authPayload));
+    }
     if (path === '/api/contacts' && method === 'GET') {
       return withCors(await handleGetContacts(url, env));
     }
@@ -267,6 +323,12 @@ export default {
     }
     if (path.match(/^\/api\/contacts\/\d+$/) && method === 'DELETE') {
       return withCors(await handleDeleteContact(path.split('/').pop(), env, authPayload));
+    }
+    if (path.match(/^\/api\/contacts\/\d+\/restore$/) && method === 'POST') {
+      return withCors(await handleRestoreContact(path.split('/')[3], env, authPayload));
+    }
+    if (path.match(/^\/api\/contacts\/\d+\/permanent$/) && method === 'DELETE') {
+      return withCors(await handlePermanentDeleteContact(path.split('/')[3], request, env, authPayload));
     }
 
     // Export
@@ -303,11 +365,25 @@ export default {
       const parts = path.split('/');
       return withCors(await handleGetWorkshopRegistrations(parts[3], env));
     }
+    if (path === '/api/workshop-registrations/deleted' && method === 'GET') {
+      return withCors(await handleGetDeletedRegistrations(env, authPayload));
+    }
     if (path.match(/^\/api\/workshop-registrations\/\d+$/) && method === 'PUT') {
       return withCors(await handleUpdateRegistration(path.split('/').pop(), request, env, authPayload));
     }
     if (path.match(/^\/api\/workshop-registrations\/\d+$/) && method === 'DELETE') {
       return withCors(await handleDeleteRegistration(path.split('/').pop(), env, authPayload));
+    }
+    if (path.match(/^\/api\/workshop-registrations\/\d+\/restore$/) && method === 'POST') {
+      return withCors(await handleRestoreRegistration(path.split('/')[3], env, authPayload));
+    }
+    if (path.match(/^\/api\/workshop-registrations\/\d+\/permanent$/) && method === 'DELETE') {
+      return withCors(await handlePermanentDeleteRegistration(path.split('/')[3], request, env, authPayload));
+    }
+
+    // Audit log (admin only — role check inside handler)
+    if (path === '/api/audit-log' && method === 'GET') {
+      return withCors(await handleGetAuditLog(url, env, authPayload));
     }
 
     return withCors(errorResponse('Not found', 404));

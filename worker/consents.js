@@ -11,6 +11,7 @@
 import { jsonResponse, errorResponse } from './utils.js';
 import { requireRole } from './auth.js';
 import { CONSENT_DOCUMENTS, hashDocument } from './consentDocuments.js';
+import { recordAudit } from './auditLog.js';
 
 /**
  * Record one signed consent. Called by consent.js and workshops.js right
@@ -59,6 +60,10 @@ export async function handleRevokeConsent(id, env, payload) {
     await env.DB.prepare(
       "UPDATE consents SET status = 'revoked', revoked_at = datetime('now') WHERE id = ?"
     ).bind(id).run();
+    await recordAudit(env, {
+      userId: payload.userId, userEmail: payload.email,
+      action: 'revoke', entityType: 'consent', entityId: id, result: 'success',
+    });
     return jsonResponse({ message: 'Consent revoked' });
   } catch (e) {
     console.error('Revoke consent error:', e);
