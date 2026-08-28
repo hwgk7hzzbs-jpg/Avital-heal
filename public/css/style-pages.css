@@ -44,7 +44,7 @@
 }
 
 .legal-page a{
-  color: #9DC8B0;
+  color: var(--primary-dark-accessible);
   text-decoration: underline;
 }
 
@@ -56,7 +56,7 @@
   top: 20px;
   right: 20px;
   font-size: 14px;
-  color: #9DC8B0;
+  color: var(--primary-dark-accessible);
   text-decoration: none;
   opacity: 0.9;
   z-index: 1000;

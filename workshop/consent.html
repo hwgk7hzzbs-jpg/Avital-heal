@@ -6,6 +6,14 @@
   <title>הסכם סדנה והצהרת בריאות - להיות המרפאה של עצמי</title>
   <meta name="description" content="הסכם סדנה, הצהרת בריאות וטופס הסכמה מדעת לסדנת 'להיות המרפאה של עצמי' עם אביטל הוכברג">
   <link rel="canonical" href="https://workshop.avital-heal.com/consent.html">
+
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://workshop.avital-heal.com/consent.html" />
+  <meta property="og:title" content="הסכם סדנה והצהרת בריאות - להיות המרפאה של עצמי" />
+  <meta property="og:description" content="הסכם סדנה, הצהרת בריאות וטופס הסכמה מדעת לסדנת 'להיות המרפאה של עצמי' עם אביטל הוכברג" />
+  <meta property="og:image" content="https://workshop.avital-heal.com/logo.png" />
+  <meta name="twitter:card" content="summary" />
+
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@200;300;400;500;700;900&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -230,8 +238,15 @@
       font-weight: 300;
       direction: rtl;
     }
+    :focus-visible {
+      outline: 3px solid rgba(212,175,55,0.9);
+      outline-offset: 2px;
+      border-radius: 6px;
+    }
+
     .form-field input:focus, .form-field textarea:focus {
       outline: none; border-color: #D4AF37;
+      box-shadow: 0 0 0 3px rgba(212,175,55,0.35);
       background: rgba(255,255,255,0.1);
     }
     .form-field input::placeholder, .form-field textarea::placeholder {
@@ -271,6 +286,13 @@
     }
     .turnstile-wrap {
       display: flex; justify-content: center; margin: 10px 0;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        transition: none !important;
+        animation: none !important;
+      }
     }
   </style>
 </head>
@@ -384,21 +406,21 @@
 </div>
 
 <!-- ===== CONTACT MODAL ===== -->
-<div id="contactModal" class="modal-overlay" onclick="if(event.target===this)closeContactModal()">
+<div id="contactModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="contactModalTitle" onclick="if(event.target===this)closeContactModal()">
   <div class="modal-box">
     <button type="button" class="modal-close" onclick="closeContactModal()" aria-label="סגור">&times;</button>
-    <div class="modal-title">יצירת קשר</div>
+    <div class="modal-title" id="contactModalTitle">יצירת קשר</div>
     <div class="modal-sub">מלאי את פרטיך ואחזור אלייך בהקדם</div>
     <form id="contactForm" onsubmit="submitContact(event)">
-      <div class="form-field"><input type="text" id="contact_name" placeholder="שם מלא" required></div>
-      <div class="form-field"><input type="tel" id="contact_phone" placeholder="טלפון"></div>
-      <div class="form-field"><input type="email" id="contact_email" placeholder="אימייל"></div>
-      <div class="form-field"><textarea id="contact_message" placeholder="איך אוכל לעזור? (שאלות / בקשות)" required></textarea></div>
+      <div class="form-field"><input type="text" id="contact_name" placeholder="שם מלא" aria-label="שם מלא" required></div>
+      <div class="form-field"><input type="tel" id="contact_phone" placeholder="טלפון" aria-label="טלפון"></div>
+      <div class="form-field"><input type="email" id="contact_email" placeholder="אימייל" aria-label="אימייל"></div>
+      <div class="form-field"><textarea id="contact_message" placeholder="איך אוכל לעזור? (שאלות / בקשות)" aria-label="איך אוכל לעזור" required></textarea></div>
       <div class="turnstile-wrap">
         <div class="cf-turnstile" data-sitekey="0x4AAAAAACxQXQewOnLqH3uM" data-theme="dark"></div>
       </div>
       <button type="submit" class="modal-submit" id="contactSubmitBtn">שליחה</button>
-      <div id="contactMsg" class="modal-msg"></div>
+      <div id="contactMsg" class="modal-msg" role="status" aria-live="polite"></div>
     </form>
   </div>
 </div>
@@ -407,9 +429,13 @@
 <script>
   const API_URL = 'https://avital-heal-crm.tgthf7frmp.workers.dev';
 
+  let contactModalLastFocused = null;
   function openContactModal() {
+    contactModalLastFocused = document.activeElement;
     document.getElementById('contactModal').classList.add('open');
     document.body.style.overflow = 'hidden';
+    const firstInput = document.getElementById('contact_name');
+    if (firstInput) setTimeout(() => firstInput.focus(), 50);
   }
   function closeContactModal() {
     document.getElementById('contactModal').classList.remove('open');
@@ -417,8 +443,27 @@
     const msg = document.getElementById('contactMsg');
     msg.className = 'modal-msg';
     msg.textContent = '';
+    if (contactModalLastFocused && typeof contactModalLastFocused.focus === 'function') {
+      contactModalLastFocused.focus();
+    }
+    contactModalLastFocused = null;
   }
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeContactModal(); });
+  document.addEventListener('keydown', (e) => {
+    const modal = document.getElementById('contactModal');
+    if (!modal.classList.contains('open')) return;
+    if (e.key === 'Escape') { closeContactModal(); return; }
+    if (e.key !== 'Tab') return;
+    const focusable = Array.from(modal.querySelectorAll('button, [href], input, textarea, select, [tabindex]'))
+      .filter(el => el.tabIndex !== -1);
+    if (!focusable.length) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault(); last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault(); first.focus();
+    }
+  });
 
   async function submitContact(e) {
     e.preventDefault();

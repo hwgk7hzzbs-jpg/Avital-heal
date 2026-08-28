@@ -83,10 +83,10 @@
         <div class="ah-modal-title" id="ah-modal-title">יצירת קשר</div>
         <div class="ah-modal-sub">מלאי את פרטייך ואחזור אלייך בהקדם</div>
         <form id="ah-contact-form" novalidate>
-          <div class="ah-field"><input type="text" name="fullName" placeholder="שם מלא" required></div>
-          <div class="ah-field"><input type="tel" name="phone" placeholder="טלפון"></div>
-          <div class="ah-field"><input type="email" name="email" placeholder="אימייל" dir="ltr"></div>
-          <div class="ah-field"><textarea name="message" placeholder="איך אוכל לעזור? (שאלות / בקשות)" required></textarea></div>
+          <div class="ah-field"><input type="text" name="fullName" placeholder="שם מלא" aria-label="שם מלא" required></div>
+          <div class="ah-field"><input type="tel" name="phone" placeholder="טלפון" aria-label="טלפון"></div>
+          <div class="ah-field"><input type="email" name="email" placeholder="אימייל" dir="ltr" aria-label="אימייל"></div>
+          <div class="ah-field"><textarea name="message" placeholder="איך אוכל לעזור? (שאלות / בקשות)" aria-label="איך אוכל לעזור" required></textarea></div>
           <div class="ah-turnstile"><div class="cf-turnstile" data-sitekey="${TURNSTILE_SITEKEY}"></div></div>
           <button type="submit" class="ah-submit">שליחה</button>
           <div class="ah-msg" role="status" aria-live="polite"></div>
@@ -121,7 +121,24 @@
 
     modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
     modal.querySelector('.ah-modal-close').addEventListener('click', close);
-    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') close(); });
+    document.addEventListener('keydown', (e) => {
+      if (!modal.classList.contains('open')) return;
+      if (e.key === 'Escape') { close(); return; }
+      if (e.key !== 'Tab') return;
+      // Focus trap: keep Tab/Shift+Tab cycling inside the open dialog.
+      const focusable = Array.from(modal.querySelectorAll('button, [href], input, textarea, select, [tabindex]'))
+        .filter(el => el.tabIndex !== -1);
+      if (!focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    });
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -175,8 +192,11 @@
     });
   }
 
+  let lastFocusedBeforeOpen = null;
+
   function open() {
     injectOnce();
+    lastFocusedBeforeOpen = document.activeElement;
     const modal = document.getElementById('ah-contact-modal');
     const msgEl = modal.querySelector('.ah-msg');
     msgEl.className = 'ah-msg';
@@ -192,6 +212,10 @@
     if (!modal) return;
     modal.classList.remove('open');
     document.body.style.overflow = '';
+    if (lastFocusedBeforeOpen && typeof lastFocusedBeforeOpen.focus === 'function') {
+      lastFocusedBeforeOpen.focus();
+    }
+    lastFocusedBeforeOpen = null;
   }
 
   window.openContactModal = open;

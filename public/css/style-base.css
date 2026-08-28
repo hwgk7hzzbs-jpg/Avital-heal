@@ -8,6 +8,10 @@
 ========================= */
 :root{
   --primary-color: #9DC8B0;
+  /* Same hue as --primary-color, darkened to pass WCAG AA (4.5:1) against
+     white — the lighter mint fails at ~1.85:1. Use this wherever the color
+     carries text or sits behind white text (buttons, colored link text). */
+  --primary-dark-accessible: #487F60;
   --text-color: #4A4A4A;
 
   --bg-overlay-strong: rgba(0, 0, 0, 0.45);
