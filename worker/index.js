@@ -10,6 +10,7 @@ import { errorResponse } from './utils.js';
 import { getAuthPayload, handleLogin, handleVerify } from './auth.js';
 import { handleRequestReset, handleExecuteReset, handleChangePassword } from './auth.js';
 import { handleConsentSubmission } from './consent.js';
+import { handleGetClientConsents, handleRevokeConsent } from './consents.js';
 import { handleContactSubmission, handleGetContacts, handleUpdateContact, handleDeleteContact } from './contacts.js';
 import { handleGetClients, handleGetClient, handleCreateClient, handleUpdateClient, handleDeleteClient, handleExportClients } from './clients.js';
 import { handleGetSessions, handleGetClientSessions, handleCreateSession, handleUpdateSession, handleDeleteSession } from './sessions.js';
@@ -35,6 +36,29 @@ async function runMigrations(env) {
       // Set all existing users as active
       await env.DB.prepare("UPDATE users SET active = 1 WHERE active IS NULL").run();
     }
+
+    // Create consents table (historical, versioned — one row per signature,
+    // in addition to the quick-lookup boolean flags on clients/workshop_registrations)
+    await env.DB.prepare(`
+      CREATE TABLE IF NOT EXISTS consents (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        consent_type TEXT NOT NULL,
+        client_id INTEGER,
+        workshop_registration_id INTEGER,
+        consent_version TEXT NOT NULL,
+        document_hash TEXT NOT NULL,
+        source TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'active',
+        ip TEXT,
+        signed_at DATETIME NOT NULL,
+        revoked_at DATETIME,
+        created_at DATETIME DEFAULT (datetime('now')),
+        FOREIGN KEY (client_id) REFERENCES clients(id),
+        FOREIGN KEY (workshop_registration_id) REFERENCES workshop_registrations(id)
+      )
+    `).run();
+    await env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_consents_client ON consents(client_id)`).run();
+    await env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_consents_workshop_reg ON consents(workshop_registration_id)`).run();
 
     // Create rate_limits table (fixed-window rate limiting for public endpoints)
     await env.DB.prepare(`
@@ -221,6 +245,14 @@ export default {
     }
     if (path.match(/^\/api\/clients\/\d+\/sessions$/) && method === 'GET') {
       return withCors(await handleGetClientSessions(path.split('/')[3], env));
+    }
+
+    // Consents
+    if (path.match(/^\/api\/clients\/\d+\/consents$/) && method === 'GET') {
+      return withCors(await handleGetClientConsents(path.split('/')[3], env));
+    }
+    if (path.match(/^\/api\/consents\/\d+\/revoke$/) && method === 'POST') {
+      return withCors(await handleRevokeConsent(path.split('/')[3], env, authPayload));
     }
 
     // Contacts
