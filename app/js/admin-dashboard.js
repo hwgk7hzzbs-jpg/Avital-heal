@@ -11,7 +11,7 @@ function contactStatusBadge(status) {
     'converted': '<span class="badge badge-green">הפך ללקוח</span>',
     'closed': '<span class="badge badge-gray">סגור</span>',
   };
-  return map[status] || '<span class="badge badge-gray">' + (status || '—') + '</span>';
+  return map[status] || '<span class="badge badge-gray">' + escapeHtml(status || '—') + '</span>';
 }
 
 async function loadDashboard() {
@@ -48,10 +48,10 @@ async function loadDashboard() {
   if (stats.recentContacts && stats.recentContacts.length) {
     ctbody.innerHTML = stats.recentContacts.map(c => `
       <tr>
-        <td><strong>${c.full_name}</strong></td>
-        <td>${c.phone || '—'}</td>
-        <td>${c.email || '—'}</td>
-        <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${c.message || '—'}</td>
+        <td><strong>${escapeHtml(c.full_name)}</strong></td>
+        <td>${escapeHtml(c.phone) || '—'}</td>
+        <td>${escapeHtml(c.email) || '—'}</td>
+        <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(c.message) || '—'}</td>
         <td>${c.created_at ? new Date(c.created_at).toLocaleDateString('he-IL') : '—'}</td>
         <td>${contactStatusBadge(c.status)}</td>
       </tr>
@@ -65,9 +65,9 @@ async function loadDashboard() {
   if (stats.recentClients && stats.recentClients.length) {
     tbody.innerHTML = stats.recentClients.map(c => `
       <tr class="clickable-row" onclick="openClientDetail(${c.id})">
-        <td>${c.full_name}</td>
-        <td>${c.email || '—'}</td>
-        <td>${c.join_date || '—'}</td>
+        <td>${escapeHtml(c.full_name)}</td>
+        <td>${escapeHtml(c.email) || '—'}</td>
+        <td>${escapeHtml(c.join_date) || '—'}</td>
         <td>${c.consent_signed ? '<span class="badge badge-green">חתום</span>' : '<span class="badge badge-gray">לא</span>'}</td>
       </tr>
     `).join('');
