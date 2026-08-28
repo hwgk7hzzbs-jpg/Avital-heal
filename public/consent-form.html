@@ -482,6 +482,11 @@
           </div>
         </div>
 
+        <div style="position:absolute;left:-9999px;" aria-hidden="true">
+          <label for="consentWebsite">אל תמלא/י שדה זה</label>
+          <input type="text" id="consentWebsite" name="website" tabindex="-1" autocomplete="off">
+        </div>
+
         <!-- Cloudflare Turnstile CAPTCHA -->
         <div class="turnstile-wrapper">
           <div class="cf-turnstile"
@@ -627,6 +632,7 @@
         params.append('timestamp', formTimestamp);
         params.append('userAgent', formUserAgent);
         params.append('cf-turnstile-response', turnstileToken);
+        params.append('website', document.getElementById('consentWebsite').value);
 
         // 1. Send to CRM Worker API (primary — saves to D1 database)
         const crmResponse = await fetch(CRM_API_URL, {

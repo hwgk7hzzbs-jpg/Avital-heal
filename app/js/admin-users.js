@@ -41,7 +41,7 @@ function renderUsersTable() {
     <tr>
       <td><strong>${escapeHtml(u.name)}</strong></td>
       <td>${escapeHtml(u.email)}</td>
-      <td>${ROLE_BADGES[u.role] || u.role}</td>
+      <td>${ROLE_BADGES[u.role] || escapeHtml(u.role)}</td>
       <td>${u.active ? '<span class="badge badge-green">פעיל</span>' : '<span class="badge badge-red">לא פעיל</span>'}</td>
       <td>${u.created_at ? new Date(u.created_at).toLocaleDateString('he-IL') : '—'}</td>
       <td class="actions-cell">
@@ -51,13 +51,6 @@ function renderUsersTable() {
       </td>
     </tr>
   `).join('');
-}
-
-// ─── Escape HTML ───
-
-function escapeHtml(str) {
-  if (!str) return '';
-  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
 // ─── Show user form modal ───

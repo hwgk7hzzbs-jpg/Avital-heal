@@ -23,13 +23,13 @@ function renderWorkshops(workshops) {
   container.innerHTML = workshops.map(w => {
     let dates = [];
     try { dates = JSON.parse(w.dates || '[]'); } catch (_) {}
-    const datesHtml = dates.map(d => `<span class="badge badge-blue" style="margin-left:6px;">${d.label}</span>`).join('');
+    const datesHtml = dates.map(d => `<span class="badge badge-blue" style="margin-left:6px;">${escapeHtml(d.label)}</span>`).join('');
     return `
       <div class="card" style="margin-bottom:12px;">
         <div class="card-body" style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
           <div style="flex:1;min-width:260px;">
-            <h3 style="margin:0 0 6px 0;">${w.name}</h3>
-            <p style="color:var(--text-light);margin:0 0 8px 0;font-size:0.9rem;">${w.description || ''}</p>
+            <h3 style="margin:0 0 6px 0;">${escapeHtml(w.name)}</h3>
+            <p style="color:var(--text-light);margin:0 0 8px 0;font-size:0.9rem;">${escapeHtml(w.description) || ''}</p>
             <div style="margin-bottom:6px;">${datesHtml}</div>
             <div style="font-size:0.85rem;color:var(--text-light);">
               ${w.sessions_count || ''} מפגשים · ${w.duration_minutes ? (w.duration_minutes / 60) + ' שעות כל מפגש' : ''} · ₪${w.price || 0}
@@ -39,7 +39,7 @@ function renderWorkshops(workshops) {
             <div style="font-size:1.8rem;font-weight:700;color:var(--primary-dark);">${w.registration_count || 0}</div>
             <div style="font-size:0.85rem;color:var(--text-light);">נרשמים</div>
           </div>
-          <button onclick="openWorkshopDetails('${w.id}')" class="btn btn-primary">צפה בנרשמים</button>
+          <button onclick="openWorkshopDetails('${escapeHtml(w.id)}')" class="btn btn-primary">צפה בנרשמים</button>
         </div>
       </div>
     `;
@@ -56,13 +56,13 @@ async function openWorkshopDetails(workshopId) {
   document.getElementById('workshopDetailsTitle').textContent = workshop.name;
 
   const dates = workshop.dates || [];
-  const datesHtml = dates.map(d => `<span class="badge badge-blue" style="margin-left:6px;">${d.label}</span>`).join('');
+  const datesHtml = dates.map(d => `<span class="badge badge-blue" style="margin-left:6px;">${escapeHtml(d.label)}</span>`).join('');
 
   document.getElementById('workshopDetailsInfo').innerHTML = `
-    <p style="color:var(--text-light);margin-bottom:8px;">${workshop.description || ''}</p>
+    <p style="color:var(--text-light);margin-bottom:8px;">${escapeHtml(workshop.description) || ''}</p>
     <div style="margin-bottom:8px;"><strong>מועדים זמינים:</strong> ${datesHtml}</div>
     <div style="font-size:0.9rem;color:var(--text-light);">
-      ${workshop.sessions_count} מפגשים · ${workshop.duration_minutes / 60} שעות · ₪${workshop.price} · ${workshop.location || ''}
+      ${workshop.sessions_count} מפגשים · ${workshop.duration_minutes / 60} שעות · ₪${workshop.price} · ${escapeHtml(workshop.location) || ''}
     </div>
   `;
 
@@ -91,10 +91,10 @@ function renderWorkshopRegistrations(regs, dates) {
   };
   tbody.innerHTML = regs.map(r => `
     <tr>
-      <td><strong>${r.full_name}</strong> ${r.consent_agreed ? '<span class="badge badge-green" title="אישרה הסכם סדנה ב-' + (r.consent_date || '') + '">📝✓</span>' : '<span class="badge badge-gray" title="לא אישרה הסכם">⚠</span>'}</td>
-      <td>${r.phone ? `<a href="tel:${r.phone}">${r.phone}</a>` : '—'}</td>
-      <td>${r.email ? `<a href="mailto:${r.email}">${r.email}</a>` : '—'}</td>
-      <td>${dateLabel(r.date_option)}</td>
+      <td><strong>${escapeHtml(r.full_name)}</strong> ${r.consent_agreed ? '<span class="badge badge-green" title="אישרה הסכם סדנה ב-' + escapeHtml(r.consent_date || '') + '">📝✓</span>' : '<span class="badge badge-gray" title="לא אישרה הסכם">⚠</span>'}</td>
+      <td>${r.phone ? `<a href="tel:${encodeURIComponent(r.phone)}">${escapeHtml(r.phone)}</a>` : '—'}</td>
+      <td>${r.email ? `<a href="mailto:${encodeURIComponent(r.email)}">${escapeHtml(r.email)}</a>` : '—'}</td>
+      <td>${escapeHtml(dateLabel(r.date_option))}</td>
       <td>${new Date(r.created_at).toLocaleDateString('he-IL')}</td>
       <td>${statusBadge(r.status)}</td>
       <td>

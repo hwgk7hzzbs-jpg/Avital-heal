@@ -44,6 +44,12 @@ function togglePasswordVisibility(inputId, btn) {
 
 // ─── Login (email + password) ───
 
+let loginTurnstileToken = '';
+let resetTurnstileToken = '';
+
+function onLoginTurnstile(token) { loginTurnstileToken = token; }
+function onResetTurnstile(token) { resetTurnstileToken = token; }
+
 async function login() {
   const email = document.getElementById('loginEmail').value.trim();
   const password = document.getElementById('loginPassword').value;
@@ -55,12 +61,17 @@ async function login() {
     errEl.style.display = 'block';
     return;
   }
+  if (!loginTurnstileToken) {
+    errEl.textContent = 'נא להשלים את אימות ה-CAPTCHA';
+    errEl.style.display = 'block';
+    return;
+  }
 
   try {
     const res = await fetch(`${API_BASE}/api/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email, password, 'cf-turnstile-response': loginTurnstileToken }),
     });
     const data = await res.json();
     if (data.token) {
@@ -71,6 +82,8 @@ async function login() {
     } else {
       errEl.textContent = data.error || 'אימייל או סיסמה שגויים';
       errEl.style.display = 'block';
+      if (window.turnstile) window.turnstile.reset();
+      loginTurnstileToken = '';
     }
   } catch (e) {
     errEl.textContent = 'שגיאת חיבור לשרת';
@@ -134,11 +147,16 @@ async function requestReset() {
     msgEl.className = 'reset-msg error';
     return;
   }
+  if (!resetTurnstileToken) {
+    msgEl.textContent = 'נא להשלים את אימות ה-CAPTCHA';
+    msgEl.className = 'reset-msg error';
+    return;
+  }
   try {
     const res = await fetch(`${API_BASE}/api/reset-request`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email }),
+      body: JSON.stringify({ email, 'cf-turnstile-response': resetTurnstileToken }),
     });
     const data = await res.json();
     msgEl.textContent = data.message || 'הבקשה נשלחה';
@@ -146,6 +164,9 @@ async function requestReset() {
   } catch (e) {
     msgEl.textContent = 'שגיאה בשליחת הבקשה';
     msgEl.className = 'reset-msg error';
+  } finally {
+    if (window.turnstile) window.turnstile.reset();
+    resetTurnstileToken = '';
   }
 }
 

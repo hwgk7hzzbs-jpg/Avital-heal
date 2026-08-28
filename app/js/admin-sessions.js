@@ -14,9 +14,9 @@ async function loadSessions() {
   }
   tbody.innerHTML = sessions.map(s => `
     <tr>
-      <td>${s.session_date}</td>
-      <td>${s.client_name || '—'}</td>
-      <td>${s.session_type || '—'}</td>
+      <td>${escapeHtml(s.session_date)}</td>
+      <td>${escapeHtml(s.client_name) || '—'}</td>
+      <td>${escapeHtml(s.session_type) || '—'}</td>
       <td>${s.duration_minutes} דק׳</td>
       <td>₪${s.amount || 0}</td>
       <td>${s.paid ? '<span class="badge badge-green">שולם</span>' : '<span class="badge badge-red">לא שולם</span>'}</td>
@@ -38,7 +38,7 @@ function openNewSessionModal() {
 
   const sel = document.getElementById('sf_client');
   sel.innerHTML = '<option value="">— בחירת לקוח —</option>' +
-    allClients.map(c => `<option value="${c.id}">${c.full_name}</option>`).join('');
+    allClients.map(c => `<option value="${c.id}">${escapeHtml(c.full_name)}</option>`).join('');
 
   document.getElementById('sessionFormModal').classList.add('active');
 }

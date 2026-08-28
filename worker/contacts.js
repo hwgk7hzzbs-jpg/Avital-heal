@@ -5,7 +5,10 @@
  */
 
 import { jsonResponse, errorResponse, sendNotification } from './utils.js';
-import { verifyTurnstile } from './auth.js';
+import { verifyTurnstile, checkRateLimit, requireRole } from './auth.js';
+
+const MAX_FIELD_LEN = 2000;
+const CONTACT_STATUSES = ['new', 'contacted', 'converted', 'closed'];
 
 // ─── Contact form submission (public) ───
 
@@ -22,17 +25,31 @@ export async function handleContactSubmission(request, env) {
 
     const { fullName, phone, email, message, turnstileToken } = data;
 
+    // Honeypot: a hidden field real users never fill in
+    if (data.website) {
+      return jsonResponse({ success: true, message: 'הפנייה נקלטה בהצלחה' });
+    }
+
     if (!fullName || !fullName.trim()) {
       return errorResponse('שם מלא הוא שדה חובה', 400);
     }
     if (!phone && !email) {
       return errorResponse('יש למלא טלפון או אימייל ליצירת קשר', 400);
     }
-
-    if (turnstileToken && env.TURNSTILE_SECRET_KEY) {
-      const valid = await verifyTurnstile(turnstileToken, env);
-      if (!valid) return errorResponse('אימות CAPTCHA נכשל', 403);
+    if ([fullName, phone, email, message].some(v => typeof v === 'string' && v.length > MAX_FIELD_LEN)) {
+      return errorResponse('שדה חורג מהאורך המותר', 400);
     }
+
+    const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
+    if (!(await checkRateLimit(env, `contact:ip:${ip}`, 10, 3600))) {
+      return errorResponse('יותר מדי בקשות — נסי שוב מאוחר יותר', 429);
+    }
+
+    if (!turnstileToken) {
+      return errorResponse('אימות CAPTCHA נדרש', 403);
+    }
+    const valid = await verifyTurnstile(turnstileToken, env, ip);
+    if (!valid) return errorResponse('אימות CAPTCHA נכשל', 403);
 
     await env.DB.prepare(
       `INSERT INTO contacts (full_name, phone, email, message, source, status, created_at)
@@ -44,12 +61,11 @@ export async function handleContactSubmission(request, env) {
       message ? message.trim() : null
     ).run();
 
-    // Notify Avital (fire & forget)
+    // Notify Avital (fire & forget) — generic notice only, no PII/message content
+    // sent off-platform (see docs/apps-script-notifications.md for the matching template).
     await sendNotification(env, 'new-contact', {
-      fullName: fullName.trim(),
-      phone: phone ? phone.trim() : '',
-      email: email ? email.trim() : '',
-      message: message ? message.trim() : '',
+      notice: 'התקבלה פנייה חדשה מהאתר',
+      crmLink: 'https://app.avital-heal.com',
       timestamp: new Date().toISOString(),
     });
 
@@ -87,13 +103,20 @@ export async function handleGetContacts(url, env) {
 
 // ─── Update contact status (protected) ───
 
-export async function handleUpdateContact(id, request, env) {
+export async function handleUpdateContact(id, request, env, payload) {
+  const forbidden = requireRole(payload, 'admin', 'therapist');
+  if (forbidden) return forbidden;
   try {
     const data = await request.json();
     const fields = [];
     const values = [];
 
-    if (data.status !== undefined) { fields.push('status = ?'); values.push(data.status); }
+    if (data.status !== undefined) {
+      if (!CONTACT_STATUSES.includes(data.status)) {
+        return errorResponse('סטטוס לא תקין', 400);
+      }
+      fields.push('status = ?'); values.push(data.status);
+    }
     if (data.notes !== undefined) { fields.push('notes = ?'); values.push(data.notes); }
 
     if (fields.length === 0) return errorResponse('No fields to update', 400);
@@ -112,7 +135,9 @@ export async function handleUpdateContact(id, request, env) {
 
 // ─── Delete contact (protected) ───
 
-export async function handleDeleteContact(id, env) {
+export async function handleDeleteContact(id, env, payload) {
+  const forbidden = requireRole(payload, 'admin');
+  if (forbidden) return forbidden;
   try {
     await env.DB.prepare('DELETE FROM contacts WHERE id = ?').bind(id).run();
     return jsonResponse({ message: 'Contact deleted' });

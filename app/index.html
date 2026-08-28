@@ -25,6 +25,7 @@
         <svg class="eye-off-icon hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
       </button>
     </div>
+    <div class="cf-turnstile" data-sitekey="0x4AAAAAACxQXQewOnLqH3uM" data-callback="onLoginTurnstile" style="margin:12px 0;"></div>
     <button onclick="login()" class="btn btn-primary login-btn">כניסה</button>
     <div id="loginError" class="login-error"></div>
     <div class="reset-link" onclick="showResetForm()">שכחתי סיסמה</div>
@@ -37,6 +38,7 @@
     <h2>איפוס סיסמה</h2>
     <p class="subtitle">הכנס את כתובת האימייל שלך</p>
     <input type="email" id="resetEmail" placeholder="אימייל" class="input-field">
+    <div class="cf-turnstile" data-sitekey="0x4AAAAAACxQXQewOnLqH3uM" data-callback="onResetTurnstile" style="margin:12px 0;"></div>
     <button onclick="requestReset()" class="btn btn-primary">שלח קישור</button>
     <div id="resetMsg" class="reset-msg"></div>
     <div class="reset-link" onclick="showLoginForm()">חזרה לכניסה</div>
@@ -349,13 +351,15 @@
   </div>
 </div>
 
-<script src="js/admin-app.js?v=13"></script>
-<script src="js/admin-dashboard.js?v=13"></script>
-<script src="js/admin-clients.js?v=13"></script>
-<script src="js/admin-sessions.js?v=13"></script>
-<script src="js/admin-contacts.js?v=13"></script>
-<script src="js/admin-users.js?v=13"></script>
-<script src="js/admin-workshops.js?v=13"></script>
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+<script src="js/admin-utils.js?v=14"></script>
+<script src="js/admin-app.js?v=14"></script>
+<script src="js/admin-dashboard.js?v=14"></script>
+<script src="js/admin-clients.js?v=14"></script>
+<script src="js/admin-sessions.js?v=14"></script>
+<script src="js/admin-contacts.js?v=14"></script>
+<script src="js/admin-users.js?v=14"></script>
+<script src="js/admin-workshops.js?v=14"></script>
 
 </body>
 </html>

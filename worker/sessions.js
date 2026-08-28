@@ -5,6 +5,7 @@
  */
 
 import { jsonResponse, errorResponse } from './utils.js';
+import { requireRole } from './auth.js';
 
 // ─── Get sessions (with filters) ───
 
@@ -50,7 +51,9 @@ export async function handleGetClientSessions(clientId, env) {
 
 // ─── Create session ───
 
-export async function handleCreateSession(request, env) {
+export async function handleCreateSession(request, env, payload) {
+  const forbidden = requireRole(payload, 'admin', 'therapist');
+  if (forbidden) return forbidden;
   try {
     const data = await request.json();
     const {
@@ -87,7 +90,9 @@ export async function handleCreateSession(request, env) {
 
 // ─── Update session ───
 
-export async function handleUpdateSession(id, request, env) {
+export async function handleUpdateSession(id, request, env, payload) {
+  const forbidden = requireRole(payload, 'admin', 'therapist');
+  if (forbidden) return forbidden;
   try {
     const data = await request.json();
     const fields = [];
@@ -121,7 +126,9 @@ export async function handleUpdateSession(id, request, env) {
 
 // ─── Delete session ───
 
-export async function handleDeleteSession(id, env) {
+export async function handleDeleteSession(id, env, payload) {
+  const forbidden = requireRole(payload, 'admin');
+  if (forbidden) return forbidden;
   try {
     await env.DB.prepare('DELETE FROM sessions WHERE id = ?').bind(id).run();
     return jsonResponse({ message: 'Session deleted' });

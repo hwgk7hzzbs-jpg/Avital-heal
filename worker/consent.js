@@ -5,7 +5,9 @@
  */
 
 import { jsonResponse, errorResponse } from './utils.js';
-import { verifyTurnstile } from './auth.js';
+import { verifyTurnstile, checkRateLimit } from './auth.js';
+
+const MAX_FIELD_LEN = 2000;
 
 // ─── Consent form submission (public) ───
 
@@ -28,6 +30,11 @@ export async function handleConsentSubmission(request, env) {
     } = data;
     const turnstileToken = data['cf-turnstile-response'] || '';
 
+    // Honeypot: a hidden field real users never fill in
+    if (data.website) {
+      return jsonResponse({ status: 'success', message: 'Form submitted successfully' });
+    }
+
     // Validate required fields
     if (!email || !fullName || !date) {
       return errorResponse('Missing required fields');
@@ -38,13 +45,22 @@ export async function handleConsentSubmission(request, env) {
     if (agreementConfirmation !== 'true' && agreementConfirmation !== true) {
       return errorResponse('Agreement confirmation required');
     }
+    if ([email, fullName].some(v => typeof v === 'string' && v.length > MAX_FIELD_LEN)) {
+      return errorResponse('Field too long');
+    }
 
-    // Verify Turnstile
-    if (turnstileToken) {
-      const verified = await verifyTurnstile(turnstileToken, env);
-      if (!verified) {
-        return errorResponse('CAPTCHA verification failed', 403);
-      }
+    const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
+    if (!(await checkRateLimit(env, `consent:ip:${ip}`, 10, 3600))) {
+      return errorResponse('Too many requests — please try again later', 429);
+    }
+
+    // Verify Turnstile (required)
+    if (!turnstileToken) {
+      return errorResponse('CAPTCHA verification required', 403);
+    }
+    const verified = await verifyTurnstile(turnstileToken, env, ip);
+    if (!verified) {
+      return errorResponse('CAPTCHA verification failed', 403);
     }
 
     // Check if client already exists by email

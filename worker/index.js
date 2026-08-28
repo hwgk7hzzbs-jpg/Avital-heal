@@ -7,7 +7,7 @@
 
 import { CORS_HEADERS, SECURITY_HEADERS, getCorsHeaders } from './utils.js';
 import { errorResponse } from './utils.js';
-import { isAuthorized, handleLogin, handleVerify } from './auth.js';
+import { getAuthPayload, handleLogin, handleVerify } from './auth.js';
 import { handleRequestReset, handleExecuteReset, handleChangePassword } from './auth.js';
 import { handleConsentSubmission } from './consent.js';
 import { handleContactSubmission, handleGetContacts, handleUpdateContact, handleDeleteContact } from './contacts.js';
@@ -35,6 +35,15 @@ async function runMigrations(env) {
       // Set all existing users as active
       await env.DB.prepare("UPDATE users SET active = 1 WHERE active IS NULL").run();
     }
+
+    // Create rate_limits table (fixed-window rate limiting for public endpoints)
+    await env.DB.prepare(`
+      CREATE TABLE IF NOT EXISTS rate_limits (
+        rl_key TEXT PRIMARY KEY,
+        count INTEGER NOT NULL,
+        expires_at INTEGER NOT NULL
+      )
+    `).run();
 
     // Create workshops table
     await env.DB.prepare(`
@@ -161,8 +170,10 @@ export default {
     }
 
     // ─── Auth check for all /api/* routes below ───
+    let authPayload = null;
     if (path.startsWith('/api/')) {
-      if (!(await isAuthorized(request, env))) {
+      authPayload = await getAuthPayload(request, env);
+      if (!authPayload) {
         return withCors(errorResponse('Unauthorized', 401));
       }
     }
@@ -183,16 +194,16 @@ export default {
       return withCors(await handleGetClients(url, env));
     }
     if (path === '/api/clients' && method === 'POST') {
-      return withCors(await handleCreateClient(request, env));
+      return withCors(await handleCreateClient(request, env, authPayload));
     }
     if (path.match(/^\/api\/clients\/\d+$/) && method === 'GET') {
       return withCors(await handleGetClient(path.split('/').pop(), env));
     }
     if (path.match(/^\/api\/clients\/\d+$/) && method === 'PUT') {
-      return withCors(await handleUpdateClient(path.split('/').pop(), request, env));
+      return withCors(await handleUpdateClient(path.split('/').pop(), request, env, authPayload));
     }
     if (path.match(/^\/api\/clients\/\d+$/) && method === 'DELETE') {
-      return withCors(await handleDeleteClient(path.split('/').pop(), env));
+      return withCors(await handleDeleteClient(path.split('/').pop(), env, authPayload));
     }
 
     // Sessions
@@ -200,13 +211,13 @@ export default {
       return withCors(await handleGetSessions(url, env));
     }
     if (path === '/api/sessions' && method === 'POST') {
-      return withCors(await handleCreateSession(request, env));
+      return withCors(await handleCreateSession(request, env, authPayload));
     }
     if (path.match(/^\/api\/sessions\/\d+$/) && method === 'PUT') {
-      return withCors(await handleUpdateSession(path.split('/').pop(), request, env));
+      return withCors(await handleUpdateSession(path.split('/').pop(), request, env, authPayload));
     }
     if (path.match(/^\/api\/sessions\/\d+$/) && method === 'DELETE') {
-      return withCors(await handleDeleteSession(path.split('/').pop(), env));
+      return withCors(await handleDeleteSession(path.split('/').pop(), env, authPayload));
     }
     if (path.match(/^\/api\/clients\/\d+\/sessions$/) && method === 'GET') {
       return withCors(await handleGetClientSessions(path.split('/')[3], env));
@@ -217,15 +228,15 @@ export default {
       return withCors(await handleGetContacts(url, env));
     }
     if (path.match(/^\/api\/contacts\/\d+$/) && method === 'PUT') {
-      return withCors(await handleUpdateContact(path.split('/').pop(), request, env));
+      return withCors(await handleUpdateContact(path.split('/').pop(), request, env, authPayload));
     }
     if (path.match(/^\/api\/contacts\/\d+$/) && method === 'DELETE') {
-      return withCors(await handleDeleteContact(path.split('/').pop(), env));
+      return withCors(await handleDeleteContact(path.split('/').pop(), env, authPayload));
     }
 
     // Export
     if (path === '/api/export/clients' && method === 'GET') {
-      return withCors(await handleExportClients(env));
+      return withCors(await handleExportClients(env, authPayload));
     }
 
     // Users (admin only — role check inside handlers)
@@ -258,10 +269,10 @@ export default {
       return withCors(await handleGetWorkshopRegistrations(parts[3], env));
     }
     if (path.match(/^\/api\/workshop-registrations\/\d+$/) && method === 'PUT') {
-      return withCors(await handleUpdateRegistration(path.split('/').pop(), request, env));
+      return withCors(await handleUpdateRegistration(path.split('/').pop(), request, env, authPayload));
     }
     if (path.match(/^\/api\/workshop-registrations\/\d+$/) && method === 'DELETE') {
-      return withCors(await handleDeleteRegistration(path.split('/').pop(), env));
+      return withCors(await handleDeleteRegistration(path.split('/').pop(), env, authPayload));
     }
 
     return withCors(errorResponse('Not found', 404));

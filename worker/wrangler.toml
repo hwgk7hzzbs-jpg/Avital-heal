@@ -11,6 +11,9 @@ database_id = "8e1ab564-8b00-4b2f-a0f1-99fbdab95bfc"
 # Non-secret variables can go here
 
 # Secret variables (set via `wrangler secret put`):
-# CRM_AUTH_TOKEN — random token for API auth
-# CRM_PASSWORD — password for Avital to log in
-# TURNSTILE_SECRET_KEY — Cloudflare Turnstile secret
+# JWT_SECRET — signing secret for login session tokens
+# TURNSTILE_SECRET_KEY — Cloudflare Turnstile secret, required on every public form endpoint
+# RESET_EMAIL_SCRIPT_URL — Google Apps Script webhook for password-reset and notification emails
+#
+# CRM_AUTH_TOKEN / CRM_PASSWORD belonged to the legacy static-token auth scheme
+# (worker/crm-worker.js, removed) and are not used by the current JWT-based auth in auth.js.

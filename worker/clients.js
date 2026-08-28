@@ -5,6 +5,7 @@
  */
 
 import { jsonResponse, errorResponse, csvResponse } from './utils.js';
+import { requireRole } from './auth.js';
 
 // ─── Get all clients ───
 
@@ -63,7 +64,9 @@ export async function handleGetClient(id, env) {
 
 // ─── Create client ───
 
-export async function handleCreateClient(request, env) {
+export async function handleCreateClient(request, env, payload) {
+  const forbidden = requireRole(payload, 'admin', 'therapist');
+  if (forbidden) return forbidden;
   try {
     const data = await request.json();
     const { full_name, email, phone, address, birth_date, treatment_type, notes } = data;
@@ -86,7 +89,9 @@ export async function handleCreateClient(request, env) {
 
 // ─── Update client ───
 
-export async function handleUpdateClient(id, request, env) {
+export async function handleUpdateClient(id, request, env, payload) {
+  const forbidden = requireRole(payload, 'admin', 'therapist');
+  if (forbidden) return forbidden;
   try {
     const data = await request.json();
     const fields = [];
@@ -120,7 +125,9 @@ export async function handleUpdateClient(id, request, env) {
 
 // ─── Delete client ───
 
-export async function handleDeleteClient(id, env) {
+export async function handleDeleteClient(id, env, payload) {
+  const forbidden = requireRole(payload, 'admin');
+  if (forbidden) return forbidden;
   try {
     await env.DB.prepare('DELETE FROM sessions WHERE client_id = ?').bind(id).run();
     await env.DB.prepare('DELETE FROM clients WHERE id = ?').bind(id).run();
@@ -133,7 +140,9 @@ export async function handleDeleteClient(id, env) {
 
 // ─── Export clients CSV ───
 
-export async function handleExportClients(env) {
+export async function handleExportClients(env, payload) {
+  const forbidden = requireRole(payload, 'admin');
+  if (forbidden) return forbidden;
   try {
     const clients = await env.DB.prepare(
       `SELECT c.*,

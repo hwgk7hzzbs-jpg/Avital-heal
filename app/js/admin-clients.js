@@ -21,9 +21,9 @@ function renderClients(clients) {
   }
   tbody.innerHTML = clients.map(c => `
     <tr class="clickable-row" onclick="openClientDetail(${c.id})">
-      <td><strong>${c.full_name}</strong></td>
-      <td>${c.phone || '—'}</td>
-      <td>${c.treatment_type || '—'}</td>
+      <td><strong>${escapeHtml(c.full_name)}</strong></td>
+      <td>${escapeHtml(c.phone) || '—'}</td>
+      <td>${escapeHtml(c.treatment_type) || '—'}</td>
       <td>${c.session_count || 0}</td>
       <td>${c.consent_signed ? '<span class="badge badge-green">חתום</span>' : '<span class="badge badge-gray">לא</span>'}</td>
       <td>${c.status === 'active' ? '<span class="badge badge-green">פעיל</span>' : c.status === 'completed' ? '<span class="badge badge-blue">הסתיים</span>' : '<span class="badge badge-gray">לא פעיל</span>'}</td>
@@ -49,30 +49,30 @@ async function openClientDetail(id) {
   document.getElementById('clientDetailName').textContent = data.full_name;
   document.getElementById('clientDetailContent').innerHTML = `
     <div class="form-row" style="margin-bottom:12px;">
-      <div><strong>אימייל:</strong> ${data.email || '—'}</div>
-      <div><strong>טלפון:</strong> ${data.phone || '—'}</div>
+      <div><strong>אימייל:</strong> ${escapeHtml(data.email) || '—'}</div>
+      <div><strong>טלפון:</strong> ${escapeHtml(data.phone) || '—'}</div>
     </div>
     <div class="form-row" style="margin-bottom:12px;">
-      <div><strong>סוג טיפול:</strong> ${data.treatment_type || '—'}</div>
-      <div><strong>סטטוס:</strong> ${data.status || '—'}</div>
+      <div><strong>סוג טיפול:</strong> ${escapeHtml(data.treatment_type) || '—'}</div>
+      <div><strong>סטטוס:</strong> ${escapeHtml(data.status) || '—'}</div>
     </div>
     <div class="form-row" style="margin-bottom:12px;">
-      <div><strong>תאריך הצטרפות:</strong> ${data.join_date || '—'}</div>
-      <div><strong>הסכמה:</strong> ${data.consent_signed ? '✅ חתום (' + (data.consent_date || '') + ')' : '❌ לא חתום'}</div>
+      <div><strong>תאריך הצטרפות:</strong> ${escapeHtml(data.join_date) || '—'}</div>
+      <div><strong>הסכמה:</strong> ${data.consent_signed ? '✅ חתום (' + escapeHtml(data.consent_date || '') + ')' : '❌ לא חתום'}</div>
     </div>
-    ${data.notes ? '<div style="margin-bottom:12px;"><strong>הערות:</strong> ' + data.notes + '</div>' : ''}
+    ${data.notes ? '<div style="margin-bottom:12px;"><strong>הערות:</strong> ' + escapeHtml(data.notes) + '</div>' : ''}
   `;
 
   const stbody = document.getElementById('clientSessionsTable');
   if (data.sessions && data.sessions.length) {
     stbody.innerHTML = data.sessions.map(s => `
       <tr>
-        <td>${s.session_date}</td>
-        <td>${s.session_type || '—'}</td>
+        <td>${escapeHtml(s.session_date)}</td>
+        <td>${escapeHtml(s.session_type) || '—'}</td>
         <td>${s.duration_minutes} דק׳</td>
         <td>₪${s.amount || 0}</td>
         <td>${s.paid ? '<span class="badge badge-green">שולם</span>' : '<span class="badge badge-red">לא שולם</span>'}</td>
-        <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${s.summary || '—'}</td>
+        <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(s.summary) || '—'}</td>
       </tr>
     `).join('');
   } else {

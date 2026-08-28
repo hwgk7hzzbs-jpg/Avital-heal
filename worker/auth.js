@@ -11,17 +11,23 @@ import { hashPassword, verifyPassword, createJWT, verifyJWT, generateToken } fro
 
 // ─── Turnstile CAPTCHA verification ───
 
-export async function verifyTurnstile(token, env) {
+export async function verifyTurnstile(token, env, remoteip) {
+  if (!env.TURNSTILE_SECRET_KEY) {
+    console.error('Turnstile verification skipped: TURNSTILE_SECRET_KEY not configured');
+    return false;
+  }
   try {
+    const body = new URLSearchParams({
+      secret: env.TURNSTILE_SECRET_KEY,
+      response: token,
+    });
+    if (remoteip) body.set('remoteip', remoteip);
     const response = await fetch(
       'https://challenges.cloudflare.com/turnstile/v0/siteverify',
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({
-          secret: env.TURNSTILE_SECRET_KEY,
-          response: token,
-        }),
+        body,
       }
     );
     const result = await response.json();
@@ -32,24 +38,76 @@ export async function verifyTurnstile(token, env) {
   }
 }
 
+// ─── Rate limiting (D1-backed fixed window) ───
+// Table: rate_limits(rl_key TEXT PRIMARY KEY, count INTEGER, expires_at INTEGER)
+
+export async function checkRateLimit(env, key, limit, windowSeconds) {
+  const now = Math.floor(Date.now() / 1000);
+  try {
+    const row = await env.DB.prepare(
+      'SELECT count, expires_at FROM rate_limits WHERE rl_key = ?'
+    ).bind(key).first();
+
+    if (!row || row.expires_at < now) {
+      await env.DB.prepare(
+        `INSERT INTO rate_limits (rl_key, count, expires_at) VALUES (?, 1, ?)
+         ON CONFLICT(rl_key) DO UPDATE SET count = 1, expires_at = excluded.expires_at`
+      ).bind(key, now + windowSeconds).run();
+      return true;
+    }
+    if (row.count >= limit) return false;
+    await env.DB.prepare(
+      'UPDATE rate_limits SET count = count + 1 WHERE rl_key = ?'
+    ).bind(key).run();
+    return true;
+  } catch (e) {
+    // Fail open on infra errors — a broken limiter must not take the site down.
+    console.error('Rate limit check error:', e);
+    return true;
+  }
+}
+
 // ─── Auth middleware check ───
 
-export async function isAuthorized(request, env) {
+export async function getAuthPayload(request, env) {
   const authHeader = request.headers.get('Authorization');
-  if (!authHeader || !authHeader.startsWith('Bearer ')) return false;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
   const token = authHeader.slice(7);
-  const payload = await verifyJWT(token, env.JWT_SECRET);
-  return payload !== null;
+  return await verifyJWT(token, env.JWT_SECRET);
+}
+
+// ─── Role-based access control ───
+
+export function requireRole(payload, ...roles) {
+  if (!payload || !roles.includes(payload.role)) {
+    return errorResponse('אין הרשאה לפעולה זו', 403);
+  }
+  return null;
 }
 
 // ─── Login (email + password) ───
 
 export async function handleLogin(request, env) {
   try {
-    const { email, password } = await request.json();
+    const { email, password, 'cf-turnstile-response': turnstileToken } = await request.json();
     if (!email || !password) {
       return errorResponse('נדרש אימייל וסיסמה', 400, request);
     }
+    const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
+
+    if (!(await checkRateLimit(env, `login:ip:${ip}`, 15, 900))) {
+      return errorResponse('יותר מדי ניסיונות כניסה — נסי שוב בעוד כמה דקות', 429, request);
+    }
+    if (!(await checkRateLimit(env, `login:email:${email.toLowerCase().trim()}`, 8, 900))) {
+      return errorResponse('יותר מדי ניסיונות כניסה — נסי שוב בעוד כמה דקות', 429, request);
+    }
+    if (!turnstileToken) {
+      return errorResponse('אימות CAPTCHA נדרש', 403, request);
+    }
+    if (!(await verifyTurnstile(turnstileToken, env, ip))) {
+      return errorResponse('אימות CAPTCHA נכשל', 403, request);
+    }
+
     const user = await env.DB.prepare(
       'SELECT id, email, name, role, password_hash, active FROM users WHERE email = ?'
     ).bind(email.toLowerCase().trim()).first();
@@ -92,8 +150,23 @@ export async function handleVerify(request, env) {
 
 export async function handleRequestReset(request, env) {
   try {
-    const { email } = await request.json();
+    const { email, 'cf-turnstile-response': turnstileToken } = await request.json();
     if (!email) return errorResponse('נדרש אימייל', 400, request);
+    const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
+
+    if (!(await checkRateLimit(env, `reset-request:ip:${ip}`, 5, 3600))) {
+      return errorResponse('יותר מדי בקשות איפוס — נסי שוב בעוד שעה', 429, request);
+    }
+    if (!(await checkRateLimit(env, `reset-request:email:${email.toLowerCase().trim()}`, 3, 3600))) {
+      return errorResponse('יותר מדי בקשות איפוס — נסי שוב בעוד שעה', 429, request);
+    }
+    if (!turnstileToken) {
+      return errorResponse('אימות CAPTCHA נדרש', 403, request);
+    }
+    if (!(await verifyTurnstile(turnstileToken, env, ip))) {
+      return errorResponse('אימות CAPTCHA נכשל', 403, request);
+    }
+
     const user = await env.DB.prepare(
       'SELECT id, name FROM users WHERE email = ? AND active = 1'
     ).bind(email.toLowerCase().trim()).first();
