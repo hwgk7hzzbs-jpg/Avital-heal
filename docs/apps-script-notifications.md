@@ -6,6 +6,13 @@
 1. **פנייה חדשה** מהאתר (טופס יצירת קשר / מודאל מייל בברושור)
 2. **רישום חדש לסדנה** (דרך הברושור `workshop.avital-heal.com`)
 
+> **⚠️ עדכון אבטחה — פעולה נדרשת:** החל מהגרסה הנוכחית, ה-Worker כבר **לא**
+> שולח שם/טלפון/אימייל/תוכן פנייה/הערות ל-Apps Script הזה — רק הודעה כללית
+> וקישור ל-CRM (כדי לא להעביר מידע אישי דרך שרתי Google). **יש להחליף את
+> הקוד ב-Apps Script לגרסה המעודכנת למטה ולפרוס מחדש (Deploy → New version)
+> לפני שהשינוי הזה עולה ל-Production** — אחרת המיילים על פניות/הרשמות חדשות
+> יפסיקו להגיע (הקוד הישן מצפה לשדות שכבר לא נשלחים).
+
 ---
 
 ## איך לפרוס:
@@ -71,21 +78,17 @@ ${resetLink}
 }
 
 // ─── 2. פנייה חדשה מטופס האתר ───
+// הערה: הודעה כללית בלבד — ה-Worker כבר לא שולח שם/טלפון/אימייל/תוכן הפנייה
+// לשירות חיצוני; יש לפתוח את ה-CRM כדי לראות את הפרטים.
 function handleNewContact(data) {
-  const { fullName, phone, email, message, timestamp } = data;
+  const { notice, crmLink, timestamp } = data;
 
-  const subject = `🔔 פנייה חדשה מהאתר - ${fullName}`;
+  const subject = `🔔 ${notice || 'פנייה חדשה מהאתר'}`;
   const htmlBody = `
     <div dir="rtl" style="font-family: Arial, sans-serif; max-width: 600px;">
-      <h2 style="color: #2a5a3e;">📬 פנייה חדשה מהאתר</h2>
-      <table style="border-collapse: collapse; width: 100%;">
-        <tr><td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>שם:</strong></td><td style="padding: 8px; border-bottom: 1px solid #ddd;">${escapeHtml(fullName)}</td></tr>
-        <tr><td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>טלפון:</strong></td><td style="padding: 8px; border-bottom: 1px solid #ddd;">${phone ? '<a href="tel:' + escapeHtml(phone) + '">' + escapeHtml(phone) + '</a>' : '—'}</td></tr>
-        <tr><td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>אימייל:</strong></td><td style="padding: 8px; border-bottom: 1px solid #ddd;">${email ? '<a href="mailto:' + escapeHtml(email) + '">' + escapeHtml(email) + '</a>' : '—'}</td></tr>
-        <tr><td style="padding: 8px; border-bottom: 1px solid #ddd; vertical-align: top;"><strong>הודעה:</strong></td><td style="padding: 8px; border-bottom: 1px solid #ddd; white-space: pre-wrap;">${escapeHtml(message || '')}</td></tr>
-        <tr><td style="padding: 8px;"><strong>תאריך:</strong></td><td style="padding: 8px;">${formatDate(timestamp)}</td></tr>
-      </table>
-      <p style="margin-top: 20px;"><a href="https://app.avital-heal.com" style="background: #9DC8B0; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px;">פתיחת ה-CRM לצפייה בפנייה ➝</a></p>
+      <h2 style="color: #2a5a3e;">📬 ${escapeHtml(notice || 'פנייה חדשה מהאתר')}</h2>
+      <p style="color:#555;">תאריך: ${formatDate(timestamp)}</p>
+      <p style="margin-top: 20px;"><a href="${escapeHtml(crmLink || 'https://app.avital-heal.com')}" style="background: #9DC8B0; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px;">פתיחת ה-CRM לצפייה בפנייה ➝</a></p>
     </div>
   `;
   GmailApp.sendEmail(NOTIFY_EMAIL, subject, '', { htmlBody, name: 'Avital Heal' });
@@ -94,23 +97,16 @@ function handleNewContact(data) {
 }
 
 // ─── 3. רישום חדש לסדנה ───
+// הערה: הודעה כללית בלבד — ראי הערה למעלה.
 function handleNewWorkshopRegistration(data) {
-  const { workshopName, fullName, phone, email, dateLabel, notes, timestamp } = data;
+  const { notice, crmLink, timestamp } = data;
 
-  const subject = `🎉 רישום חדש לסדנה "${workshopName}" - ${fullName}`;
+  const subject = `🎉 ${notice || 'רישום חדש לסדנה'}`;
   const htmlBody = `
     <div dir="rtl" style="font-family: Arial, sans-serif; max-width: 600px;">
-      <h2 style="color: #D4AF37;">🌿 רישום חדש לסדנה</h2>
-      <p style="font-size: 16px; color: #555;"><strong>${escapeHtml(workshopName)}</strong></p>
-      <table style="border-collapse: collapse; width: 100%;">
-        <tr><td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>שם:</strong></td><td style="padding: 8px; border-bottom: 1px solid #ddd;">${escapeHtml(fullName)}</td></tr>
-        <tr><td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>טלפון:</strong></td><td style="padding: 8px; border-bottom: 1px solid #ddd;"><a href="tel:${escapeHtml(phone)}">${escapeHtml(phone)}</a></td></tr>
-        <tr><td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>אימייל:</strong></td><td style="padding: 8px; border-bottom: 1px solid #ddd;">${email ? '<a href="mailto:' + escapeHtml(email) + '">' + escapeHtml(email) + '</a>' : '—'}</td></tr>
-        <tr><td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>מועד שנבחר:</strong></td><td style="padding: 8px; border-bottom: 1px solid #ddd;">${escapeHtml(dateLabel || '')}</td></tr>
-        <tr><td style="padding: 8px; border-bottom: 1px solid #ddd; vertical-align: top;"><strong>הערות:</strong></td><td style="padding: 8px; border-bottom: 1px solid #ddd; white-space: pre-wrap;">${escapeHtml(notes || '—')}</td></tr>
-        <tr><td style="padding: 8px;"><strong>תאריך:</strong></td><td style="padding: 8px;">${formatDate(timestamp)}</td></tr>
-      </table>
-      <p style="margin-top: 20px;"><a href="https://app.avital-heal.com" style="background: #D4AF37; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px;">פתיחת ה-CRM לצפייה ברישום ➝</a></p>
+      <h2 style="color: #D4AF37;">🌿 ${escapeHtml(notice || 'רישום חדש לסדנה')}</h2>
+      <p style="color:#555;">תאריך: ${formatDate(timestamp)}</p>
+      <p style="margin-top: 20px;"><a href="${escapeHtml(crmLink || 'https://app.avital-heal.com')}" style="background: #D4AF37; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px;">פתיחת ה-CRM לצפייה ברישום ➝</a></p>
     </div>
   `;
   GmailApp.sendEmail(NOTIFY_EMAIL, subject, '', { htmlBody, name: 'Avital Heal' });
@@ -143,12 +139,12 @@ function formatDate(iso) {
 ## מה תקבלי במייל:
 
 ### 📬 פנייה חדשה
-נושא: `🔔 פנייה חדשה מהאתר - [שם]`
-תוכן: טבלה מעוצבת עם שם, טלפון, אימייל, הודעה, תאריך + כפתור לפתיחת ה-CRM.
+נושא: `🔔 התקבלה פנייה חדשה מהאתר`
+תוכן: הודעה כללית + תאריך + כפתור לפתיחת ה-CRM לצפייה בפרטים המלאים.
 
 ### 🌿 רישום לסדנה
-נושא: `🎉 רישום חדש לסדנה "להיות המרפאה של עצמי" - [שם]`
-תוכן: טבלה מעוצבת עם כל הפרטים + המועד שנבחר + כפתור לפתיחת ה-CRM.
+נושא: `🎉 התקבלה הרשמה חדשה לסדנה "..."`
+תוכן: הודעה כללית + תאריך + כפתור לפתיחת ה-CRM לצפייה בפרטים המלאים.
 
 ---
 

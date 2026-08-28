@@ -835,6 +835,10 @@
           קראתי ואני מסכימה ל<a href="/consent.html" target="_blank" rel="noopener">הסכם הסדנה והצהרת הבריאות</a> (כולל מדיניות ביטול, סודיות קבוצתית ותנאי השתתפות).
         </label>
       </div>
+      <div style="position:absolute;left:-9999px;" aria-hidden="true">
+        <label for="reg_website">אל תמלא/י שדה זה</label>
+        <input type="text" id="reg_website" tabindex="-1" autocomplete="off">
+      </div>
       <div class="turnstile-wrap">
         <div class="cf-turnstile" data-sitekey="0x4AAAAAACxQXQewOnLqH3uM" data-theme="dark"></div>
       </div>
@@ -902,6 +906,10 @@
       <div class="form-field">
         <textarea id="contact_message" placeholder="איך אוכל לעזור? (שאלות / בקשות)" required></textarea>
       </div>
+      <div style="position:absolute;left:-9999px;" aria-hidden="true">
+        <label for="contact_website">אל תמלא/י שדה זה</label>
+        <input type="text" id="contact_website" tabindex="-1" autocomplete="off">
+      </div>
       <div class="turnstile-wrap">
         <div class="cf-turnstile" data-sitekey="0x4AAAAAACxQXQewOnLqH3uM" data-theme="dark"></div>
       </div>
@@ -964,6 +972,7 @@
           email: document.getElementById('contact_email').value,
           message: document.getElementById('contact_message').value,
           turnstileToken,
+          website: document.getElementById('contact_website').value,
         }),
       });
       const data = await res.json();
@@ -1023,6 +1032,7 @@
           dateOption: selectedDate.id,
           consentAgreed: true,
           turnstileToken,
+          website: document.getElementById('reg_website').value,
         }),
       });
       const data = await res.json();

@@ -129,6 +129,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const phoneVal = document.getElementById("contactPhone").value.trim();
       const emailVal = document.getElementById("contactEmail").value.trim();
       const messageVal = document.getElementById("contactMessage").value.trim();
+      const honeypotVal = document.getElementById("contactWebsite").value;
 
       // Validation
       if (!nameVal) {
@@ -157,6 +158,7 @@ document.addEventListener("DOMContentLoaded", () => {
             email: emailVal || null,
             message: messageVal || null,
             turnstileToken: contactTurnstileToken,
+            website: honeypotVal,
           }),
         });
 
