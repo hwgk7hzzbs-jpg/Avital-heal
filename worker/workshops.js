@@ -78,7 +78,6 @@ export async function handleWorkshopRegister(request, env) {
     if (!matchedDate) {
       return errorResponse('מועד הסדנה שנבחר אינו קיים', 400);
     }
-    const dateLabel = matchedDate.label || dateOption;
 
     const consentIp = request.headers.get('CF-Connecting-IP') || '';
 

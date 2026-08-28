@@ -5,7 +5,7 @@
  * @security Auth check applied before protected routes.
  */
 
-import { CORS_HEADERS, SECURITY_HEADERS, getCorsHeaders } from './utils.js';
+import { SECURITY_HEADERS, getCorsHeaders } from './utils.js';
 import { errorResponse } from './utils.js';
 import { getAuthPayload, handleLogin, handleVerify } from './auth.js';
 import { handleRequestReset, handleExecuteReset, handleChangePassword } from './auth.js';

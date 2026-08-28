@@ -33,7 +33,17 @@ export async function verifyPassword(password, storedHash) {
   const bits = await crypto.subtle.deriveBits(
     { name: 'PBKDF2', salt, iterations: PBKDF2_ITERATIONS, hash: 'SHA-256' }, key, 256
   );
-  return bufToHex(new Uint8Array(bits)) === parts[1];
+  return timingSafeEqual(bufToHex(new Uint8Array(bits)), parts[1]);
+}
+
+// Constant-time string comparison — avoids leaking hash match position via timing.
+function timingSafeEqual(a, b) {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) {
+    diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return diff === 0;
 }
 
 // ─── UTF-8 safe Base64url ───
