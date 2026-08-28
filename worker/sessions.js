@@ -6,6 +6,15 @@
 
 import { jsonResponse, errorResponse } from './utils.js';
 import { requireRole } from './auth.js';
+import { encryptField, decryptField } from './crypto.js';
+
+async function decryptSessionRow(env, row) {
+  return {
+    ...row,
+    summary: await decryptField(env, row.summary),
+    next_session_notes: await decryptField(env, row.next_session_notes),
+  };
+}
 
 // ─── Get sessions (with filters) ───
 
@@ -28,7 +37,8 @@ export async function handleGetSessions(url, env) {
     bindings.push(limit);
 
     const result = await env.DB.prepare(query).bind(...bindings).all();
-    return jsonResponse(result.results);
+    const rows = await Promise.all(result.results.map(row => decryptSessionRow(env, row)));
+    return jsonResponse(rows);
   } catch (e) {
     console.error('Get sessions error:', e);
     return errorResponse('Failed to load sessions', 500);
@@ -42,7 +52,8 @@ export async function handleGetClientSessions(clientId, env) {
     const result = await env.DB.prepare(
       'SELECT * FROM sessions WHERE client_id = ? ORDER BY session_date DESC'
     ).bind(clientId).all();
-    return jsonResponse(result.results);
+    const rows = await Promise.all(result.results.map(row => decryptSessionRow(env, row)));
+    return jsonResponse(rows);
   } catch (e) {
     console.error('Get client sessions error:', e);
     return errorResponse('Failed to load sessions', 500);
@@ -77,7 +88,9 @@ export async function handleCreateSession(request, env, payload) {
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     ).bind(
       client_id, session_date, session_type || null,
-      duration_minutes || 50, summary || null, next_session_notes || null,
+      duration_minutes || 50,
+      await encryptField(env, summary || null),
+      await encryptField(env, next_session_notes || null),
       paid ? 1 : 0, amount || 0, payment_method || null, invoice_number || null
     ).run();
 
@@ -105,7 +118,10 @@ export async function handleUpdateSession(id, request, env, payload) {
     for (const field of allowed) {
       if (data[field] !== undefined) {
         fields.push(`${field} = ?`);
-        values.push(field === 'paid' ? (data[field] ? 1 : 0) : data[field]);
+        let value = data[field];
+        if (field === 'paid') value = value ? 1 : 0;
+        else if (field === 'summary' || field === 'next_session_notes') value = await encryptField(env, value);
+        values.push(value);
       }
     }
     if (fields.length === 0) return errorResponse('No fields to update');

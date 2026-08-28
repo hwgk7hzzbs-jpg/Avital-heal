@@ -1,5 +1,8 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { hashPassword, verifyPassword, createJWT, verifyJWT, generateToken } from '../crypto.js';
+import { hashPassword, verifyPassword, createJWT, verifyJWT, generateToken, encryptField, decryptField } from '../crypto.js';
+
+// 32 bytes, hex-encoded — matches how ENCRYPTION_KEY is expected to be provisioned.
+const TEST_KEY = 'a'.repeat(64);
 
 describe('password hashing', () => {
   it('verifies a correct password', async () => {
@@ -71,5 +74,48 @@ describe('generateToken', () => {
 
   it('generates unique tokens', () => {
     expect(generateToken(32)).not.toBe(generateToken(32));
+  });
+});
+
+describe('encryptField / decryptField', () => {
+  const env = { ENCRYPTION_KEY: TEST_KEY };
+
+  it('round-trips plaintext', async () => {
+    const enc = await encryptField(env, 'session summary with sensitive content');
+    expect(await decryptField(env, enc)).toBe('session summary with sensitive content');
+  });
+
+  it('does not store the plaintext anywhere in the encrypted value', async () => {
+    const enc = await encryptField(env, 'a very identifiable secret phrase');
+    expect(enc).not.toContain('a very identifiable secret phrase');
+  });
+
+  it('produces a different ciphertext each time (random IV), same plaintext decrypts equal', async () => {
+    const a = await encryptField(env, 'same text');
+    const b = await encryptField(env, 'same text');
+    expect(a).not.toBe(b);
+    expect(await decryptField(env, a)).toBe(await decryptField(env, b));
+  });
+
+  it('passes legacy plaintext through decryptField unchanged (no "encv1." prefix)', async () => {
+    expect(await decryptField(env, 'plain old note from before encryption existed')).toBe(
+      'plain old note from before encryption existed'
+    );
+  });
+
+  it('passes null/empty through both functions unchanged', async () => {
+    expect(await encryptField(env, null)).toBeNull();
+    expect(await encryptField(env, '')).toBe('');
+    expect(await decryptField(env, null)).toBeNull();
+  });
+
+  it('fails decryption under a different key (tamper/wrong-key detection via GCM auth tag)', async () => {
+    const enc = await encryptField(env, 'secret');
+    const wrongEnv = { ENCRYPTION_KEY: 'b'.repeat(64) };
+    await expect(decryptField(wrongEnv, enc)).rejects.toThrow();
+  });
+
+  it('throws clearly if ENCRYPTION_KEY is not configured', async () => {
+    await expect(encryptField({}, 'text')).rejects.toThrow(/ENCRYPTION_KEY/);
   });
 });

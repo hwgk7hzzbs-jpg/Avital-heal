@@ -79,11 +79,12 @@ export async function handleConsentSubmission(request, env) {
         "UPDATE clients SET consent_signed = 1, consent_date = ?, updated_at = datetime('now') WHERE id = ?"
       ).bind(signedAt, existing.id).run();
     } else {
+      // IP is recorded once, on the consents row below — not duplicated here too.
       const result = await env.DB.prepare(
         `INSERT INTO clients
-         (full_name, email, consent_signed, consent_date, consent_ip, created_at, updated_at)
-         VALUES (?, ?, 1, ?, ?, datetime('now'), datetime('now'))`
-      ).bind(fullName, email, signedAt, ip).run();
+         (full_name, email, consent_signed, consent_date, created_at, updated_at)
+         VALUES (?, ?, 1, ?, datetime('now'), datetime('now'))`
+      ).bind(fullName, email, signedAt).run();
       clientId = result.meta.last_row_id;
     }
 

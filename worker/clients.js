@@ -6,6 +6,7 @@
 
 import { jsonResponse, errorResponse, csvResponse } from './utils.js';
 import { requireRole } from './auth.js';
+import { encryptField, decryptField } from './crypto.js';
 
 // ─── Get all clients ───
 
@@ -35,7 +36,8 @@ export async function handleGetClients(url, env) {
 
     const stmt = env.DB.prepare(query);
     const result = await (bindings.length ? stmt.bind(...bindings) : stmt).all();
-    return jsonResponse(result.results);
+    const rows = await Promise.all(result.results.map(async c => ({ ...c, notes: await decryptField(env, c.notes) })));
+    return jsonResponse(rows);
   } catch (e) {
     console.error('Get clients error:', e);
     return errorResponse('Failed to load clients', 500);
@@ -54,8 +56,13 @@ export async function handleGetClient(id, env) {
     const sessions = await env.DB.prepare(
       'SELECT * FROM sessions WHERE client_id = ? ORDER BY session_date DESC'
     ).bind(id).all();
+    const sessionRows = await Promise.all(sessions.results.map(async s => ({
+      ...s,
+      summary: await decryptField(env, s.summary),
+      next_session_notes: await decryptField(env, s.next_session_notes),
+    })));
 
-    return jsonResponse({ ...client, sessions: sessions.results });
+    return jsonResponse({ ...client, notes: await decryptField(env, client.notes), sessions: sessionRows });
   } catch (e) {
     console.error('Get client error:', e);
     return errorResponse('Failed to load client', 500);
@@ -77,7 +84,7 @@ export async function handleCreateClient(request, env, payload) {
        VALUES (?, ?, ?, ?, ?, ?, ?)`
     ).bind(
       full_name, email || null, phone || null, address || null,
-      birth_date || null, treatment_type || null, notes || null
+      birth_date || null, treatment_type || null, await encryptField(env, notes || null)
     ).run();
 
     return jsonResponse({ id: result.meta.last_row_id, message: 'Client created' }, 201);
@@ -104,7 +111,7 @@ export async function handleUpdateClient(id, request, env, payload) {
     for (const field of allowed) {
       if (data[field] !== undefined) {
         fields.push(`${field} = ?`);
-        values.push(data[field]);
+        values.push(field === 'notes' ? await encryptField(env, data[field]) : data[field]);
       }
     }
     if (fields.length === 0) return errorResponse('No fields to update');
@@ -164,5 +171,43 @@ export async function handleExportClients(env, payload) {
   } catch (e) {
     console.error('Export error:', e);
     return errorResponse('Failed to export', 500);
+  }
+}
+
+// ─── Export one client's full record (subject access / portability request) ───
+// Distinct from handleExportClients (a CSV of everyone, for business reporting):
+// this returns one person's complete data — profile, sessions, consent history —
+// decrypted and in full, for responding to a "what data do you have on me" /
+// "give me a copy of my data" request.
+
+export async function handleExportClientData(id, env, payload) {
+  const forbidden = requireRole(payload, 'admin');
+  if (forbidden) return forbidden;
+  try {
+    const client = await env.DB.prepare('SELECT * FROM clients WHERE id = ?').bind(id).first();
+    if (!client) return errorResponse('Client not found', 404);
+
+    const sessions = await env.DB.prepare(
+      'SELECT * FROM sessions WHERE client_id = ? ORDER BY session_date DESC'
+    ).bind(id).all();
+    const sessionRows = await Promise.all(sessions.results.map(async s => ({
+      ...s,
+      summary: await decryptField(env, s.summary),
+      next_session_notes: await decryptField(env, s.next_session_notes),
+    })));
+
+    const consents = await env.DB.prepare(
+      'SELECT * FROM consents WHERE client_id = ? ORDER BY signed_at DESC'
+    ).bind(id).all();
+
+    return jsonResponse({
+      exported_at: new Date().toISOString(),
+      client: { ...client, notes: await decryptField(env, client.notes) },
+      sessions: sessionRows,
+      consents: consents.results,
+    });
+  } catch (e) {
+    console.error('Export client data error:', e);
+    return errorResponse('Failed to export client data', 500);
   }
 }
