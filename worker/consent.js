@@ -26,7 +26,7 @@ export async function handleConsentSubmission(request, env) {
 
     const {
       email, fullName, date, healthDeclaration,
-      agreementConfirmation, timestamp, userAgent,
+      agreementConfirmation, timestamp,
     } = data;
     const turnstileToken = data['cf-turnstile-response'] || '';
 
