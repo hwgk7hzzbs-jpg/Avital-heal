@@ -80,20 +80,19 @@ export async function handleWorkshopRegister(request, env) {
       return errorResponse('מועד הסדנה שנבחר אינו קיים', 400);
     }
 
-    // Insert registration
+    // Insert registration — IP is recorded once, on the consents row below.
     const inserted = await env.DB.prepare(
       `INSERT INTO workshop_registrations
        (workshop_id, full_name, phone, email, date_option, notes, status,
-        consent_agreed, consent_date, consent_ip, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, 'new', 1, datetime('now'), ?, datetime('now'))`
+        consent_agreed, consent_date, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, 'new', 1, datetime('now'), datetime('now'))`
     ).bind(
       workshopId,
       fullName.trim(),
       phone.trim(),
       email ? email.trim() : null,
       dateOption,
-      notes ? notes.trim() : null,
-      ip
+      notes ? notes.trim() : null
     ).run();
 
     await recordConsent(env, {

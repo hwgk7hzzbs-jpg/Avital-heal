@@ -12,7 +12,7 @@ import { handleRequestReset, handleExecuteReset, handleChangePassword } from './
 import { handleConsentSubmission } from './consent.js';
 import { handleGetClientConsents, handleRevokeConsent } from './consents.js';
 import { handleContactSubmission, handleGetContacts, handleUpdateContact, handleDeleteContact } from './contacts.js';
-import { handleGetClients, handleGetClient, handleCreateClient, handleUpdateClient, handleDeleteClient, handleExportClients } from './clients.js';
+import { handleGetClients, handleGetClient, handleCreateClient, handleUpdateClient, handleDeleteClient, handleExportClients, handleExportClientData } from './clients.js';
 import { handleGetSessions, handleGetClientSessions, handleCreateSession, handleUpdateSession, handleDeleteSession } from './sessions.js';
 import { handleStats } from './dashboard.js';
 import { handleGetUsers, handleCreateUser, handleUpdateUser, handleDeleteUser, handleAdminResetPassword } from './users.js';
@@ -246,6 +246,9 @@ export default {
     if (path.match(/^\/api\/clients\/\d+\/sessions$/) && method === 'GET') {
       return withCors(await handleGetClientSessions(path.split('/')[3], env));
     }
+    if (path.match(/^\/api\/clients\/\d+\/export$/) && method === 'GET') {
+      return withCors(await handleExportClientData(path.split('/')[3], env, authPayload));
+    }
 
     // Consents
     if (path.match(/^\/api\/clients\/\d+\/consents$/) && method === 'GET') {
@@ -308,5 +311,21 @@ export default {
     }
 
     return withCors(errorResponse('Not found', 404));
+  },
+
+  // Daily cleanup of expired operational data (see docs/data-retention-policy.md).
+  // Deliberately limited to data with no independent business value once expired —
+  // it never touches clients/sessions/contacts/consents.
+  async scheduled(event, env) {
+    try {
+      const now = Math.floor(Date.now() / 1000);
+      const rl = await env.DB.prepare('DELETE FROM rate_limits WHERE expires_at < ?').bind(now).run();
+      const pr = await env.DB.prepare(
+        "DELETE FROM password_resets WHERE used = 1 OR expires_at < datetime('now')"
+      ).run();
+      console.log(`Retention cleanup: removed ${rl.meta?.changes ?? 0} rate_limits, ${pr.meta?.changes ?? 0} password_resets`);
+    } catch (e) {
+      console.error('Retention cleanup error:', e);
+    }
   },
 };

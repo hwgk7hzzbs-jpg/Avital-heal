@@ -117,6 +117,44 @@ export function generateToken(length = 32) {
   return bufToHex(crypto.getRandomValues(new Uint8Array(length)));
 }
 
+// ─── Field-level encryption (AES-256-GCM) ───
+// Used for sensitive free-text fields (session summaries, next-session notes,
+// client notes) so their content isn't sitting in D1 as plaintext. Values are
+// tagged with an "encv1." prefix so decryptField() can tell an encrypted
+// value apart from legacy plaintext written before this existed — old rows
+// keep working unmodified; only new writes get encrypted.
+
+const ENC_PREFIX = 'encv1.';
+
+async function importEncryptionKey(env) {
+  if (!env.ENCRYPTION_KEY) {
+    throw new Error('ENCRYPTION_KEY is not configured');
+  }
+  const keyBytes = hexToBuf(env.ENCRYPTION_KEY);
+  return crypto.subtle.importKey('raw', keyBytes, { name: 'AES-GCM' }, false, ['encrypt', 'decrypt']);
+}
+
+export async function encryptField(env, plaintext) {
+  if (plaintext == null || plaintext === '') return plaintext;
+  const key = await importEncryptionKey(env);
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const ciphertext = await crypto.subtle.encrypt(
+    { name: 'AES-GCM', iv }, key, new TextEncoder().encode(String(plaintext))
+  );
+  return ENC_PREFIX + bufToHex(iv) + '.' + bufToHex(new Uint8Array(ciphertext));
+}
+
+export async function decryptField(env, value) {
+  if (value == null || !value.startsWith(ENC_PREFIX)) return value; // legacy plaintext, pass through
+  const [, ivHex, dataHex] = value.split('.');
+  const key = await importEncryptionKey(env);
+  const iv = hexToBuf(ivHex);
+  const plaintext = await crypto.subtle.decrypt(
+    { name: 'AES-GCM', iv }, key, hexToBuf(dataHex)
+  );
+  return new TextDecoder().decode(plaintext);
+}
+
 // ─── Helpers ───
 
 async function importHMACKey(secret) {
