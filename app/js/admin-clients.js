@@ -79,6 +79,9 @@ async function openClientDetail(id) {
     stbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-light);">אין טיפולים</td></tr>';
   }
 
+  const deleteBtn = document.getElementById('clientDeleteBtn');
+  if (deleteBtn) deleteBtn.style.display = (currentUser && currentUser.role === 'admin') ? '' : 'none';
+
   openModal('clientDetailModal');
   loadClientConsents(id);
 }
@@ -168,9 +171,13 @@ async function saveClient() {
 }
 
 async function deleteCurrentClient() {
-  if (!confirm('למחוק את הלקוח? כל הטיפולים שלו יימחקו גם.')) return;
-  await api(`/api/clients/${currentClientId}`, { method: 'DELETE' });
-  closeModal('clientDetailModal');
-  loadClients();
-  loadDashboard();
+  if (!confirm('להעביר את הלקוחה לסל המיחזור? הטיפולים שלה לא יימחקו ויישארו נגישים דרך סל המיחזור.')) return;
+  const data = await api(`/api/clients/${currentClientId}`, { method: 'DELETE' });
+  if (data && !data.error) {
+    closeModal('clientDetailModal');
+    loadClients();
+    loadDashboard();
+  } else {
+    alert(data?.error || 'שגיאה במחיקת לקוחה');
+  }
 }

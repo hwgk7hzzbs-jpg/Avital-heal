@@ -7,7 +7,7 @@
   <title>Avital Heal CRM</title>
   <link rel="icon" href="logo-favicon.webp" type="image/webp">
   <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=9">
+  <link rel="stylesheet" href="admin.css?v=10">
 </head>
 <body>
 
@@ -82,6 +82,8 @@
     <button class="tab-btn" onclick="switchTab('sessions')">טיפולים</button>
     <button class="tab-btn" onclick="switchTab('workshops')">סדנאות</button>
     <button class="tab-btn" onclick="switchTab('users')" id="usersTab" style="display:none">משתמשים</button>
+    <button class="tab-btn" onclick="switchTab('recyclebin')" id="recycleBinTab" style="display:none">סל מיחזור</button>
+    <button class="tab-btn" onclick="switchTab('auditlog')" id="auditLogTab" style="display:none">יומן פעולות</button>
   </div>
 
   <!-- CONTENT AREA -->
@@ -232,6 +234,69 @@
       </table>
     </div>
 
+    <!-- RECYCLE BIN PAGE (admin only) -->
+    <div id="page-recyclebin" class="page hidden">
+      <div class="page-header">
+        <h2>סל מיחזור</h2>
+      </div>
+      <p style="color:var(--text-light); font-size:0.85rem; margin-bottom:12px;">
+        רשומות שנמחקו לא נעלמות מיד — הן נשמרות כאן ואפשר לשחזר אותן. מחיקה סופית היא בלתי הפיכה.
+      </p>
+      <div class="filter-bar">
+        <select id="recycleBinType" class="filter-select" onchange="loadRecycleBin()">
+          <option value="clients">לקוחות</option>
+          <option value="sessions">טיפולים</option>
+          <option value="contacts">פניות</option>
+          <option value="workshop-registrations">נרשמות לסדנאות</option>
+        </select>
+      </div>
+      <table class="table">
+        <thead><tr><th>פרטים</th><th>נמחק בתאריך</th><th>נמחק על ידי</th><th>פעולות</th></tr></thead>
+        <tbody id="recycleBinTable"></tbody>
+      </table>
+    </div>
+
+    <!-- AUDIT LOG PAGE (admin only) -->
+    <div id="page-auditlog" class="page hidden">
+      <div class="page-header">
+        <h2>יומן פעולות</h2>
+      </div>
+      <div class="filter-bar" style="display:flex; gap:8px; flex-wrap:wrap;">
+        <select id="auditLogEntityFilter" class="filter-select" onchange="loadAuditLog(true)">
+          <option value="">כל הישויות</option>
+          <option value="client">לקוח</option>
+          <option value="session">טיפול</option>
+          <option value="contact">פנייה</option>
+          <option value="workshop_registration">הרשמה לסדנה</option>
+          <option value="user">משתמש</option>
+          <option value="consent">הסכמה</option>
+        </select>
+        <select id="auditLogActionFilter" class="filter-select" onchange="loadAuditLog(true)">
+          <option value="">כל הפעולות</option>
+          <option value="login">כניסה</option>
+          <option value="create">יצירה</option>
+          <option value="update">עדכון</option>
+          <option value="view">צפייה</option>
+          <option value="delete">מחיקה</option>
+          <option value="restore">שחזור</option>
+          <option value="permanent_delete">מחיקה סופית</option>
+          <option value="export">ייצוא</option>
+          <option value="revoke">ביטול הסכמה</option>
+          <option value="password_change">שינוי סיסמה</option>
+          <option value="password_reset">איפוס סיסמה</option>
+        </select>
+      </div>
+      <table class="table">
+        <thead><tr><th>תאריך</th><th>משתמש</th><th>פעולה</th><th>ישות</th><th>תוצאה</th><th>פרטים</th></tr></thead>
+        <tbody id="auditLogTable"></tbody>
+      </table>
+      <div style="display:flex; justify-content:center; align-items:center; gap:8px; margin-top:16px;">
+        <button onclick="changeAuditLogPage(-1)" class="btn btn-sm btn-outline">← הקודם</button>
+        <span id="auditLogPageLabel" style="color:var(--text-light); font-size:0.85rem;"></span>
+        <button onclick="changeAuditLogPage(1)" class="btn btn-sm btn-outline">הבא →</button>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -265,7 +330,10 @@
     </table>
     <h3 style="margin-top:16px;">היסטוריית הסכמות</h3>
     <div id="clientConsentHistory"></div>
-    <button onclick="openEditClientModal()" class="btn btn-secondary">עריכה</button>
+    <div style="display:flex; gap:8px; margin-top:12px;">
+      <button onclick="openEditClientModal()" class="btn btn-secondary">עריכה</button>
+      <button id="clientDeleteBtn" onclick="deleteCurrentClient()" class="btn btn-danger-outline" style="display:none;">מחק</button>
+    </div>
   </div>
 </div>
 
@@ -359,14 +427,16 @@
 </div>
 
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
-<script src="js/admin-utils.js?v=15"></script>
-<script src="js/admin-app.js?v=15"></script>
-<script src="js/admin-dashboard.js?v=15"></script>
-<script src="js/admin-clients.js?v=15"></script>
-<script src="js/admin-sessions.js?v=15"></script>
-<script src="js/admin-contacts.js?v=15"></script>
-<script src="js/admin-users.js?v=15"></script>
-<script src="js/admin-workshops.js?v=15"></script>
+<script src="js/admin-utils.js?v=16"></script>
+<script src="js/admin-app.js?v=16"></script>
+<script src="js/admin-dashboard.js?v=16"></script>
+<script src="js/admin-clients.js?v=16"></script>
+<script src="js/admin-sessions.js?v=16"></script>
+<script src="js/admin-contacts.js?v=16"></script>
+<script src="js/admin-users.js?v=16"></script>
+<script src="js/admin-workshops.js?v=16"></script>
+<script src="js/admin-recyclebin.js?v=16"></script>
+<script src="js/admin-auditlog.js?v=16"></script>
 
 </body>
 </html>
