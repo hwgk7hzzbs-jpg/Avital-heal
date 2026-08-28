@@ -1,15 +1,22 @@
 /**
  * @file admin-sessions.js
- * @description Session management: list, create, edit.
+ * @description Session management: list, create, edit, delete.
  * @module AdminSessions
  */
+
+let allSessions = [];
 
 async function loadSessions() {
   const sessions = await api('/api/sessions');
   if (!sessions) return;
+  allSessions = sessions;
+  renderSessions(sessions);
+}
+
+function renderSessions(sessions) {
   const tbody = document.getElementById('sessionsTable');
   if (!sessions.length) {
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-light);">אין טיפולים</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-light);">אין טיפולים</td></tr>';
     return;
   }
   tbody.innerHTML = sessions.map(s => `
@@ -20,47 +27,31 @@ async function loadSessions() {
       <td>${s.duration_minutes} דק׳</td>
       <td>₪${s.amount || 0}</td>
       <td>${s.paid ? '<span class="badge badge-green">שולם</span>' : '<span class="badge badge-red">לא שולם</span>'}</td>
+      <td class="actions-cell">
+        <button onclick="editSession(${s.id})" class="btn btn-sm btn-outline" title="עריכה">✏️</button>
+        <button onclick="deleteSession(${s.id})" class="btn btn-sm btn-outline btn-danger-outline" title="מחיקה">🗑️</button>
+      </td>
     </tr>
   `).join('');
 }
 
-function openNewSessionModal() {
-  document.getElementById('sessionFormTitle').textContent = 'טיפול חדש';
-  document.getElementById('sf_id').value = '';
-  document.getElementById('sf_date').value = new Date().toISOString().slice(0, 10);
-  document.getElementById('sf_type').value = '';
-  document.getElementById('sf_duration').value = '50';
-  document.getElementById('sf_amount').value = '0';
-  document.getElementById('sf_paid').value = '0';
-  document.getElementById('sf_payment_method').value = '';
-  document.getElementById('sf_summary').value = '';
-  document.getElementById('sf_next_notes').value = '';
-
-  const sel = document.getElementById('sf_client');
-  sel.innerHTML = '<option value="">— בחירת לקוח —</option>' +
-    allClients.map(c => `<option value="${c.id}">${escapeHtml(c.full_name)}</option>`).join('');
-
-  document.getElementById('sessionFormModal').classList.add('active');
-}
-
-function openNewSessionForClient() {
-  closeModal('clientDetailModal');
-  openNewSessionModal();
-  document.getElementById('sf_client').value = currentClientId;
+function editSession(id) {
+  const s = allSessions.find(x => x.id === id);
+  if (s) showSessionFormModal(s);
 }
 
 async function saveSession() {
   const id = document.getElementById('sf_id').value;
   const body = {
-    client_id: parseInt(document.getElementById('sf_client').value),
+    client_id: parseInt(document.getElementById('sf_clientId').value),
     session_date: document.getElementById('sf_date').value,
-    session_type: document.getElementById('sf_type').value,
+    session_type: document.getElementById('sf_serviceType').value,
     duration_minutes: parseInt(document.getElementById('sf_duration').value) || 50,
     amount: parseFloat(document.getElementById('sf_amount').value) || 0,
-    paid: document.getElementById('sf_paid').value === '1',
-    payment_method: document.getElementById('sf_payment_method').value,
+    paid: document.getElementById('sf_paid').checked,
+    payment_method: document.getElementById('sf_paymentMethod').value,
     summary: document.getElementById('sf_summary').value,
-    next_session_notes: document.getElementById('sf_next_notes').value,
+    next_session_notes: document.getElementById('sf_nextNotes').value,
   };
   if (!body.client_id) { alert('יש לבחור לקוח'); return; }
   if (!body.session_date) { alert('יש לבחור תאריך'); return; }
@@ -75,9 +66,22 @@ async function saveSession() {
   loadDashboard();
 }
 
+// ─── Soft-delete session ───
+
+async function deleteSession(id) {
+  if (!confirm('להעביר את הטיפול לסל המיחזור?')) return;
+  const data = await api(`/api/sessions/${id}`, { method: 'DELETE' });
+  if (data && !data.error) {
+    loadSessions();
+    loadDashboard();
+  } else {
+    alert(data?.error || 'שגיאה במחיקת טיפול');
+  }
+}
+
 // ─── Export ───
 
-async function exportClients() {
+async function exportCSV() {
   try {
     const res = await fetch(`${API_BASE}/api/export/clients`, {
       headers: { 'Authorization': `Bearer ${authToken}` },

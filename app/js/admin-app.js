@@ -110,11 +110,12 @@ async function showApp() {
     const ui = document.getElementById('userInfo');
     if (ui) ui.textContent = currentUser.name || currentUser.email;
   }
-  // Show/hide users tab based on role
-  const usersTab = document.getElementById('usersTab');
-  if (usersTab) {
-    usersTab.style.display = (currentUser && currentUser.role === 'admin') ? '' : 'none';
-  }
+  // Show/hide admin-only tabs based on role
+  const isAdmin = currentUser && currentUser.role === 'admin';
+  ['usersTab', 'recycleBinTab', 'auditLogTab'].forEach(id => {
+    const tab = document.getElementById(id);
+    if (tab) tab.style.display = isAdmin ? '' : 'none';
+  });
   switchTab('dashboard');
   loadDashboard();
   loadContacts();
@@ -122,7 +123,7 @@ async function showApp() {
   loadSessions();
   if (typeof loadWorkshops === 'function') loadWorkshops();
   // Load users for admins
-  if (currentUser && currentUser.role === 'admin' && typeof loadUsers === 'function') {
+  if (isAdmin && typeof loadUsers === 'function') {
     loadUsers();
   }
 }
@@ -245,8 +246,13 @@ function switchTab(name) {
 
   // Handle tab button activation
   if (name === 'users') {
-    const usersTab = document.getElementById('usersTab');
-    if (usersTab) usersTab.classList.add('active');
+    document.getElementById('usersTab')?.classList.add('active');
+  } else if (name === 'recyclebin') {
+    document.getElementById('recycleBinTab')?.classList.add('active');
+    if (typeof loadRecycleBin === 'function') loadRecycleBin();
+  } else if (name === 'auditlog') {
+    document.getElementById('auditLogTab')?.classList.add('active');
+    if (typeof loadAuditLog === 'function') loadAuditLog();
   } else {
     const pages = ['dashboard', 'contacts', 'clients', 'sessions', 'workshops'];
     const idx = pages.indexOf(name);
@@ -267,6 +273,11 @@ function closeModal(id) {
 }
 function closeClientFormModal() { closeModal('clientFormModal'); }
 function showSessionFormModal(sessionData) {
+  const clientSelect = document.getElementById('sf_clientId');
+  if (clientSelect) {
+    clientSelect.innerHTML = '<option value="">בחר לקוח</option>' +
+      allClients.map(c => `<option value="${c.id}">${escapeHtml(c.full_name)}</option>`).join('');
+  }
   if (sessionData) {
     document.getElementById('sf_id').value = sessionData.id || '';
     document.getElementById('sf_clientId').value = sessionData.client_id || '';

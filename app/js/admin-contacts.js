@@ -106,11 +106,15 @@ function closeContactDetailModal() {
 
 async function deleteContact() {
   if (!currentContactId) return;
-  if (!confirm('למחוק את הפנייה? פעולה זו אינה הפיכה.')) return;
-  await api(`/api/contacts/${currentContactId}`, { method: 'DELETE' });
-  closeContactDetailModal();
-  loadContacts();
-  loadDashboard();
+  if (!confirm('להעביר את הפנייה לסל המיחזור?')) return;
+  const data = await api(`/api/contacts/${currentContactId}`, { method: 'DELETE' });
+  if (data && !data.error) {
+    closeContactDetailModal();
+    loadContacts();
+    loadDashboard();
+  } else {
+    alert(data?.error || 'שגיאה במחיקת פנייה');
+  }
 }
 
 function filterContacts() {
