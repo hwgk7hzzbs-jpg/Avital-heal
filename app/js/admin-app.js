@@ -265,30 +265,6 @@ function openModal(id) {
 function closeModal(id) {
   document.getElementById(id).classList.add('hidden');
 }
-function showClientFormModal(clientData) {
-  if (clientData) {
-    document.getElementById('cf_id').value = clientData.id || '';
-    document.getElementById('cf_fullName').value = clientData.full_name || '';
-    document.getElementById('cf_email').value = clientData.email || '';
-    document.getElementById('cf_phone').value = clientData.phone || '';
-    document.getElementById('cf_dob').value = clientData.date_of_birth || '';
-    document.getElementById('cf_serviceType').value = clientData.service_type || '';
-    document.getElementById('cf_status').value = clientData.status || 'active';
-    document.getElementById('cf_address').value = clientData.address || '';
-    document.getElementById('cf_notes').value = clientData.notes || '';
-  } else {
-    document.getElementById('cf_id').value = '';
-    document.getElementById('cf_fullName').value = '';
-    document.getElementById('cf_email').value = '';
-    document.getElementById('cf_phone').value = '';
-    document.getElementById('cf_dob').value = '';
-    document.getElementById('cf_serviceType').value = '';
-    document.getElementById('cf_status').value = 'active';
-    document.getElementById('cf_address').value = '';
-    document.getElementById('cf_notes').value = '';
-  }
-  openModal('clientFormModal');
-}
 function closeClientFormModal() { closeModal('clientFormModal'); }
 function showSessionFormModal(sessionData) {
   if (sessionData) {
@@ -316,19 +292,6 @@ function showSessionFormModal(sessionData) {
   openModal('sessionFormModal');
 }
 function closeSessionFormModal() { closeModal('sessionFormModal'); }
-function showClientDetailModal(client) {
-  document.getElementById('clientDetailName').textContent = client.full_name || 'פרטי לקוח';
-  const content = document.getElementById('clientDetailContent');
-  content.innerHTML = `
-    <p><strong>אימייל:</strong> ${client.email || '—'}</p>
-    <p><strong>טלפון:</strong> ${client.phone || '—'}</p>
-    <p><strong>סוג טיפול:</strong> ${client.service_type || '—'}</p>
-    <p><strong>סטטוס:</strong> ${client.status || '—'}</p>
-    <p><strong>כתובת:</strong> ${client.address || '—'}</p>
-    <p><strong>הערות:</strong> ${client.notes || '—'}</p>
-  `;
-  openModal('clientDetailModal');
-}
 function closeClientDetailModal() { closeModal('clientDetailModal'); }
 function showChangePasswordModal() { openModal('changePasswordModal'); }
 function closeChangePasswordModal() { closeModal('changePasswordModal'); }

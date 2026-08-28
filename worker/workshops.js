@@ -6,6 +6,7 @@
 
 import { jsonResponse, errorResponse, sendNotification } from './utils.js';
 import { verifyTurnstile, checkRateLimit, requireRole } from './auth.js';
+import { recordConsent } from './consents.js';
 
 const MAX_FIELD_LEN = 2000;
 const REGISTRATION_STATUSES = ['new', 'contacted', 'confirmed', 'cancelled'];
@@ -79,10 +80,8 @@ export async function handleWorkshopRegister(request, env) {
       return errorResponse('מועד הסדנה שנבחר אינו קיים', 400);
     }
 
-    const consentIp = request.headers.get('CF-Connecting-IP') || '';
-
     // Insert registration
-    await env.DB.prepare(
+    const inserted = await env.DB.prepare(
       `INSERT INTO workshop_registrations
        (workshop_id, full_name, phone, email, date_option, notes, status,
         consent_agreed, consent_date, consent_ip, created_at)
@@ -94,8 +93,14 @@ export async function handleWorkshopRegister(request, env) {
       email ? email.trim() : null,
       dateOption,
       notes ? notes.trim() : null,
-      consentIp
+      ip
     ).run();
+
+    await recordConsent(env, {
+      consentType: 'workshop',
+      workshopRegistrationId: inserted.meta.last_row_id,
+      ip,
+    });
 
     // Notify Avital (fire & forget) — generic notice only, no PII/notes content
     // sent off-platform (see docs/apps-script-notifications.md for the matching template).

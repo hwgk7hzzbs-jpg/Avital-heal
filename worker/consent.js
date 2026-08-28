@@ -6,6 +6,7 @@
 
 import { jsonResponse, errorResponse } from './utils.js';
 import { verifyTurnstile, checkRateLimit } from './auth.js';
+import { recordConsent } from './consents.js';
 
 const MAX_FIELD_LEN = 2000;
 
@@ -26,7 +27,7 @@ export async function handleConsentSubmission(request, env) {
 
     const {
       email, fullName, date, healthDeclaration,
-      agreementConfirmation, timestamp,
+      agreementConfirmation,
     } = data;
     const turnstileToken = data['cf-turnstile-response'] || '';
 
@@ -63,26 +64,30 @@ export async function handleConsentSubmission(request, env) {
       return errorResponse('CAPTCHA verification failed', 403);
     }
 
+    // Signing time is set by the server — never trusted from the client.
+    const signedAt = new Date().toISOString();
+
     // Check if client already exists by email
     const existing = await env.DB.prepare(
       'SELECT id FROM clients WHERE email = ?'
     ).bind(email).first();
 
+    let clientId;
     if (existing) {
+      clientId = existing.id;
       await env.DB.prepare(
         "UPDATE clients SET consent_signed = 1, consent_date = ?, updated_at = datetime('now') WHERE id = ?"
-      ).bind(timestamp || new Date().toISOString(), existing.id).run();
+      ).bind(signedAt, existing.id).run();
     } else {
-      await env.DB.prepare(
+      const result = await env.DB.prepare(
         `INSERT INTO clients
          (full_name, email, consent_signed, consent_date, consent_ip, created_at, updated_at)
          VALUES (?, ?, 1, ?, ?, datetime('now'), datetime('now'))`
-      ).bind(
-        fullName, email,
-        timestamp || new Date().toISOString(),
-        request.headers.get('CF-Connecting-IP') || ''
-      ).run();
+      ).bind(fullName, email, signedAt, ip).run();
+      clientId = result.meta.last_row_id;
     }
+
+    await recordConsent(env, { consentType: 'treatment', clientId, ip });
 
     return jsonResponse({ status: 'success', message: 'Form submitted successfully' });
   } catch (e) {

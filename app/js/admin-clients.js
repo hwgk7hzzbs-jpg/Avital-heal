@@ -79,18 +79,51 @@ async function openClientDetail(id) {
     stbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-light);">אין טיפולים</td></tr>';
   }
 
-  document.getElementById('clientDetailModal').classList.add('active');
+  openModal('clientDetailModal');
+  loadClientConsents(id);
+}
+
+const CONSENT_TYPE_LABELS = { treatment: 'הסכם טיפול', workshop: 'הסכם סדנה' };
+
+async function loadClientConsents(clientId) {
+  const el = document.getElementById('clientConsentHistory');
+  if (!el) return;
+  el.innerHTML = '<p style="color:var(--text-light);">טוען...</p>';
+  const consents = await api(`/api/clients/${clientId}/consents`);
+  if (!consents || !consents.length) {
+    el.innerHTML = '<p style="color:var(--text-light);">אין רישומי הסכמה</p>';
+    return;
+  }
+  el.innerHTML = consents.map(c => `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:0.85rem;">
+      <div>
+        <strong>${escapeHtml(CONSENT_TYPE_LABELS[c.consent_type] || c.consent_type)}</strong>
+        &nbsp;גרסה ${escapeHtml(c.consent_version)}
+        &nbsp;·&nbsp;${escapeHtml(c.signed_at)}
+        ${c.status === 'revoked' ? '<span class="badge badge-red" style="margin-right:6px;">בוטל</span>' : '<span class="badge badge-green" style="margin-right:6px;">בתוקף</span>'}
+      </div>
+      ${c.status === 'active' && currentUser && currentUser.role === 'admin'
+        ? `<button onclick="revokeConsent(${c.id}, ${clientId})" class="btn btn-sm" style="background:var(--danger);color:white;">בטל הסכמה</button>`
+        : ''}
+    </div>
+  `).join('');
+}
+
+async function revokeConsent(consentId, clientId) {
+  if (!confirm('לבטל את ההסכמה הזו? הפעולה מתועדת ואינה הפיכה.')) return;
+  const res = await api(`/api/consents/${consentId}/revoke`, { method: 'POST' });
+  if (res && res.message) loadClientConsents(clientId);
 }
 
 function openNewClientModal() {
   document.getElementById('clientFormTitle').textContent = 'לקוח חדש';
-  document.getElementById('clientFormId').value = '';
-  ['cf_name', 'cf_email', 'cf_phone', 'cf_birth', 'cf_address', 'cf_notes'].forEach(id =>
+  document.getElementById('cf_id').value = '';
+  ['cf_fullName', 'cf_email', 'cf_phone', 'cf_dob', 'cf_address', 'cf_notes'].forEach(id =>
     document.getElementById(id).value = ''
   );
-  document.getElementById('cf_type').value = '';
+  document.getElementById('cf_serviceType').value = '';
   document.getElementById('cf_status').value = 'active';
-  document.getElementById('clientFormModal').classList.add('active');
+  openModal('clientFormModal');
 }
 
 function openEditClientModal() {
@@ -98,26 +131,26 @@ function openEditClientModal() {
   if (!c) return;
   closeModal('clientDetailModal');
   document.getElementById('clientFormTitle').textContent = 'עריכת לקוח';
-  document.getElementById('clientFormId').value = c.id;
-  document.getElementById('cf_name').value = c.full_name || '';
+  document.getElementById('cf_id').value = c.id;
+  document.getElementById('cf_fullName').value = c.full_name || '';
   document.getElementById('cf_email').value = c.email || '';
   document.getElementById('cf_phone').value = c.phone || '';
-  document.getElementById('cf_birth').value = c.birth_date || '';
-  document.getElementById('cf_type').value = c.treatment_type || '';
+  document.getElementById('cf_dob').value = c.birth_date || '';
+  document.getElementById('cf_serviceType').value = c.treatment_type || '';
   document.getElementById('cf_status').value = c.status || 'active';
   document.getElementById('cf_address').value = c.address || '';
   document.getElementById('cf_notes').value = c.notes || '';
-  document.getElementById('clientFormModal').classList.add('active');
+  openModal('clientFormModal');
 }
 
 async function saveClient() {
-  const id = document.getElementById('clientFormId').value;
+  const id = document.getElementById('cf_id').value;
   const body = {
-    full_name: document.getElementById('cf_name').value,
+    full_name: document.getElementById('cf_fullName').value,
     email: document.getElementById('cf_email').value,
     phone: document.getElementById('cf_phone').value,
-    birth_date: document.getElementById('cf_birth').value,
-    treatment_type: document.getElementById('cf_type').value,
+    birth_date: document.getElementById('cf_dob').value,
+    treatment_type: document.getElementById('cf_serviceType').value,
     status: document.getElementById('cf_status').value,
     address: document.getElementById('cf_address').value,
     notes: document.getElementById('cf_notes').value,
