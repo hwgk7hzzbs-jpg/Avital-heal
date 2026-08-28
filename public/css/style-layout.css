@@ -91,7 +91,7 @@ section:not(.hero) .section-title p{
    7) BUTTONS
 ========================= */
 .btn{
-  background: var(--primary-color);
+  background: var(--primary-dark-accessible);
   padding: 12px 30px;
   border-radius: 999px;
   color: #fff;
