@@ -7,7 +7,7 @@
 
 import { SECURITY_HEADERS, getCorsHeaders } from './utils.js';
 import { errorResponse } from './utils.js';
-import { getAuthPayload, handleLogin, handleVerify } from './auth.js';
+import { getAuthPayload, handleLogin, handleRefresh, handleLogout, handleVerify } from './auth.js';
 import { handleRequestReset, handleExecuteReset, handleChangePassword } from './auth.js';
 import { handleConsentSubmission } from './consent.js';
 import { handleGetClientConsents, handleRevokeConsent } from './consents.js';
@@ -80,6 +80,28 @@ async function runMigrations(env) {
     `).run();
     await env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_audit_log_entity ON audit_log(entity_type, entity_id)`).run();
     await env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_audit_log_created ON audit_log(created_at)`).run();
+
+    // Add token_version to users (bumped to invalidate every outstanding
+    // access/refresh token on password change/reset or deactivation)
+    if (!cols.results.some(c => c.name === 'token_version')) {
+      await env.DB.prepare("ALTER TABLE users ADD COLUMN token_version INTEGER NOT NULL DEFAULT 0").run();
+    }
+
+    // Create refresh_tokens table — only a hash of each token is ever stored
+    // (see worker/crypto.js hashToken). Rotated on every /api/refresh call;
+    // revoked wholesale by revokeAllSessions() in worker/auth.js.
+    await env.DB.prepare(`
+      CREATE TABLE IF NOT EXISTS refresh_tokens (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        token_hash TEXT NOT NULL UNIQUE,
+        token_version INTEGER NOT NULL DEFAULT 0,
+        expires_at DATETIME NOT NULL,
+        revoked_at DATETIME,
+        created_at DATETIME DEFAULT (datetime('now'))
+      )
+    `).run();
+    await env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_refresh_tokens_user ON refresh_tokens(user_id)`).run();
 
     // Add soft-delete columns (deleted_at/deleted_by) to the entities that
     // support a recycle bin. Deleting a client no longer cascades to her
@@ -218,6 +240,12 @@ export default {
     if (path === '/api/login' && method === 'POST') {
       return withCors(await handleLogin(request, env));
     }
+    if (path === '/api/refresh' && method === 'POST') {
+      return withCors(await handleRefresh(request, env));
+    }
+    if (path === '/api/logout' && method === 'POST') {
+      return withCors(await handleLogout(request, env));
+    }
     if (path === '/api/reset-request' && method === 'POST') {
       return withCors(await handleRequestReset(request, env));
     }
@@ -338,20 +366,20 @@ export default {
 
     // Users (admin only — role check inside handlers)
     if (path === '/api/users' && method === 'GET') {
-      return withCors(await handleGetUsers(request, env));
+      return withCors(await handleGetUsers(env, authPayload));
     }
     if (path === '/api/users' && method === 'POST') {
-      return withCors(await handleCreateUser(request, env));
+      return withCors(await handleCreateUser(request, env, authPayload));
     }
     if (path.match(/^\/api\/users\/\d+$/) && method === 'PUT') {
-      return withCors(await handleUpdateUser(request, env, path.split('/').pop()));
+      return withCors(await handleUpdateUser(path.split('/').pop(), request, env, authPayload));
     }
     if (path.match(/^\/api\/users\/\d+$/) && method === 'DELETE') {
-      return withCors(await handleDeleteUser(request, env, path.split('/').pop()));
+      return withCors(await handleDeleteUser(path.split('/').pop(), env, authPayload));
     }
     if (path.match(/^\/api\/users\/\d+\/reset-password$/) && method === 'POST') {
       const parts = path.split('/');
-      return withCors(await handleAdminResetPassword(request, env, parts[3]));
+      return withCors(await handleAdminResetPassword(parts[3], request, env, authPayload));
     }
 
     // Workshops (protected)
@@ -399,7 +427,10 @@ export default {
       const pr = await env.DB.prepare(
         "DELETE FROM password_resets WHERE used = 1 OR expires_at < datetime('now')"
       ).run();
-      console.log(`Retention cleanup: removed ${rl.meta?.changes ?? 0} rate_limits, ${pr.meta?.changes ?? 0} password_resets`);
+      const rt = await env.DB.prepare(
+        "DELETE FROM refresh_tokens WHERE revoked_at IS NOT NULL OR expires_at < datetime('now')"
+      ).run();
+      console.log(`Retention cleanup: removed ${rl.meta?.changes ?? 0} rate_limits, ${pr.meta?.changes ?? 0} password_resets, ${rt.meta?.changes ?? 0} refresh_tokens`);
     } catch (e) {
       console.error('Retention cleanup error:', e);
     }
