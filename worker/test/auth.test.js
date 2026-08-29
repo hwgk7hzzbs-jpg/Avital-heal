@@ -4,8 +4,9 @@ import {
   getAuthPayload, handleLogin, handleRefresh, handleLogout,
   handleChangePassword, handleExecuteReset, handleRequestReset,
   revokeAllSessions,
+  handleMfaLoginVerify, handleMfaSetupStart, handleMfaSetupVerify, handleMfaDisable,
 } from '../auth.js';
-import { hashPassword, createJWT, hashToken } from '../crypto.js';
+import { hashPassword, createJWT, hashToken, generateTotpSecret, encryptField } from '../crypto.js';
 import { makeFakeD1, mockFetchTurnstile } from './testUtils.js';
 
 function authedRequest(url, token, opts = {}) {
@@ -22,6 +23,39 @@ async function makeUser(overrides = {}) {
     ...overrides,
   };
 }
+
+// Independent TOTP-code generator (RFC 6238, HMAC-SHA1) used only to produce
+// a currently-valid code for a given secret in these integration tests — the
+// algorithm itself is already cross-checked against the RFC reference vector
+// in crypto.test.js, so this exists purely to drive handleMfa*/handleLogin's
+// integration, not to re-prove the math.
+function base32DecodeForTest(str) {
+  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+  const clean = str.toUpperCase().replace(/[^A-Z2-7]/g, '');
+  let bits = 0, value = 0;
+  const output = [];
+  for (let i = 0; i < clean.length; i++) {
+    const idx = alphabet.indexOf(clean[i]);
+    if (idx === -1) continue;
+    value = (value << 5) | idx;
+    bits += 5;
+    if (bits >= 8) { output.push((value >>> (bits - 8)) & 0xff); bits -= 8; }
+  }
+  return new Uint8Array(output);
+}
+async function computeTotpCodeForTest(secretBase32, timeMs = Date.now()) {
+  const counter = Math.floor(timeMs / 1000 / 30);
+  const keyBytes = base32DecodeForTest(secretBase32);
+  const key = await crypto.subtle.importKey('raw', keyBytes, { name: 'HMAC', hash: 'SHA-1' }, false, ['sign']);
+  const counterBuf = new ArrayBuffer(8);
+  new DataView(counterBuf).setUint32(4, counter, false);
+  const sig = new Uint8Array(await crypto.subtle.sign('HMAC', key, counterBuf));
+  const offset = sig[sig.length - 1] & 0xf;
+  const binCode = ((sig[offset] & 0x7f) << 24) | ((sig[offset + 1] & 0xff) << 16) | ((sig[offset + 2] & 0xff) << 8) | (sig[offset + 3] & 0xff);
+  return String(binCode % 1000000).padStart(6, '0');
+}
+
+const ENCRYPTION_KEY = 'a'.repeat(64);
 
 describe('requireRole', () => {
   it('allows a matching role', () => {
@@ -579,5 +613,198 @@ describe('handleRequestReset / handleExecuteReset', () => {
       method: 'POST', body: JSON.stringify({ token: 'used-token', newPassword: 'BrandNewPass9' }),
     }), env);
     expect(res.status).toBe(400);
+  });
+});
+
+describe('MFA enrollment (handleMfaSetupStart / handleMfaSetupVerify / handleMfaDisable)', () => {
+  it('setup start generates and encrypts a secret without enabling MFA yet', async () => {
+    const user = await makeUser();
+    const db = makeFakeD1({ users: [user] });
+    const env = { DB: db, ENCRYPTION_KEY };
+    const res = await handleMfaSetupStart(new Request('https://x', { method: 'POST' }), env, { userId: user.id });
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.secret).toMatch(/^[A-Z2-7]+$/);
+    expect(body.otpauthUri).toContain(body.secret);
+
+    expect(db._state.users[0].mfa_secret).not.toBe(body.secret);
+    expect(db._state.users[0].mfa_secret.startsWith('encv1.')).toBe(true);
+    expect(db._state.users[0].mfa_enabled).toBeFalsy();
+  });
+
+  it('setup start refuses to run again once MFA is already enabled', async () => {
+    const user = await makeUser({ mfa_enabled: 1 });
+    const env = { DB: makeFakeD1({ users: [user] }), ENCRYPTION_KEY };
+    const res = await handleMfaSetupStart(new Request('https://x', { method: 'POST' }), env, { userId: user.id });
+    expect(res.status).toBe(400);
+  });
+
+  it('setup verify enables MFA with a correct code and returns 8 usable backup codes', async () => {
+    const secret = generateTotpSecret();
+    const user = await makeUser({ mfa_secret: await encryptField({ ENCRYPTION_KEY }, secret) });
+    const db = makeFakeD1({ users: [user] });
+    const env = { DB: db, ENCRYPTION_KEY };
+    const code = await computeTotpCodeForTest(secret);
+
+    const res = await handleMfaSetupVerify(new Request('https://x', { method: 'POST', body: JSON.stringify({ code }) }), env, { userId: user.id });
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.backupCodes).toHaveLength(8);
+    expect(new Set(body.backupCodes).size).toBe(8); // all distinct
+
+    expect(db._state.users[0].mfa_enabled).toBeTruthy();
+    expect(db._state.mfaBackupCodes).toHaveLength(8);
+    expect(db._state.mfaBackupCodes.every(c => c.code_hash !== body.backupCodes[0])).toBe(true); // stored hashed, not raw
+  });
+
+  it('setup verify rejects an incorrect code and leaves MFA disabled', async () => {
+    const secret = generateTotpSecret();
+    const user = await makeUser({ mfa_secret: await encryptField({ ENCRYPTION_KEY }, secret) });
+    const db = makeFakeD1({ users: [user] });
+    const env = { DB: db, ENCRYPTION_KEY };
+
+    const res = await handleMfaSetupVerify(new Request('https://x', { method: 'POST', body: JSON.stringify({ code: '000000' }) }), env, { userId: user.id });
+    expect(res.status).toBe(401);
+    expect(db._state.users[0].mfa_enabled).toBeFalsy();
+  });
+
+  it('setup verify 400s if setup was never started', async () => {
+    const user = await makeUser();
+    const env = { DB: makeFakeD1({ users: [user] }), ENCRYPTION_KEY };
+    const res = await handleMfaSetupVerify(new Request('https://x', { method: 'POST', body: JSON.stringify({ code: '123456' }) }), env, { userId: user.id });
+    expect(res.status).toBe(400);
+  });
+
+  it('disable requires the correct current password and clears secret + backup codes', async () => {
+    const user = await makeUser({ mfa_enabled: 1, mfa_secret: 'encv1.whatever' });
+    const db = makeFakeD1({
+      users: [user],
+      mfaBackupCodes: [{ id: 1, user_id: user.id, code_hash: 'h', used_at: null }],
+    });
+    const env = { DB: db, ENCRYPTION_KEY };
+
+    const wrongPass = await handleMfaDisable(new Request('https://x', { method: 'POST', body: JSON.stringify({ currentPassword: 'nope' }) }), env, { userId: user.id });
+    expect(wrongPass.status).toBe(401);
+    expect(db._state.users[0].mfa_enabled).toBeTruthy();
+
+    const res = await handleMfaDisable(new Request('https://x', { method: 'POST', body: JSON.stringify({ currentPassword: 'CorrectPass1' }) }), env, { userId: user.id });
+    expect(res.status).toBe(200);
+    expect(db._state.users[0].mfa_enabled).toBeFalsy();
+    expect(db._state.users[0].mfa_secret).toBeFalsy();
+    expect(db._state.mfaBackupCodes).toHaveLength(0);
+  });
+});
+
+describe('MFA login (handleLogin gating + handleMfaLoginVerify)', () => {
+  beforeEach(() => mockFetchTurnstile(true));
+  afterEach(() => vi.unstubAllGlobals());
+
+  async function makeMfaUser(overrides = {}) {
+    const secret = generateTotpSecret();
+    const user = await makeUser({ mfa_enabled: 1, mfa_secret: await encryptField({ ENCRYPTION_KEY }, secret), ...overrides });
+    return { user, secret };
+  }
+
+  it('handleLogin returns a challenge instead of tokens when MFA is enabled', async () => {
+    const { user } = await makeMfaUser();
+    const db = makeFakeD1({ users: [user] });
+    const env = { DB: db, JWT_SECRET, TURNSTILE_SECRET_KEY: 'k', ENCRYPTION_KEY };
+    const res = await handleLogin(new Request('https://x', {
+      method: 'POST', body: JSON.stringify({ email: user.email, password: 'CorrectPass1', 'cf-turnstile-response': 't' }),
+    }), env);
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.mfaRequired).toBe(true);
+    expect(body.mfaToken).toBeTruthy();
+    expect(body.token).toBeUndefined();
+    expect(db._state.refreshTokens).toHaveLength(0); // no session issued until MFA passes
+  });
+
+  it('completes login with a correct TOTP code', async () => {
+    const { user, secret } = await makeMfaUser();
+    const db = makeFakeD1({ users: [user] });
+    const env = { DB: db, JWT_SECRET, TURNSTILE_SECRET_KEY: 'k', ENCRYPTION_KEY };
+    const { mfaToken } = await (await handleLogin(new Request('https://x', {
+      method: 'POST', body: JSON.stringify({ email: user.email, password: 'CorrectPass1', 'cf-turnstile-response': 't' }),
+    }), env)).json();
+
+    const code = await computeTotpCodeForTest(secret);
+    const res = await handleMfaLoginVerify(new Request('https://x', { method: 'POST', body: JSON.stringify({ mfaToken, code }) }), env);
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.token).toBeTruthy();
+    expect(body.refreshToken).toBeTruthy();
+    expect(db._state.users[0].mfa_last_counter).toBeTruthy();
+  });
+
+  it('rejects an incorrect TOTP code', async () => {
+    const { user } = await makeMfaUser();
+    const db = makeFakeD1({ users: [user] });
+    const env = { DB: db, JWT_SECRET, TURNSTILE_SECRET_KEY: 'k', ENCRYPTION_KEY };
+    const { mfaToken } = await (await handleLogin(new Request('https://x', {
+      method: 'POST', body: JSON.stringify({ email: user.email, password: 'CorrectPass1', 'cf-turnstile-response': 't' }),
+    }), env)).json();
+
+    const res = await handleMfaLoginVerify(new Request('https://x', { method: 'POST', body: JSON.stringify({ mfaToken, code: '000000' }) }), env);
+    expect(res.status).toBe(401);
+  });
+
+  it('rejects a real access token used as an mfaToken (different audience)', async () => {
+    const { user } = await makeMfaUser();
+    const db = makeFakeD1({ users: [user] });
+    const env = { DB: db, JWT_SECRET, ENCRYPTION_KEY };
+    const fakeAccessToken = await createJWT(
+      { userId: user.id, sub: String(user.id), iss: 'avital-heal-crm', aud: 'avital-heal-crm-app', jti: 'x' },
+      JWT_SECRET
+    );
+    const res = await handleMfaLoginVerify(new Request('https://x', {
+      method: 'POST', body: JSON.stringify({ mfaToken: fakeAccessToken, code: '123456' }),
+    }), env);
+    expect(res.status).toBe(401);
+  });
+
+  it('completes login with a valid backup code, and that code cannot be reused', async () => {
+    const { user } = await makeMfaUser();
+    const db = makeFakeD1({
+      users: [user],
+      mfaBackupCodes: [{ id: 1, user_id: user.id, code_hash: await hashToken('WXYZ-1234'), used_at: null }],
+    });
+    const env = { DB: db, JWT_SECRET, TURNSTILE_SECRET_KEY: 'k', ENCRYPTION_KEY };
+    const { mfaToken } = await (await handleLogin(new Request('https://x', {
+      method: 'POST', body: JSON.stringify({ email: user.email, password: 'CorrectPass1', 'cf-turnstile-response': 't' }),
+    }), env)).json();
+
+    const first = await handleMfaLoginVerify(new Request('https://x', {
+      method: 'POST', body: JSON.stringify({ mfaToken, backupCode: 'wxyz-1234' }),
+    }), env);
+    expect(first.status).toBe(200);
+
+    const { mfaToken: mfaToken2 } = await (await handleLogin(new Request('https://x', {
+      method: 'POST', body: JSON.stringify({ email: user.email, password: 'CorrectPass1', 'cf-turnstile-response': 't' }),
+    }), env)).json();
+    const second = await handleMfaLoginVerify(new Request('https://x', {
+      method: 'POST', body: JSON.stringify({ mfaToken: mfaToken2, backupCode: 'wxyz-1234' }),
+    }), env);
+    expect(second.status).toBe(401);
+  });
+
+  it('rejects a code once a login has already been fully completed with a later counter (replay protection)', async () => {
+    const { user, secret } = await makeMfaUser();
+    const db = makeFakeD1({ users: [user] });
+    const env = { DB: db, JWT_SECRET, TURNSTILE_SECRET_KEY: 'k', ENCRYPTION_KEY };
+    const code = await computeTotpCodeForTest(secret);
+
+    const { mfaToken: t1 } = await (await handleLogin(new Request('https://x', {
+      method: 'POST', body: JSON.stringify({ email: user.email, password: 'CorrectPass1', 'cf-turnstile-response': 't' }),
+    }), env)).json();
+    const firstUse = await handleMfaLoginVerify(new Request('https://x', { method: 'POST', body: JSON.stringify({ mfaToken: t1, code }) }), env);
+    expect(firstUse.status).toBe(200);
+
+    // Same code, fresh challenge token — must not be accepted twice.
+    const { mfaToken: t2 } = await (await handleLogin(new Request('https://x', {
+      method: 'POST', body: JSON.stringify({ email: user.email, password: 'CorrectPass1', 'cf-turnstile-response': 't' }),
+    }), env)).json();
+    const secondUse = await handleMfaLoginVerify(new Request('https://x', { method: 'POST', body: JSON.stringify({ mfaToken: t2, code }) }), env);
+    expect(secondUse.status).toBe(401);
   });
 });

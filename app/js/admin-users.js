@@ -33,7 +33,7 @@ function renderUsersTable() {
   if (!tbody) return;
 
   if (allUsers.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-light);">אין משתמשים</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-light);">אין משתמשים</td></tr>';
     return;
   }
 
@@ -45,9 +45,11 @@ function renderUsersTable() {
       <td>${u.active ? '<span class="badge badge-green">פעיל</span>' : '<span class="badge badge-red">לא פעיל</span>'}</td>
       <td>${u.created_at ? new Date(u.created_at).toLocaleDateString('he-IL') : '—'}</td>
       <td title="${u.last_login_ip ? 'כתובת IP: ' + escapeHtml(u.last_login_ip) : ''}">${u.last_login_at ? new Date(u.last_login_at).toLocaleString('he-IL') : 'מעולם לא'}</td>
+      <td>${u.mfa_enabled ? '<span class="badge badge-green">פעיל</span>' : '<span class="badge badge-gray">לא פעיל</span>'}</td>
       <td class="actions-cell">
         <button onclick="editUser(${u.id})" class="btn btn-sm btn-outline" title="עריכה">✏️</button>
         <button onclick="resetUserPassword(${u.id})" class="btn btn-sm btn-outline" title="איפוס סיסמה">🔑</button>
+        ${u.mfa_enabled ? `<button onclick="disableUserMfa(${u.id})" class="btn btn-sm btn-outline" title="בטל אימות דו-שלבי (במקרה של אובדן מכשיר)">📵</button>` : ''}
         ${u.id !== currentUser?.id ? `<button onclick="deleteUser(${u.id})" class="btn btn-sm btn-outline btn-danger-outline" title="מחיקה">🗑️</button>` : ''}
       </td>
     </tr>
@@ -174,5 +176,20 @@ async function resetUserPassword(id) {
     alert('הסיסמה עודכנה בהצלחה');
   } else {
     alert(data?.error || 'שגיאה באיפוס סיסמה');
+  }
+}
+
+// ─── Disable a user's MFA (lost-device recovery) ───
+
+async function disableUserMfa(id) {
+  const user = allUsers.find(u => u.id === id);
+  if (!user) return;
+  if (!confirm(`לבטל אימות דו-שלבי עבור "${user.name}"? מומלץ רק אם המשתמשת איבדה גישה למכשיר האימות שלה.`)) return;
+
+  const data = await api(`/api/users/${id}/disable-mfa`, { method: 'POST' });
+  if (data && !data.error) {
+    loadUsers();
+  } else {
+    alert(data?.error || 'שגיאה בביטול אימות דו-שלבי');
   }
 }

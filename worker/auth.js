@@ -7,7 +7,10 @@
  */
 
 import { jsonResponse, errorResponse } from './utils.js';
-import { hashPassword, verifyPassword, needsRehash, createJWT, verifyJWT, generateToken, hashToken } from './crypto.js';
+import {
+  hashPassword, verifyPassword, needsRehash, createJWT, verifyJWT, generateToken, hashToken,
+  encryptField, decryptField, generateTotpSecret, getTotpUri, verifyTotp, generateBackupCode,
+} from './crypto.js';
 import { recordAudit } from './auditLog.js';
 
 // Short-lived access token — a stolen one is only useful for a limited window.
@@ -18,6 +21,11 @@ const ACCESS_TOKEN_TTL_SECONDS = 20 * 60;
 const REFRESH_TOKEN_TTL_SECONDS = 12 * 60 * 60;
 const JWT_ISSUER = 'avital-heal-crm';
 const JWT_AUDIENCE = 'avital-heal-crm-app';
+// A distinct audience for the short-lived "password verified, MFA pending"
+// token issued mid-login — getAuthPayload's strict aud check means this can
+// never be mistaken for (or replayed as) a real access token.
+const MFA_CHALLENGE_AUDIENCE = 'avital-heal-crm-mfa-challenge';
+const MFA_CHALLENGE_TTL_SECONDS = 5 * 60;
 
 // ─── Turnstile CAPTCHA verification ───
 
@@ -142,11 +150,14 @@ export async function getAuthPayload(request, env) {
   }
   try {
     const user = await env.DB.prepare(
-      'SELECT active, token_version FROM users WHERE id = ?'
+      'SELECT active, token_version, mfa_enabled FROM users WHERE id = ?'
     ).bind(payload.userId).first();
     if (!user || user.active === 0 || (user.token_version || 0) !== (payload.tokenVersion || 0)) {
       return null;
     }
+    // Freshly read from D1 rather than trusted from the JWT — MFA can be
+    // enabled/disabled mid-session, well before the token's own expiry.
+    payload.mfaEnabled = !!user.mfa_enabled;
   } catch (e) {
     // Unlike checkRateLimit, an auth check that can't confirm validity must
     // fail closed — a broken DB must not become a way to bypass revocation.
@@ -227,6 +238,19 @@ async function clearLoginLockout(env, email) {
   }
 }
 
+// Finishes a login once the caller is fully authenticated — password alone
+// for non-MFA accounts, or password + verified TOTP/backup code otherwise.
+// Shared by handleLogin (non-MFA path) and handleMfaLoginVerify.
+async function completeSuccessfulLogin(env, user, auditMeta) {
+  await clearLoginLockout(env, user.email);
+  await env.DB.prepare(
+    "UPDATE users SET last_login_at = datetime('now'), last_login_ip = ? WHERE id = ?"
+  ).bind(auditMeta.ip, user.id).run();
+  const { token, refreshToken } = await issueTokenPair(env, user);
+  await recordAudit(env, { userId: user.id, userEmail: user.email, action: 'login', entityType: 'user', entityId: user.id, result: 'success', metadata: auditMeta });
+  return { token, refreshToken, user: { id: user.id, email: user.email, name: user.name, role: user.role, mfaEnabled: !!user.mfa_enabled } };
+}
+
 // ─── Login (email + password) ───
 
 export async function handleLogin(request, env) {
@@ -261,7 +285,7 @@ export async function handleLogin(request, env) {
     }
 
     const user = await env.DB.prepare(
-      'SELECT id, email, name, role, password_hash, active, token_version FROM users WHERE email = ?'
+      'SELECT id, email, name, role, password_hash, active, token_version, mfa_enabled FROM users WHERE email = ?'
     ).bind(normalizedEmail).first();
     if (!user) {
       await recordFailedLogin(env, normalizedEmail);
@@ -287,17 +311,172 @@ export async function handleLogin(request, env) {
       await env.DB.prepare("UPDATE users SET password_hash = ? WHERE id = ?").bind(rehashed, user.id).run();
     }
 
-    await clearLoginLockout(env, normalizedEmail);
-    await env.DB.prepare(
-      "UPDATE users SET last_login_at = datetime('now'), last_login_ip = ? WHERE id = ?"
-    ).bind(ip, user.id).run();
+    // Password is correct. If MFA is enabled, the login isn't complete yet —
+    // issue a short-lived challenge token (a different audience than a real
+    // access token, so it can't be used as one) and require the second factor.
+    if (user.mfa_enabled) {
+      const mfaToken = await createJWT(
+        { userId: user.id, sub: String(user.id), iss: JWT_ISSUER, aud: MFA_CHALLENGE_AUDIENCE, jti: generateToken(16) },
+        env.JWT_SECRET,
+        MFA_CHALLENGE_TTL_SECONDS
+      );
+      return jsonResponse({ mfaRequired: true, mfaToken }, 200, request);
+    }
 
-    const { token, refreshToken } = await issueTokenPair(env, user);
-    await recordAudit(env, { userId: user.id, userEmail: user.email, action: 'login', entityType: 'user', entityId: user.id, result: 'success', metadata: auditMeta });
-    return jsonResponse({ token, refreshToken, user: { id: user.id, email: user.email, name: user.name, role: user.role } }, 200, request);
+    const body = await completeSuccessfulLogin(env, user, auditMeta);
+    return jsonResponse(body, 200, request);
   } catch (e) {
     console.error('Login error:', e);
     return errorResponse('שגיאת כניסה', 500, request);
+  }
+}
+
+// ─── MFA: second step of login (public — auth is the mfaToken itself) ───
+
+async function consumeBackupCode(env, userId, rawCode) {
+  const normalized = String(rawCode).trim().toUpperCase();
+  const codeHash = await hashToken(normalized);
+  const row = await env.DB.prepare(
+    'SELECT id FROM mfa_backup_codes WHERE user_id = ? AND code_hash = ? AND used_at IS NULL'
+  ).bind(userId, codeHash).first();
+  if (!row) return false;
+  await env.DB.prepare("UPDATE mfa_backup_codes SET used_at = datetime('now') WHERE id = ?").bind(row.id).run();
+  return true;
+}
+
+export async function handleMfaLoginVerify(request, env) {
+  try {
+    const { mfaToken, code, backupCode } = await request.json();
+    if (!mfaToken || (!code && !backupCode)) {
+      return errorResponse('נדרש קוד אימות', 400, request);
+    }
+    const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
+    const userAgent = (request.headers.get('User-Agent') || 'unknown').slice(0, 200);
+    const auditMeta = { ip, userAgent };
+
+    if (!(await checkRateLimit(env, `mfa-verify:ip:${ip}`, 15, 900))) {
+      return errorResponse('יותר מדי ניסיונות — נסי שוב מאוחר יותר', 429, request);
+    }
+
+    const challenge = await verifyJWT(mfaToken, env.JWT_SECRET);
+    if (
+      !challenge ||
+      challenge.iss !== JWT_ISSUER ||
+      challenge.aud !== MFA_CHALLENGE_AUDIENCE ||
+      !challenge.jti ||
+      challenge.sub !== String(challenge.userId)
+    ) {
+      return errorResponse('פג תוקף האימות — יש להתחבר מחדש', 401, request);
+    }
+
+    const user = await env.DB.prepare(
+      'SELECT id, email, name, role, active, token_version, mfa_enabled, mfa_secret, mfa_last_counter FROM users WHERE id = ?'
+    ).bind(challenge.userId).first();
+    if (!user || user.active === 0 || !user.mfa_enabled) {
+      return errorResponse('משתמש לא נמצא או שאימות דו-שלבי אינו פעיל', 401, request);
+    }
+
+    if (backupCode) {
+      const ok = await consumeBackupCode(env, user.id, backupCode);
+      if (!ok) {
+        await recordAudit(env, { userId: user.id, userEmail: user.email, action: 'mfa_verify', entityType: 'user', entityId: user.id, result: 'failure', metadata: { ...auditMeta, method: 'backup_code' } });
+        return errorResponse('קוד גיבוי שגוי או שכבר נוצל', 401, request);
+      }
+      const body = await completeSuccessfulLogin(env, user, auditMeta);
+      await recordAudit(env, { userId: user.id, userEmail: user.email, action: 'mfa_verify', entityType: 'user', entityId: user.id, result: 'success', metadata: { ...auditMeta, method: 'backup_code' } });
+      return jsonResponse(body, 200, request);
+    }
+
+    const secret = await decryptField(env, user.mfa_secret);
+    const result = await verifyTotp(secret, code, { lastCounter: user.mfa_last_counter });
+    if (!result.valid) {
+      await recordAudit(env, { userId: user.id, userEmail: user.email, action: 'mfa_verify', entityType: 'user', entityId: user.id, result: 'failure', metadata: { ...auditMeta, method: 'totp' } });
+      return errorResponse('קוד אימות שגוי', 401, request);
+    }
+    await env.DB.prepare('UPDATE users SET mfa_last_counter = ? WHERE id = ?').bind(result.counter, user.id).run();
+
+    const body = await completeSuccessfulLogin(env, user, auditMeta);
+    await recordAudit(env, { userId: user.id, userEmail: user.email, action: 'mfa_verify', entityType: 'user', entityId: user.id, result: 'success', metadata: { ...auditMeta, method: 'totp' } });
+    return jsonResponse(body, 200, request);
+  } catch (e) {
+    console.error('MFA verify error:', e);
+    return errorResponse('שגיאת אימות דו-שלבי', 500, request);
+  }
+}
+
+// ─── MFA: self-service enrollment (protected — payload comes from getAuthPayload) ───
+
+export async function handleMfaSetupStart(request, env, payload) {
+  try {
+    const user = await env.DB.prepare('SELECT id, email, mfa_enabled FROM users WHERE id = ?').bind(payload.userId).first();
+    if (!user) return errorResponse('משתמש לא נמצא', 404, request);
+    if (user.mfa_enabled) return errorResponse('אימות דו-שלבי כבר פעיל', 400, request);
+
+    const secret = generateTotpSecret();
+    await env.DB.prepare('UPDATE users SET mfa_secret = ? WHERE id = ?').bind(await encryptField(env, secret), user.id).run();
+
+    return jsonResponse({ secret, otpauthUri: getTotpUri(secret, user.email) }, 200, request);
+  } catch (e) {
+    console.error('MFA setup start error:', e);
+    return errorResponse('שגיאה בהפעלת אימות דו-שלבי', 500, request);
+  }
+}
+
+export async function handleMfaSetupVerify(request, env, payload) {
+  try {
+    const { code } = await request.json();
+    if (!code) return errorResponse('נדרש קוד אימות', 400, request);
+
+    const user = await env.DB.prepare('SELECT id, email, mfa_enabled, mfa_secret FROM users WHERE id = ?').bind(payload.userId).first();
+    if (!user) return errorResponse('משתמש לא נמצא', 404, request);
+    if (user.mfa_enabled) return errorResponse('אימות דו-שלבי כבר פעיל', 400, request);
+    if (!user.mfa_secret) return errorResponse('יש להתחיל בתהליך ההגדרה מחדש', 400, request);
+
+    const secret = await decryptField(env, user.mfa_secret);
+    const result = await verifyTotp(secret, code);
+    if (!result.valid) return errorResponse('קוד אימות שגוי', 401, request);
+
+    await env.DB.prepare(
+      'UPDATE users SET mfa_enabled = 1, mfa_last_counter = ? WHERE id = ?'
+    ).bind(result.counter, user.id).run();
+
+    const backupCodes = [];
+    for (let i = 0; i < 8; i++) {
+      const raw = generateBackupCode();
+      backupCodes.push(raw);
+      await env.DB.prepare(
+        'INSERT INTO mfa_backup_codes (user_id, code_hash) VALUES (?, ?)'
+      ).bind(user.id, await hashToken(raw.toUpperCase())).run();
+    }
+
+    await recordAudit(env, { userId: user.id, userEmail: user.email, action: 'mfa_enable', entityType: 'user', entityId: user.id, result: 'success' });
+    return jsonResponse({ message: 'אימות דו-שלבי הופעל בהצלחה', backupCodes }, 200, request);
+  } catch (e) {
+    console.error('MFA setup verify error:', e);
+    return errorResponse('שגיאה באימות הקוד', 500, request);
+  }
+}
+
+export async function handleMfaDisable(request, env, payload) {
+  try {
+    const { currentPassword } = await request.json();
+    if (!currentPassword) return errorResponse('נדרשת סיסמה נוכחית', 400, request);
+
+    const user = await env.DB.prepare('SELECT id, email, password_hash FROM users WHERE id = ?').bind(payload.userId).first();
+    if (!user) return errorResponse('משתמש לא נמצא', 404, request);
+    const valid = await verifyPassword(currentPassword, user.password_hash);
+    if (!valid) return errorResponse('סיסמה שגויה', 401, request);
+
+    await env.DB.prepare(
+      "UPDATE users SET mfa_enabled = 0, mfa_secret = NULL, mfa_last_counter = NULL WHERE id = ?"
+    ).bind(user.id).run();
+    await env.DB.prepare('DELETE FROM mfa_backup_codes WHERE user_id = ?').bind(user.id).run();
+
+    await recordAudit(env, { userId: user.id, userEmail: user.email, action: 'mfa_disable', entityType: 'user', entityId: user.id, result: 'success' });
+    return jsonResponse({ message: 'אימות דו-שלבי בוטל' }, 200, request);
+  } catch (e) {
+    console.error('MFA disable error:', e);
+    return errorResponse('שגיאה בביטול אימות דו-שלבי', 500, request);
   }
 }
 
@@ -377,7 +556,7 @@ export async function handleVerify(request, env) {
   if (!payload) return errorResponse('Token expired', 401, request);
   return jsonResponse({
     valid: true,
-    user: { id: payload.userId, email: payload.email, name: payload.name, role: payload.role },
+    user: { id: payload.userId, email: payload.email, name: payload.name, role: payload.role, mfaEnabled: !!payload.mfaEnabled },
   }, 200, request);
 }
 

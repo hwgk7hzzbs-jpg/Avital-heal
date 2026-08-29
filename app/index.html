@@ -45,6 +45,19 @@
   </div>
 </div>
 
+<!-- MFA CHALLENGE SCREEN (second step of login) -->
+<div id="mfaScreen" class="login-screen hidden">
+  <div class="login-box">
+    <h1>אימות דו-שלבי</h1>
+    <p class="subtitle" id="mfaSubtitle">הזן את הקוד מאפליקציית האימות</p>
+    <input type="text" id="mfaCode" placeholder="קוד בן 6 ספרות" class="input-field" inputmode="numeric" autocomplete="one-time-code" maxlength="9">
+    <button onclick="submitMfaCode()" class="btn btn-primary login-btn">אימות</button>
+    <div id="mfaError" class="login-error"></div>
+    <div class="reset-link" onclick="toggleMfaBackupMode()" id="mfaToggleLink">להשתמש בקוד גיבוי</div>
+    <div class="reset-link" onclick="backToLoginFromMfa()">חזרה לכניסה</div>
+  </div>
+</div>
+
 <!-- RESET EXECUTE SCREEN -->
 <div id="resetExecScreen" class="login-screen hidden">
   <div class="reset-box">
@@ -80,6 +93,7 @@
       <span id="userInfo" class="user-info"></span>
       <button onclick="exportCSV()" class="btn btn-sm">ייצוא CSV</button>
       <button onclick="showChangePasswordModal()" class="btn btn-sm">שינוי סיסמה</button>
+      <button onclick="showMfaModal()" class="btn btn-sm">אימות דו-שלבי</button>
       <button onclick="logout()" class="btn btn-sm btn-logout">🚪 התנתקות</button>
     </div>
   </div>
@@ -241,7 +255,7 @@
         <button onclick="showUserFormModal()" class="btn btn-primary">+ משתמש חדש</button>
       </div>
       <table class="table">
-        <thead><tr><th>שם</th><th>אימייל</th><th>תפקיד</th><th>סטטוס</th><th>תאריך יצירה</th><th>כניסה אחרונה</th><th>פעולות</th></tr></thead>
+        <thead><tr><th>שם</th><th>אימייל</th><th>תפקיד</th><th>סטטוס</th><th>תאריך יצירה</th><th>כניסה אחרונה</th><th>אימות דו-שלבי</th><th>פעולות</th></tr></thead>
         <tbody id="usersTable"></tbody>
       </table>
     </div>
@@ -462,17 +476,27 @@
   </div>
 </div>
 
+<!-- MFA MANAGEMENT MODAL -->
+<div id="mfaModal" class="modal hidden">
+  <div class="modal-content">
+    <span class="modal-close" onclick="closeMfaModal()">&times;</span>
+    <h2>אימות דו-שלבי</h2>
+    <div id="mfaModalBody"></div>
+  </div>
+</div>
+
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
-<script src="js/admin-utils.js?v=18"></script>
-<script src="js/admin-app.js?v=18"></script>
-<script src="js/admin-dashboard.js?v=18"></script>
-<script src="js/admin-clients.js?v=18"></script>
-<script src="js/admin-sessions.js?v=18"></script>
-<script src="js/admin-contacts.js?v=18"></script>
-<script src="js/admin-users.js?v=18"></script>
-<script src="js/admin-workshops.js?v=18"></script>
-<script src="js/admin-recyclebin.js?v=18"></script>
-<script src="js/admin-auditlog.js?v=18"></script>
+<script src="js/admin-utils.js?v=19"></script>
+<script src="js/admin-app.js?v=19"></script>
+<script src="js/admin-dashboard.js?v=19"></script>
+<script src="js/admin-clients.js?v=19"></script>
+<script src="js/admin-sessions.js?v=19"></script>
+<script src="js/admin-contacts.js?v=19"></script>
+<script src="js/admin-users.js?v=19"></script>
+<script src="js/admin-workshops.js?v=19"></script>
+<script src="js/admin-recyclebin.js?v=19"></script>
+<script src="js/admin-auditlog.js?v=19"></script>
+<script src="js/admin-mfa.js?v=19"></script>
 
 </body>
 </html>

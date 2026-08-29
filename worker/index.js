@@ -9,13 +9,14 @@ import { SECURITY_HEADERS, getCorsHeaders } from './utils.js';
 import { errorResponse } from './utils.js';
 import { getAuthPayload, handleLogin, handleRefresh, handleLogout, handleVerify } from './auth.js';
 import { handleRequestReset, handleExecuteReset, handleChangePassword } from './auth.js';
+import { handleMfaLoginVerify, handleMfaSetupStart, handleMfaSetupVerify, handleMfaDisable } from './auth.js';
 import { handleConsentSubmission } from './consent.js';
 import { handleGetClientConsents, handleRevokeConsent } from './consents.js';
 import { handleContactSubmission, handleGetContacts, handleUpdateContact, handleDeleteContact, handleGetDeletedContacts, handleRestoreContact, handlePermanentDeleteContact } from './contacts.js';
 import { handleGetClients, handleGetClient, handleCreateClient, handleUpdateClient, handleDeleteClient, handleExportClients, handleExportClientData, handleGetDeletedClients, handleRestoreClient, handlePermanentDeleteClient } from './clients.js';
 import { handleGetSessions, handleGetClientSessions, handleCreateSession, handleUpdateSession, handleDeleteSession, handleGetDeletedSessions, handleRestoreSession, handlePermanentDeleteSession } from './sessions.js';
 import { handleStats } from './dashboard.js';
-import { handleGetUsers, handleCreateUser, handleUpdateUser, handleDeleteUser, handleAdminResetPassword } from './users.js';
+import { handleGetUsers, handleCreateUser, handleUpdateUser, handleDeleteUser, handleAdminResetPassword, handleAdminDisableMfa } from './users.js';
 import {
   handleWorkshopRegister,
   handleGetWorkshops,
@@ -103,6 +104,34 @@ async function runMigrations(env) {
         updated_at DATETIME DEFAULT (datetime('now'))
       )
     `).run();
+
+    // Add MFA (TOTP) columns to users. mfa_secret is encrypted at rest
+    // (worker/crypto.js encryptField) the same way clinical notes are — it's
+    // a credential, not a UI string. mfa_last_counter blocks replaying an
+    // already-used TOTP code within its own validity window.
+    if (!cols.results.some(c => c.name === 'mfa_enabled')) {
+      await env.DB.prepare("ALTER TABLE users ADD COLUMN mfa_enabled BOOLEAN NOT NULL DEFAULT 0").run();
+    }
+    if (!cols.results.some(c => c.name === 'mfa_secret')) {
+      await env.DB.prepare("ALTER TABLE users ADD COLUMN mfa_secret TEXT").run();
+    }
+    if (!cols.results.some(c => c.name === 'mfa_last_counter')) {
+      await env.DB.prepare("ALTER TABLE users ADD COLUMN mfa_last_counter INTEGER").run();
+    }
+
+    // Create mfa_backup_codes table — single-use recovery codes issued when
+    // MFA is enabled (worker/auth.js handleMfaSetupVerify). Only a hash of
+    // each code is ever stored (worker/crypto.js hashToken).
+    await env.DB.prepare(`
+      CREATE TABLE IF NOT EXISTS mfa_backup_codes (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        code_hash TEXT NOT NULL,
+        used_at DATETIME,
+        created_at DATETIME DEFAULT (datetime('now'))
+      )
+    `).run();
+    await env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_mfa_backup_codes_user ON mfa_backup_codes(user_id)`).run();
 
     // Add token_version to users (bumped to invalidate every outstanding
     // access/refresh token on password change/reset or deactivation)
@@ -269,6 +298,9 @@ export default {
     if (path === '/api/logout' && method === 'POST') {
       return withCors(await handleLogout(request, env));
     }
+    if (path === '/api/mfa/login-verify' && method === 'POST') {
+      return withCors(await handleMfaLoginVerify(request, env));
+    }
     if (path === '/api/reset-request' && method === 'POST') {
       return withCors(await handleRequestReset(request, env));
     }
@@ -294,6 +326,15 @@ export default {
     }
     if (path === '/api/change-password' && method === 'POST') {
       return withCors(await handleChangePassword(request, env));
+    }
+    if (path === '/api/mfa/setup/start' && method === 'POST') {
+      return withCors(await handleMfaSetupStart(request, env, authPayload));
+    }
+    if (path === '/api/mfa/setup/verify' && method === 'POST') {
+      return withCors(await handleMfaSetupVerify(request, env, authPayload));
+    }
+    if (path === '/api/mfa/disable' && method === 'POST') {
+      return withCors(await handleMfaDisable(request, env, authPayload));
     }
     if (path === '/api/stats' && method === 'GET') {
       return withCors(await handleStats(env));
@@ -403,6 +444,10 @@ export default {
     if (path.match(/^\/api\/users\/\d+\/reset-password$/) && method === 'POST') {
       const parts = path.split('/');
       return withCors(await handleAdminResetPassword(parts[3], request, env, authPayload));
+    }
+    if (path.match(/^\/api\/users\/\d+\/disable-mfa$/) && method === 'POST') {
+      const parts = path.split('/');
+      return withCors(await handleAdminDisableMfa(parts[3], env, authPayload));
     }
 
     // Workshops (protected)

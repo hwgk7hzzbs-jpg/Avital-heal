@@ -123,11 +123,80 @@ async function login() {
       sessionStorage.setItem('crm_token', authToken);
       if (data.refreshToken) sessionStorage.setItem('crm_refresh_token', data.refreshToken);
       showApp();
+    } else if (data.mfaRequired) {
+      showMfaScreen(data.mfaToken);
     } else {
       errEl.textContent = data.error || 'אימייל או סיסמה שגויים';
       errEl.style.display = 'block';
       if (window.turnstile) window.turnstile.reset();
       loginTurnstileToken = '';
+    }
+  } catch (e) {
+    errEl.textContent = 'שגיאת חיבור לשרת';
+    errEl.style.display = 'block';
+  }
+}
+
+// ─── MFA challenge (second step of login) ───
+
+let pendingMfaToken = null;
+let mfaBackupMode = false;
+
+function showMfaScreen(mfaToken) {
+  pendingMfaToken = mfaToken;
+  mfaBackupMode = false;
+  document.getElementById('mfaCode').value = '';
+  document.getElementById('mfaCode').placeholder = 'קוד בן 6 ספרות';
+  document.getElementById('mfaSubtitle').textContent = 'הזן את הקוד מאפליקציית האימות';
+  document.getElementById('mfaToggleLink').textContent = 'להשתמש בקוד גיבוי';
+  document.getElementById('mfaError').style.display = 'none';
+  document.getElementById('loginScreen').classList.add('hidden');
+  document.getElementById('mfaScreen').classList.remove('hidden');
+}
+
+function toggleMfaBackupMode() {
+  mfaBackupMode = !mfaBackupMode;
+  document.getElementById('mfaCode').value = '';
+  document.getElementById('mfaCode').placeholder = mfaBackupMode ? 'קוד גיבוי (XXXX-XXXX)' : 'קוד בן 6 ספרות';
+  document.getElementById('mfaSubtitle').textContent = mfaBackupMode
+    ? 'הזן אחד מקודי הגיבוי שנשמרו בעת ההפעלה'
+    : 'הזן את הקוד מאפליקציית האימות';
+  document.getElementById('mfaToggleLink').textContent = mfaBackupMode ? 'להשתמש בקוד מהאפליקציה' : 'להשתמש בקוד גיבוי';
+}
+
+function backToLoginFromMfa() {
+  pendingMfaToken = null;
+  document.getElementById('mfaScreen').classList.add('hidden');
+  document.getElementById('loginScreen').classList.remove('hidden');
+}
+
+async function submitMfaCode() {
+  const value = document.getElementById('mfaCode').value.trim();
+  const errEl = document.getElementById('mfaError');
+  errEl.style.display = 'none';
+  if (!value) {
+    errEl.textContent = 'נא להזין קוד';
+    errEl.style.display = 'block';
+    return;
+  }
+  try {
+    const res = await fetch(`${API_BASE}/api/mfa/login-verify`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(mfaBackupMode ? { mfaToken: pendingMfaToken, backupCode: value } : { mfaToken: pendingMfaToken, code: value }),
+    });
+    const data = await res.json();
+    if (data.token) {
+      authToken = data.token;
+      currentUser = data.user;
+      sessionStorage.setItem('crm_token', authToken);
+      sessionStorage.setItem('crm_refresh_token', data.refreshToken);
+      pendingMfaToken = null;
+      document.getElementById('mfaScreen').classList.add('hidden');
+      showApp();
+    } else {
+      errEl.textContent = data.error || 'קוד שגוי';
+      errEl.style.display = 'block';
     }
   } catch (e) {
     errEl.textContent = 'שגיאת חיבור לשרת';
@@ -406,5 +475,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
   document.getElementById('loginEmail')?.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') document.getElementById('loginPassword').focus();
+  });
+  document.getElementById('mfaCode')?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') submitMfaCode();
   });
 });

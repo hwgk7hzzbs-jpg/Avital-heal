@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { handleGetUsers, handleCreateUser, handleUpdateUser, handleDeleteUser, handleAdminResetPassword } from '../users.js';
+import { handleGetUsers, handleCreateUser, handleUpdateUser, handleDeleteUser, handleAdminResetPassword, handleAdminDisableMfa } from '../users.js';
 import { makeFakeD1 } from './testUtils.js';
 
 function req(body) {
@@ -25,6 +25,29 @@ describe('RBAC — every endpoint requires admin', () => {
   });
   it('blocks handleAdminResetPassword', async () => {
     expect((await handleAdminResetPassword('1', req({}), { DB: makeFakeD1() }, nonAdmin)).status).toBe(403);
+  });
+  it('blocks handleAdminDisableMfa', async () => {
+    expect((await handleAdminDisableMfa('1', { DB: makeFakeD1() }, nonAdmin)).status).toBe(403);
+  });
+});
+
+describe('handleAdminDisableMfa', () => {
+  it('clears MFA state and backup codes for the target user, logging who did it', async () => {
+    const db = makeFakeD1({
+      users: [{ id: 2, email: 'lost-device@x.com', role: 'therapist', mfa_enabled: 1, mfa_secret: 'encv1.whatever', mfa_last_counter: 5 }],
+      mfaBackupCodes: [{ id: 1, user_id: 2, code_hash: 'h', used_at: null }],
+    });
+    const res = await handleAdminDisableMfa('2', { DB: db }, admin);
+    expect(res.status).toBe(200);
+    expect(db._state.users[0].mfa_enabled).toBeFalsy();
+    expect(db._state.users[0].mfa_secret).toBeFalsy();
+    expect(db._state.mfaBackupCodes).toHaveLength(0);
+    expect(db._state.auditLog.some(a => a.action === 'mfa_disable' && a.entity_id === '2' && a.user_id === admin.userId)).toBe(true);
+  });
+
+  it('404s for a user that does not exist', async () => {
+    const res = await handleAdminDisableMfa('999', { DB: makeFakeD1() }, admin);
+    expect(res.status).toBe(404);
   });
 });
 

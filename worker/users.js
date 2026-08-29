@@ -34,7 +34,7 @@ export async function handleGetUsers(env, payload) {
 
   try {
     const { results } = await env.DB.prepare(
-      'SELECT id, name, email, role, active, created_at, updated_at, last_login_at, last_login_ip FROM users ORDER BY id'
+      'SELECT id, name, email, role, active, created_at, updated_at, last_login_at, last_login_ip, mfa_enabled FROM users ORDER BY id'
     ).all();
     return jsonResponse(results || []);
   } catch (e) {
@@ -267,5 +267,36 @@ export async function handleAdminResetPassword(userId, request, env, payload) {
   } catch (e) {
     console.error('Admin reset password error:', e);
     return errorResponse('שגיאה באיפוס סיסמה', 500);
+  }
+}
+
+// ─── POST /api/users/:id/disable-mfa ───
+// Recovery path for a user who lost their authenticator device/backup
+// codes — an admin can turn MFA back off for them so they can log in and
+// (if they want) set it up again from scratch.
+
+export async function handleAdminDisableMfa(userId, env, payload) {
+  const denied = requireRole(payload, 'admin');
+  if (denied) return denied;
+
+  try {
+    const user = await env.DB.prepare('SELECT id, email FROM users WHERE id = ?').bind(userId).first();
+    if (!user) return errorResponse('משתמש לא נמצא', 404);
+
+    await env.DB.prepare(
+      "UPDATE users SET mfa_enabled = 0, mfa_secret = NULL, mfa_last_counter = NULL WHERE id = ?"
+    ).bind(userId).run();
+    await env.DB.prepare('DELETE FROM mfa_backup_codes WHERE user_id = ?').bind(userId).run();
+
+    await recordAudit(env, {
+      userId: payload.userId, userEmail: payload.email,
+      action: 'mfa_disable', entityType: 'user', entityId: userId, result: 'success',
+      metadata: { by: 'admin' },
+    });
+
+    return jsonResponse({ message: 'אימות דו-שלבי בוטל עבור המשתמש' });
+  } catch (e) {
+    console.error('Admin disable MFA error:', e);
+    return errorResponse('שגיאה בביטול אימות דו-שלבי', 500);
   }
 }
