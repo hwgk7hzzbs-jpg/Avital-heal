@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { hashPassword, verifyPassword, createJWT, verifyJWT, generateToken, encryptField, decryptField } from '../crypto.js';
+import { hashPassword, verifyPassword, needsRehash, createJWT, verifyJWT, generateToken, hashToken, encryptField, decryptField } from '../crypto.js';
 
 // 32 bytes, hex-encoded — matches how ENCRYPTION_KEY is expected to be provisioned.
 const TEST_KEY = 'a'.repeat(64);
@@ -23,6 +23,44 @@ describe('password hashing', () => {
 
   it('rejects a malformed stored hash', async () => {
     expect(await verifyPassword('anything', 'not-a-valid-hash')).toBe(false);
+  });
+
+  it('stores the iteration count in the hash, in "iterations:salt:hash" form', async () => {
+    const hash = await hashPassword('S3curePass!');
+    const parts = hash.split(':');
+    expect(parts).toHaveLength(3);
+    expect(Number(parts[0])).toBeGreaterThan(0);
+  });
+
+  it('verifies a legacy two-part "salt:hash" hash (no embedded iteration count)', async () => {
+    // Replicates the pre-hardening format directly, so this doesn't depend on
+    // hashPassword() itself still being able to produce the old shape.
+    const salt = crypto.getRandomValues(new Uint8Array(16));
+    const key = await crypto.subtle.importKey('raw', new TextEncoder().encode('LegacyPass1'), 'PBKDF2', false, ['deriveBits']);
+    const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' }, key, 256);
+    const toHex = buf => Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+    const legacyHash = `${toHex(salt)}:${toHex(bits)}`;
+
+    expect(await verifyPassword('LegacyPass1', legacyHash)).toBe(true);
+    expect(await verifyPassword('wrong', legacyHash)).toBe(false);
+  });
+});
+
+describe('needsRehash', () => {
+  it('is false for a hash just created with the current settings', async () => {
+    expect(needsRehash(await hashPassword('S3curePass!'))).toBe(false);
+  });
+
+  it('is true for a legacy two-part hash', () => {
+    expect(needsRehash('deadbeef:c0ffee')).toBe(true);
+  });
+
+  it('is true for a hash whose embedded iteration count is lower than current', () => {
+    expect(needsRehash('1000:deadbeef:c0ffee')).toBe(true);
+  });
+
+  it('is true for an unparseable hash', () => {
+    expect(needsRehash('not-a-valid-hash')).toBe(true);
   });
 });
 
@@ -51,10 +89,17 @@ describe('JWT', () => {
 
   it('rejects an expired token', async () => {
     const token = await createJWT({ userId: 1 }, secret);
-    // createJWT always sets exp = now + 24h relative to real time, so to test
-    // expiry we advance the clock the verifier sees rather than forging exp.
+    // createJWT's default expiry (20 min) is relative to real time, so to
+    // test expiry we advance the clock the verifier sees rather than forging exp.
     vi.useFakeTimers();
-    vi.setSystemTime(Date.now() + 25 * 3600 * 1000);
+    vi.setSystemTime(Date.now() + 21 * 60 * 1000);
+    expect(await verifyJWT(token, secret)).toBeNull();
+  });
+
+  it('honors a custom expiry', async () => {
+    const token = await createJWT({ userId: 1 }, secret, 5);
+    vi.useFakeTimers();
+    vi.setSystemTime(Date.now() + 10 * 1000);
     expect(await verifyJWT(token, secret)).toBeNull();
   });
 
@@ -63,6 +108,24 @@ describe('JWT', () => {
   it('rejects garbage input', async () => {
     expect(await verifyJWT('not-a-jwt', secret)).toBeNull();
     expect(await verifyJWT('', secret)).toBeNull();
+  });
+});
+
+describe('hashToken', () => {
+  it('is deterministic — same input always hashes the same', async () => {
+    expect(await hashToken('some-token-value')).toBe(await hashToken('some-token-value'));
+  });
+
+  it('produces different hashes for different inputs', async () => {
+    expect(await hashToken('token-a')).not.toBe(await hashToken('token-b'));
+  });
+
+  it('produces a hex-encoded SHA-256 digest (64 hex chars)', async () => {
+    expect(await hashToken('anything')).toMatch(/^[0-9a-f]{64}$/);
+  });
+
+  it('never contains the original token as a substring', async () => {
+    expect(await hashToken('a-very-identifiable-refresh-token')).not.toContain('a-very-identifiable-refresh-token');
   });
 });
 

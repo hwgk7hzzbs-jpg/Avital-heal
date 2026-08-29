@@ -46,6 +46,21 @@ describe('scheduled (daily retention cleanup)', () => {
     expect(db._state.consents).toHaveLength(1);
   });
 
+  it('removes revoked or expired refresh_tokens but keeps active, unexpired ones', async () => {
+    const db = makeFakeD1({
+      refreshTokens: [
+        { id: 1, user_id: 1, token_hash: 'revoked', token_version: 0, expires_at: '2999-01-01T00:00:00.000Z', revoked_at: '2020-01-01T00:00:00.000Z' },
+        { id: 2, user_id: 1, token_hash: 'expired', token_version: 0, expires_at: '2000-01-01T00:00:00.000Z', revoked_at: null },
+        { id: 3, user_id: 1, token_hash: 'active', token_version: 0, expires_at: '2999-01-01T00:00:00.000Z', revoked_at: null },
+      ],
+    });
+    const env = { DB: db };
+
+    await worker.scheduled({}, env);
+
+    expect(db._state.refreshTokens.map(r => r.token_hash)).toEqual(['active']);
+  });
+
   it('does not throw if D1 errors — cleanup failure must not crash the cron trigger', async () => {
     const env = { DB: { prepare() { throw new Error('D1 down'); } } };
     await expect(worker.scheduled({}, env)).resolves.toBeUndefined();

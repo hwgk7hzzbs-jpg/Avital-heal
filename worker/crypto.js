@@ -6,34 +6,63 @@
  * @security CRITICAL — handles all credential operations.
  */
 
-const PBKDF2_ITERATIONS = 100000;
+// 2023 OWASP guidance for PBKDF2-HMAC-SHA256. The iteration count is stored
+// alongside each hash (see hashPassword) so raising this constant never
+// invalidates passwords hashed under an older value — verifyPassword reads
+// whatever count the hash itself was created with.
+const PBKDF2_ITERATIONS = 600000;
+// Original, pre-hardening iteration count. Hashes written before this file
+// started embedding the count in the stored value have exactly two ':'-parts
+// (salt:hash, no leading iteration count) and are assumed to use this value.
+const LEGACY_PBKDF2_ITERATIONS = 100000;
 const SALT_LENGTH = 16;
-const JWT_EXPIRY_HOURS = 24;
 
 // ─── Password Hashing (PBKDF2-SHA256) ───
 
 export async function hashPassword(password) {
   const salt = crypto.getRandomValues(new Uint8Array(SALT_LENGTH));
-  const key = await crypto.subtle.importKey(
-    'raw', new TextEncoder().encode(password), 'PBKDF2', false, ['deriveBits']
-  );
-  const bits = await crypto.subtle.deriveBits(
-    { name: 'PBKDF2', salt, iterations: PBKDF2_ITERATIONS, hash: 'SHA-256' }, key, 256
-  );
-  return bufToHex(salt) + ':' + bufToHex(new Uint8Array(bits));
+  const bits = await deriveBits(password, salt, PBKDF2_ITERATIONS);
+  return `${PBKDF2_ITERATIONS}:${bufToHex(salt)}:${bufToHex(new Uint8Array(bits))}`;
 }
 
 export async function verifyPassword(password, storedHash) {
+  const parsed = parseStoredHash(storedHash);
+  if (!parsed) return false;
+  const { iterations, salt, hash } = parsed;
+  const bits = await deriveBits(password, salt, iterations);
+  return timingSafeEqual(bufToHex(new Uint8Array(bits)), hash);
+}
+
+// True when a hash was created with fewer iterations than the current
+// target — callers (login) use this to opportunistically re-hash with the
+// plaintext password they already have on hand, migrating old hashes to the
+// current standard one successful login at a time rather than all at once.
+export function needsRehash(storedHash) {
+  const parsed = parseStoredHash(storedHash);
+  return !parsed || parsed.iterations < PBKDF2_ITERATIONS;
+}
+
+function parseStoredHash(storedHash) {
   const parts = storedHash.split(':');
-  if (parts.length !== 2) return false;
-  const salt = hexToBuf(parts[0]);
+  if (parts.length === 3) {
+    const iterations = parseInt(parts[0], 10);
+    if (!iterations || !parts[1] || !parts[2]) return null;
+    return { iterations, salt: hexToBuf(parts[1]), hash: parts[2] };
+  }
+  if (parts.length === 2) {
+    if (!parts[0] || !parts[1]) return null;
+    return { iterations: LEGACY_PBKDF2_ITERATIONS, salt: hexToBuf(parts[0]), hash: parts[1] };
+  }
+  return null;
+}
+
+async function deriveBits(password, salt, iterations) {
   const key = await crypto.subtle.importKey(
     'raw', new TextEncoder().encode(password), 'PBKDF2', false, ['deriveBits']
   );
-  const bits = await crypto.subtle.deriveBits(
-    { name: 'PBKDF2', salt, iterations: PBKDF2_ITERATIONS, hash: 'SHA-256' }, key, 256
+  return crypto.subtle.deriveBits(
+    { name: 'PBKDF2', salt, iterations, hash: 'SHA-256' }, key, 256
   );
-  return timingSafeEqual(bufToHex(new Uint8Array(bits)), parts[1]);
 }
 
 // Constant-time string comparison — avoids leaking hash match position via timing.
@@ -68,10 +97,10 @@ function b64urlToUtf8(b64) {
 
 // ─── JWT (HMAC-SHA256) ───
 
-export async function createJWT(payload, secret) {
+export async function createJWT(payload, secret, expirySeconds = 20 * 60) {
   const header = { alg: 'HS256', typ: 'JWT' };
   const now = Math.floor(Date.now() / 1000);
-  const body = { ...payload, iat: now, exp: now + JWT_EXPIRY_HOURS * 3600 };
+  const body = { ...payload, iat: now, exp: now + expirySeconds };
   const headerB64 = utf8ToB64url(JSON.stringify(header));
   const bodyB64 = utf8ToB64url(JSON.stringify(body));
   const data = `${headerB64}.${bodyB64}`;
@@ -115,6 +144,17 @@ export async function verifyJWT(token, secret) {
 
 export function generateToken(length = 32) {
   return bufToHex(crypto.getRandomValues(new Uint8Array(length)));
+}
+
+// ─── One-way token hashing (SHA-256) ───
+// Used for password-reset and refresh tokens: only this hash is ever
+// persisted to D1, so a database read alone can't be used to redeem a
+// still-valid token — the raw value only ever exists in the response sent
+// to the legitimate holder (email link / login response).
+
+export async function hashToken(token) {
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(token));
+  return bufToHex(new Uint8Array(digest));
 }
 
 // ─── Field-level encryption (AES-256-GCM) ───

@@ -6,26 +6,9 @@
  */
 
 import { jsonResponse, errorResponse } from './utils.js';
-import { hashPassword, verifyJWT } from './crypto.js';
+import { hashPassword } from './crypto.js';
+import { requireRole, revokeAllSessions } from './auth.js';
 import { recordAudit } from './auditLog.js';
-
-// ─── Helper: extract user from JWT ───
-
-async function getAuthUser(request, env) {
-  const authHeader = request.headers.get('Authorization');
-  if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
-  const token = authHeader.slice(7);
-  return await verifyJWT(token, env.JWT_SECRET);
-}
-
-// ─── Helper: require admin role ───
-
-function requireAdmin(payload) {
-  if (!payload || payload.role !== 'admin') {
-    return errorResponse('אין הרשאה — נדרש תפקיד מנהל', 403);
-  }
-  return null;
-}
 
 // ─── Validation helpers ───
 
@@ -45,9 +28,8 @@ const VALID_ROLES = ['admin', 'therapist', 'viewer'];
 
 // ─── GET /api/users ───
 
-export async function handleGetUsers(request, env) {
-  const payload = await getAuthUser(request, env);
-  const denied = requireAdmin(payload);
+export async function handleGetUsers(env, payload) {
+  const denied = requireRole(payload, 'admin');
   if (denied) return denied;
 
   try {
@@ -63,9 +45,8 @@ export async function handleGetUsers(request, env) {
 
 // ─── POST /api/users ───
 
-export async function handleCreateUser(request, env) {
-  const payload = await getAuthUser(request, env);
-  const denied = requireAdmin(payload);
+export async function handleCreateUser(request, env, payload) {
+  const denied = requireRole(payload, 'admin');
   if (denied) return denied;
 
   try {
@@ -123,9 +104,8 @@ export async function handleCreateUser(request, env) {
 
 // ─── PUT /api/users/:id ───
 
-export async function handleUpdateUser(request, env, userId) {
-  const payload = await getAuthUser(request, env);
-  const denied = requireAdmin(payload);
+export async function handleUpdateUser(userId, request, env, payload) {
+  const denied = requireRole(payload, 'admin');
   if (denied) return denied;
 
   try {
@@ -156,8 +136,10 @@ export async function handleUpdateUser(request, env, userId) {
       }
     }
 
+    const isDeactivating = active !== undefined && !active;
+
     // Prevent deactivating / demoting last admin
-    if ((role !== undefined && role !== 'admin') || (active !== undefined && !active)) {
+    if ((role !== undefined && role !== 'admin') || isDeactivating) {
       if (user.role === 'admin') {
         const adminCount = await env.DB.prepare(
           "SELECT COUNT(*) as cnt FROM users WHERE role = 'admin' AND active = 1 AND id != ?"
@@ -186,6 +168,12 @@ export async function handleUpdateUser(request, env, userId) {
       `UPDATE users SET ${fields.join(', ')} WHERE id = ?`
     ).bind(...values).run();
 
+    // Deactivating a user must kill any session they're already holding —
+    // otherwise a still-valid access token keeps working until it expires.
+    if (isDeactivating) {
+      await revokeAllSessions(env, userId);
+    }
+
     // Return updated user
     const updated = await env.DB.prepare(
       'SELECT id, name, email, role, active, created_at, updated_at FROM users WHERE id = ?'
@@ -194,7 +182,10 @@ export async function handleUpdateUser(request, env, userId) {
     await recordAudit(env, {
       userId: payload.userId, userEmail: payload.email,
       action: 'update', entityType: 'user', entityId: userId, result: 'success',
-      metadata: { fields: [name, email, role, active].map((v, i) => v !== undefined ? ['name', 'email', 'role', 'active'][i] : null).filter(Boolean) },
+      metadata: {
+        fields: [name, email, role, active].map((v, i) => v !== undefined ? ['name', 'email', 'role', 'active'][i] : null).filter(Boolean),
+        ...(isDeactivating ? { sessionsRevoked: true } : {}),
+      },
     });
 
     return jsonResponse(updated);
@@ -206,9 +197,8 @@ export async function handleUpdateUser(request, env, userId) {
 
 // ─── DELETE /api/users/:id ───
 
-export async function handleDeleteUser(request, env, userId) {
-  const payload = await getAuthUser(request, env);
-  const denied = requireAdmin(payload);
+export async function handleDeleteUser(userId, env, payload) {
+  const denied = requireRole(payload, 'admin');
   if (denied) return denied;
 
   try {
@@ -231,6 +221,7 @@ export async function handleDeleteUser(request, env, userId) {
     }
 
     await env.DB.prepare('DELETE FROM users WHERE id = ?').bind(userId).run();
+    await env.DB.prepare('DELETE FROM refresh_tokens WHERE user_id = ?').bind(userId).run();
 
     await recordAudit(env, {
       userId: payload.userId, userEmail: payload.email,
@@ -246,9 +237,8 @@ export async function handleDeleteUser(request, env, userId) {
 
 // ─── POST /api/users/:id/reset-password ───
 
-export async function handleAdminResetPassword(request, env, userId) {
-  const payload = await getAuthUser(request, env);
-  const denied = requireAdmin(payload);
+export async function handleAdminResetPassword(userId, request, env, payload) {
+  const denied = requireRole(payload, 'admin');
   if (denied) return denied;
 
   try {
@@ -265,11 +255,12 @@ export async function handleAdminResetPassword(request, env, userId) {
     await env.DB.prepare(
       "UPDATE users SET password_hash = ?, updated_at = datetime('now') WHERE id = ?"
     ).bind(passwordHash, userId).run();
+    await revokeAllSessions(env, userId);
 
     await recordAudit(env, {
       userId: payload.userId, userEmail: payload.email,
       action: 'password_reset', entityType: 'user', entityId: userId, result: 'success',
-      metadata: { by: 'admin' },
+      metadata: { by: 'admin', sessionsRevoked: true },
     });
 
     return jsonResponse({ message: 'הסיסמה עודכנה בהצלחה' });

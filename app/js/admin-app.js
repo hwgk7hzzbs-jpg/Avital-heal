@@ -11,17 +11,60 @@ let allClients = [];
 let allContacts = [];
 
 // ─── API helper ───
+// The access token is short-lived (20 min) by design. On a 401 we try one
+// silent refresh (deduped across concurrent calls — see refreshAccessToken)
+// and retry the request once before giving up and logging out.
+
+let refreshPromise = null;
+
+async function refreshAccessToken() {
+  if (refreshPromise) return refreshPromise;
+  const storedRefreshToken = sessionStorage.getItem('crm_refresh_token');
+  if (!storedRefreshToken) return false;
+
+  refreshPromise = (async () => {
+    try {
+      const res = await fetch(`${API_BASE}/api/refresh`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refreshToken: storedRefreshToken }),
+      });
+      if (!res.ok) return false;
+      const data = await res.json();
+      if (!data.token || !data.refreshToken) return false;
+      authToken = data.token;
+      sessionStorage.setItem('crm_token', authToken);
+      sessionStorage.setItem('crm_refresh_token', data.refreshToken);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  })();
+
+  const result = await refreshPromise;
+  refreshPromise = null;
+  return result;
+}
+
+function authHeaders(options) {
+  return {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${authToken}`,
+    ...(options.headers || {}),
+  };
+}
 
 async function api(path, options = {}) {
-  const res = await fetch(`${API_BASE}${path}`, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${authToken}`,
-      ...(options.headers || {}),
-    },
-  });
-  if (res.status === 401) { logout(); return null; }
+  const res = await fetch(`${API_BASE}${path}`, { ...options, headers: authHeaders(options) });
+  if (res.status === 401) {
+    if (await refreshAccessToken()) {
+      const retryRes = await fetch(`${API_BASE}${path}`, { ...options, headers: authHeaders(options) });
+      if (retryRes.status === 401) { logout(); return null; }
+      return retryRes.json();
+    }
+    logout();
+    return null;
+  }
   return res.json();
 }
 
@@ -78,6 +121,7 @@ async function login() {
       authToken = data.token;
       currentUser = data.user;
       sessionStorage.setItem('crm_token', authToken);
+      if (data.refreshToken) sessionStorage.setItem('crm_refresh_token', data.refreshToken);
       showApp();
     } else {
       errEl.textContent = data.error || 'אימייל או סיסמה שגויים';
@@ -92,9 +136,20 @@ async function login() {
 }
 
 function logout() {
+  const storedRefreshToken = sessionStorage.getItem('crm_refresh_token');
+  if (storedRefreshToken) {
+    // Best-effort — the client clears its own storage regardless of whether
+    // this reaches the server, so it's fine to not await it.
+    fetch(`${API_BASE}/api/logout`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refreshToken: storedRefreshToken }),
+    }).catch(() => {});
+  }
   authToken = null;
   currentUser = null;
   sessionStorage.removeItem('crm_token');
+  sessionStorage.removeItem('crm_refresh_token');
   document.getElementById('loginScreen').classList.remove('hidden');
   document.getElementById('resetScreen').classList.add('hidden');
   document.getElementById('app').classList.remove('active');
@@ -228,8 +283,11 @@ async function changePassword() {
     body: JSON.stringify({ currentPassword: cur, newPassword: nw }),
   });
   if (data && data.message) {
-    alert('הסיסמה שונתה בהצלחה!');
+    // Changing the password revokes every session, including this one —
+    // log out immediately rather than let the next click hit a surprise 401.
+    alert('הסיסמה שונתה בהצלחה! יש להתחבר מחדש.');
     closeModal('changePasswordModal');
+    logout();
   }
 }
 
@@ -319,16 +377,23 @@ document.addEventListener('DOMContentLoaded', async () => {
     return;
   }
 
-  // Check for existing session
+  // Check for existing session. The access token is short-lived, so on a
+  // page reload it's routinely already expired — try a silent refresh
+  // before falling back to the login screen.
   const token = sessionStorage.getItem('crm_token');
   if (token) {
+    authToken = token;
     try {
-      const res = await fetch(`${API_BASE}/api/verify`, {
-        headers: { 'Authorization': `Bearer ${token}` },
+      let res = await fetch(`${API_BASE}/api/verify`, {
+        headers: { 'Authorization': `Bearer ${authToken}` },
       });
+      if (!res.ok && (await refreshAccessToken())) {
+        res = await fetch(`${API_BASE}/api/verify`, {
+          headers: { 'Authorization': `Bearer ${authToken}` },
+        });
+      }
       if (res.ok) {
         const data = await res.json();
-        authToken = token;
         currentUser = data.user;
         showApp();
       }

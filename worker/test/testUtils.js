@@ -42,14 +42,17 @@ function applyDynamicUpdate(sql, args, collection) {
  * matcher rather than a real SQL parser — good enough for unit tests without
  * pulling in a full SQLite engine.
  */
-export function makeFakeD1({ contacts = [], workshops = [], rateLimits = new Map(), clients = [], consents = [], workshopRegistrations = [], sessions = [], passwordResets = [], auditLog = [], users = [] } = {}) {
+export function makeFakeD1({ contacts = [], workshops = [], rateLimits = new Map(), clients = [], consents = [], workshopRegistrations = [], sessions = [], passwordResets = [], auditLog = [], users = [], refreshTokens = [] } = {}) {
   let nextContactId = contacts.reduce((m, c) => Math.max(m, c.id || 0), 0) + 1;
   let nextClientId = clients.reduce((m, c) => Math.max(m, c.id || 0), 0) + 1;
   let nextConsentId = 1;
   let nextRegistrationId = workshopRegistrations.reduce((m, r) => Math.max(m, r.id || 0), 0) + 1;
   let nextSessionId = sessions.reduce((m, s) => Math.max(m, s.id || 0), 0) + 1;
   let nextAuditId = 1;
-  const state = { contacts, workshops, rateLimits, clients, consents, workshopRegistrations, sessions, passwordResets, auditLog, users };
+  let nextUserId = users.reduce((m, u) => Math.max(m, u.id || 0), 0) + 1;
+  let nextRefreshTokenId = refreshTokens.reduce((m, r) => Math.max(m, r.id || 0), 0) + 1;
+  let nextPasswordResetId = passwordResets.reduce((m, r) => Math.max(m, r.id || 0), 0) + 1;
+  const state = { contacts, workshops, rateLimits, clients, consents, workshopRegistrations, sessions, passwordResets, auditLog, users, refreshTokens };
 
   return {
     _state: state,
@@ -99,6 +102,30 @@ export function makeFakeD1({ contacts = [], workshops = [], rateLimits = new Map
           if (/FROM consents WHERE id = \?/.test(sql)) {
             return state.consents.find(c => c.id === call.args[0]) || null;
           }
+          if (/FROM users WHERE role = 'admin' AND active = 1 AND id != \?/.test(sql)) {
+            const cnt = state.users.filter(u => u.role === 'admin' && u.active && String(u.id) !== String(call.args[0])).length;
+            return { cnt };
+          }
+          if (/FROM users WHERE role = 'admin' AND id != \?/.test(sql)) {
+            const cnt = state.users.filter(u => u.role === 'admin' && String(u.id) !== String(call.args[0])).length;
+            return { cnt };
+          }
+          if (/FROM users WHERE email = \? AND id != \?/.test(sql)) {
+            const [email, excludeId] = call.args;
+            return state.users.find(u => u.email === email && String(u.id) !== String(excludeId)) || null;
+          }
+          if (/FROM users WHERE email = \?/.test(sql)) {
+            return state.users.find(u => u.email === call.args[0]) || null;
+          }
+          if (/FROM users WHERE id = \?/.test(sql)) {
+            return state.users.find(u => String(u.id) === String(call.args[0])) || null;
+          }
+          if (/FROM refresh_tokens WHERE token_hash = \?/.test(sql)) {
+            return state.refreshTokens.find(r => r.token_hash === call.args[0]) || null;
+          }
+          if (/FROM password_resets WHERE token = \?/.test(sql)) {
+            return state.passwordResets.find(r => r.token === call.args[0]) || null;
+          }
           return null;
         },
         async all() {
@@ -147,6 +174,9 @@ export function makeFakeD1({ contacts = [], workshops = [], rateLimits = new Map
           if (/FROM workshop_registrations r/.test(sql) && /deleted_at IS NOT NULL/.test(sql)) {
             const rows = state.workshopRegistrations.filter(r => r.deleted_at);
             return { results: rows };
+          }
+          if (/FROM users ORDER BY id/.test(sql)) {
+            return { results: state.users.slice().sort((a, b) => a.id - b.id) };
           }
           if (/FROM audit_log WHERE 1=1/.test(sql)) {
             let idx = 0;
@@ -249,12 +279,72 @@ export function makeFakeD1({ contacts = [], workshops = [], rateLimits = new Map
             const before = state.rateLimits.size;
             for (const [k, v] of state.rateLimits) if (v.expires_at < cutoff) state.rateLimits.delete(k);
             return { meta: { changes: before - state.rateLimits.size } };
-          } else if (/DELETE FROM password_resets/.test(sql)) {
+          } else if (/DELETE FROM password_resets WHERE used = 1 OR expires_at/.test(sql)) {
             // Test rows carry a pre-computed `expired` boolean instead of a real
             // datetime('now') comparison — see makeFakeD1's passwordResets param.
             const before = state.passwordResets.length;
             state.passwordResets = state.passwordResets.filter(r => !r.used && !r.expired);
             return { meta: { changes: before - state.passwordResets.length } };
+          } else if (/INSERT INTO password_resets/.test(sql)) {
+            const [user_id, token, expires_at] = call.args;
+            const id = nextPasswordResetId++;
+            state.passwordResets.push({ id, user_id, token, expires_at, used: 0 });
+            return { meta: { last_row_id: id } };
+          } else if (/UPDATE password_resets SET used = 1/.test(sql)) {
+            const [id] = call.args;
+            const r = state.passwordResets.find(x => String(x.id) === String(id));
+            if (r) r.used = 1;
+            return { meta: { changes: r ? 1 : 0 } };
+          } else if (/INSERT INTO users/.test(sql)) {
+            const [name, email, role, password_hash] = call.args;
+            const id = nextUserId++;
+            state.users.push({ id, name, email, role, password_hash, active: 1, token_version: 0 });
+            return { meta: { last_row_id: id } };
+          } else if (/UPDATE users SET token_version = token_version \+ 1/.test(sql)) {
+            const [id] = call.args;
+            const u = state.users.find(x => String(x.id) === String(id));
+            if (u) u.token_version = (u.token_version || 0) + 1;
+            return { meta: { changes: u ? 1 : 0 } };
+          } else if (/UPDATE users SET/.test(sql)) {
+            const { changed } = applyDynamicUpdate(sql, call.args, state.users);
+            return { meta: { changes: changed ? 1 : 0 } };
+          } else if (/DELETE FROM users WHERE id = \?/.test(sql)) {
+            const [id] = call.args;
+            const before = state.users.length;
+            state.users = state.users.filter(u => String(u.id) !== String(id));
+            return { meta: { changes: before - state.users.length } };
+          } else if (/INSERT INTO refresh_tokens/.test(sql)) {
+            const [user_id, token_hash, token_version, expires_at] = call.args;
+            const id = nextRefreshTokenId++;
+            state.refreshTokens.push({ id, user_id, token_hash, token_version, expires_at, revoked_at: null });
+            return { meta: { last_row_id: id } };
+          } else if (/refresh_tokens SET revoked_at = datetime\('now'\) WHERE id = \?/.test(sql)) {
+            const [id] = call.args;
+            const r = state.refreshTokens.find(x => String(x.id) === String(id));
+            if (r) r.revoked_at = new Date().toISOString();
+            return { meta: { changes: r ? 1 : 0 } };
+          } else if (/refresh_tokens SET revoked_at = datetime\('now'\) WHERE user_id = \?/.test(sql)) {
+            const [userId] = call.args;
+            let changes = 0;
+            state.refreshTokens.forEach(r => {
+              if (String(r.user_id) === String(userId) && !r.revoked_at) { r.revoked_at = new Date().toISOString(); changes++; }
+            });
+            return { meta: { changes } };
+          } else if (/refresh_tokens SET revoked_at = datetime\('now'\) WHERE token_hash = \?/.test(sql)) {
+            const [tokenHash] = call.args;
+            const r = state.refreshTokens.find(x => x.token_hash === tokenHash && !x.revoked_at);
+            if (r) r.revoked_at = new Date().toISOString();
+            return { meta: { changes: r ? 1 : 0 } };
+          } else if (/DELETE FROM refresh_tokens WHERE user_id = \?/.test(sql)) {
+            const [userId] = call.args;
+            const before = state.refreshTokens.length;
+            state.refreshTokens = state.refreshTokens.filter(r => String(r.user_id) !== String(userId));
+            return { meta: { changes: before - state.refreshTokens.length } };
+          } else if (/DELETE FROM refresh_tokens WHERE revoked_at IS NOT NULL OR expires_at/.test(sql)) {
+            const before = state.refreshTokens.length;
+            const now = new Date();
+            state.refreshTokens = state.refreshTokens.filter(r => !r.revoked_at && new Date(r.expires_at) >= now);
+            return { meta: { changes: before - state.refreshTokens.length } };
           }
           return { meta: { last_row_id: nextContactId - 1 } };
         },
