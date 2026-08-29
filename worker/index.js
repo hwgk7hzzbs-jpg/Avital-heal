@@ -3,6 +3,13 @@
  * @description Central entry point — routing ONLY. No business logic.
  * @module Core
  * @security Auth check applied before protected routes.
+ *
+ * Schema migrations do NOT run here (or anywhere in the request path). They
+ * live as numbered SQL files in worker/migrations/, applied only as an
+ * explicit deploy step:
+ *   npx wrangler d1 migrations apply avital-heal-crm --remote
+ * A failed migration halts there (and rolls itself back) — deploy the
+ * Worker only after `apply` reports success. See worker/migrations/README.md.
  */
 
 import { SECURITY_HEADERS, getCorsHeaders } from './utils.js';
@@ -30,224 +37,6 @@ import {
 } from './workshops.js';
 import { handleGetAuditLog } from './auditLog.js';
 
-// ─── One-time DB migration ───
-async function runMigrations(env) {
-  try {
-    // Add 'active' column to users if not exists
-    const cols = await env.DB.prepare("PRAGMA table_info(users)").all();
-    const hasActive = cols.results.some(c => c.name === 'active');
-    if (!hasActive) {
-      await env.DB.prepare("ALTER TABLE users ADD COLUMN active BOOLEAN DEFAULT 1").run();
-      // Set all existing users as active
-      await env.DB.prepare("UPDATE users SET active = 1 WHERE active IS NULL").run();
-    }
-
-    // Create consents table (historical, versioned — one row per signature,
-    // in addition to the quick-lookup boolean flags on clients/workshop_registrations)
-    await env.DB.prepare(`
-      CREATE TABLE IF NOT EXISTS consents (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        consent_type TEXT NOT NULL,
-        client_id INTEGER,
-        workshop_registration_id INTEGER,
-        consent_version TEXT NOT NULL,
-        document_hash TEXT NOT NULL,
-        source TEXT NOT NULL,
-        status TEXT NOT NULL DEFAULT 'active',
-        ip TEXT,
-        signed_at DATETIME NOT NULL,
-        revoked_at DATETIME,
-        created_at DATETIME DEFAULT (datetime('now')),
-        FOREIGN KEY (client_id) REFERENCES clients(id),
-        FOREIGN KEY (workshop_registration_id) REFERENCES workshop_registrations(id)
-      )
-    `).run();
-    await env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_consents_client ON consents(client_id)`).run();
-    await env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_consents_workshop_reg ON consents(workshop_registration_id)`).run();
-
-    // Create audit_log table (append-only — see worker/auditLog.js)
-    await env.DB.prepare(`
-      CREATE TABLE IF NOT EXISTS audit_log (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER,
-        user_email TEXT,
-        action TEXT NOT NULL,
-        entity_type TEXT NOT NULL,
-        entity_id TEXT,
-        result TEXT NOT NULL DEFAULT 'success',
-        metadata TEXT,
-        created_at DATETIME DEFAULT (datetime('now'))
-      )
-    `).run();
-    await env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_audit_log_entity ON audit_log(entity_type, entity_id)`).run();
-    await env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_audit_log_created ON audit_log(created_at)`).run();
-
-    // Add last-login tracking to users (for admin visibility — see
-    // worker/auth.js handleLogin). Full IP/device history for every attempt,
-    // not just the last successful one, lives in audit_log instead.
-    if (!cols.results.some(c => c.name === 'last_login_at')) {
-      await env.DB.prepare("ALTER TABLE users ADD COLUMN last_login_at DATETIME").run();
-    }
-    if (!cols.results.some(c => c.name === 'last_login_ip')) {
-      await env.DB.prepare("ALTER TABLE users ADD COLUMN last_login_ip TEXT").run();
-    }
-
-    // Create login_attempts table — tracks consecutive failed logins per
-    // email so handleLogin can apply a progressive lockout (see auth.js),
-    // on top of (not instead of) the fixed-window rate limiting already in
-    // place. Reset to zero on a successful login.
-    await env.DB.prepare(`
-      CREATE TABLE IF NOT EXISTS login_attempts (
-        email TEXT PRIMARY KEY,
-        failed_count INTEGER NOT NULL DEFAULT 0,
-        locked_until DATETIME,
-        updated_at DATETIME DEFAULT (datetime('now'))
-      )
-    `).run();
-
-    // Add MFA (TOTP) columns to users. mfa_secret is encrypted at rest
-    // (worker/crypto.js encryptField) the same way clinical notes are — it's
-    // a credential, not a UI string. mfa_last_counter blocks replaying an
-    // already-used TOTP code within its own validity window.
-    if (!cols.results.some(c => c.name === 'mfa_enabled')) {
-      await env.DB.prepare("ALTER TABLE users ADD COLUMN mfa_enabled BOOLEAN NOT NULL DEFAULT 0").run();
-    }
-    if (!cols.results.some(c => c.name === 'mfa_secret')) {
-      await env.DB.prepare("ALTER TABLE users ADD COLUMN mfa_secret TEXT").run();
-    }
-    if (!cols.results.some(c => c.name === 'mfa_last_counter')) {
-      await env.DB.prepare("ALTER TABLE users ADD COLUMN mfa_last_counter INTEGER").run();
-    }
-
-    // Create mfa_backup_codes table — single-use recovery codes issued when
-    // MFA is enabled (worker/auth.js handleMfaSetupVerify). Only a hash of
-    // each code is ever stored (worker/crypto.js hashToken).
-    await env.DB.prepare(`
-      CREATE TABLE IF NOT EXISTS mfa_backup_codes (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER NOT NULL,
-        code_hash TEXT NOT NULL,
-        used_at DATETIME,
-        created_at DATETIME DEFAULT (datetime('now'))
-      )
-    `).run();
-    await env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_mfa_backup_codes_user ON mfa_backup_codes(user_id)`).run();
-
-    // Add token_version to users (bumped to invalidate every outstanding
-    // access/refresh token on password change/reset or deactivation)
-    if (!cols.results.some(c => c.name === 'token_version')) {
-      await env.DB.prepare("ALTER TABLE users ADD COLUMN token_version INTEGER NOT NULL DEFAULT 0").run();
-    }
-
-    // Create refresh_tokens table — only a hash of each token is ever stored
-    // (see worker/crypto.js hashToken). Rotated on every /api/refresh call;
-    // revoked wholesale by revokeAllSessions() in worker/auth.js.
-    await env.DB.prepare(`
-      CREATE TABLE IF NOT EXISTS refresh_tokens (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER NOT NULL,
-        token_hash TEXT NOT NULL UNIQUE,
-        token_version INTEGER NOT NULL DEFAULT 0,
-        expires_at DATETIME NOT NULL,
-        revoked_at DATETIME,
-        created_at DATETIME DEFAULT (datetime('now'))
-      )
-    `).run();
-    await env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_refresh_tokens_user ON refresh_tokens(user_id)`).run();
-
-    // Add soft-delete columns (deleted_at/deleted_by) to the entities that
-    // support a recycle bin. Deleting a client no longer cascades to her
-    // sessions (each entity's delete/restore is now independent).
-    for (const table of ['clients', 'sessions', 'contacts', 'workshop_registrations']) {
-      const tableCols = await env.DB.prepare(`PRAGMA table_info(${table})`).all();
-      const names = tableCols.results.map(c => c.name);
-      if (!names.includes('deleted_at')) {
-        await env.DB.prepare(`ALTER TABLE ${table} ADD COLUMN deleted_at DATETIME`).run();
-      }
-      if (!names.includes('deleted_by')) {
-        await env.DB.prepare(`ALTER TABLE ${table} ADD COLUMN deleted_by INTEGER`).run();
-      }
-    }
-
-    // Create rate_limits table (fixed-window rate limiting for public endpoints)
-    await env.DB.prepare(`
-      CREATE TABLE IF NOT EXISTS rate_limits (
-        rl_key TEXT PRIMARY KEY,
-        count INTEGER NOT NULL,
-        expires_at INTEGER NOT NULL
-      )
-    `).run();
-
-    // Create workshops table
-    await env.DB.prepare(`
-      CREATE TABLE IF NOT EXISTS workshops (
-        id TEXT PRIMARY KEY,
-        name TEXT NOT NULL,
-        description TEXT,
-        dates TEXT,
-        price REAL,
-        sessions_count INTEGER,
-        duration_minutes INTEGER,
-        location TEXT,
-        active INTEGER DEFAULT 1,
-        created_at DATETIME DEFAULT (datetime('now')),
-        updated_at DATETIME DEFAULT (datetime('now'))
-      )
-    `).run();
-
-    // Create workshop_registrations table
-    await env.DB.prepare(`
-      CREATE TABLE IF NOT EXISTS workshop_registrations (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        workshop_id TEXT NOT NULL,
-        full_name TEXT NOT NULL,
-        phone TEXT,
-        email TEXT,
-        date_option TEXT,
-        status TEXT DEFAULT 'new',
-        notes TEXT,
-        created_at DATETIME DEFAULT (datetime('now')),
-        FOREIGN KEY (workshop_id) REFERENCES workshops(id)
-      )
-    `).run();
-
-    // Add consent columns to workshop_registrations if missing
-    const regCols = await env.DB.prepare("PRAGMA table_info(workshop_registrations)").all();
-    const hasConsent = regCols.results.some(c => c.name === 'consent_agreed');
-    if (!hasConsent) {
-      await env.DB.prepare("ALTER TABLE workshop_registrations ADD COLUMN consent_agreed BOOLEAN DEFAULT 0").run();
-      await env.DB.prepare("ALTER TABLE workshop_registrations ADD COLUMN consent_date DATETIME").run();
-      await env.DB.prepare("ALTER TABLE workshop_registrations ADD COLUMN consent_ip TEXT").run();
-    }
-
-    // Seed default workshop if missing
-    const existing = await env.DB.prepare(
-      "SELECT id FROM workshops WHERE id = ?"
-    ).bind('mirpaa-shel-atzmi').first();
-
-    if (!existing) {
-      const dates = JSON.stringify([
-        { id: 'june-3-1730', label: '3 ביוני, 17:30', date: '2026-06-03T17:30:00' },
-      ]);
-      await env.DB.prepare(`
-        INSERT INTO workshops (id, name, description, dates, price, sessions_count, duration_minutes, location, active)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)
-      `).bind(
-        'mirpaa-shel-atzmi',
-        'להיות המרפאה של עצמי',
-        'סדנת נשים אינטימית — 5 מפגשים, פעם בשבוע, בשיטת מסע הנשמה',
-        dates,
-        1000,
-        5,
-        120,
-        'מורדכי רומנו 27, תל אביב'
-      ).run();
-    }
-  } catch (e) {
-    console.error('Migration error:', e);
-  }
-}
-
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -261,12 +50,6 @@ export default {
         status: 204,
         headers: { ...corsHeaders, ...SECURITY_HEADERS },
       });
-    }
-
-    // Run migrations on first request (idempotent)
-    if (!env._migrated) {
-      await runMigrations(env);
-      env._migrated = true;
     }
 
     // Helper: ensure every response has correct CORS for this origin

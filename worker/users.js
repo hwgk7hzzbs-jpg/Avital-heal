@@ -220,8 +220,10 @@ export async function handleDeleteUser(userId, env, payload) {
       }
     }
 
-    await env.DB.prepare('DELETE FROM users WHERE id = ?').bind(userId).run();
-    await env.DB.prepare('DELETE FROM refresh_tokens WHERE user_id = ?').bind(userId).run();
+    await env.DB.batch([
+      env.DB.prepare('DELETE FROM users WHERE id = ?').bind(userId),
+      env.DB.prepare('DELETE FROM refresh_tokens WHERE user_id = ?').bind(userId),
+    ]);
 
     await recordAudit(env, {
       userId: payload.userId, userEmail: payload.email,
@@ -283,10 +285,10 @@ export async function handleAdminDisableMfa(userId, env, payload) {
     const user = await env.DB.prepare('SELECT id, email FROM users WHERE id = ?').bind(userId).first();
     if (!user) return errorResponse('משתמש לא נמצא', 404);
 
-    await env.DB.prepare(
-      "UPDATE users SET mfa_enabled = 0, mfa_secret = NULL, mfa_last_counter = NULL WHERE id = ?"
-    ).bind(userId).run();
-    await env.DB.prepare('DELETE FROM mfa_backup_codes WHERE user_id = ?').bind(userId).run();
+    await env.DB.batch([
+      env.DB.prepare("UPDATE users SET mfa_enabled = 0, mfa_secret = NULL, mfa_last_counter = NULL WHERE id = ?").bind(userId),
+      env.DB.prepare('DELETE FROM mfa_backup_codes WHERE user_id = ?').bind(userId),
+    ]);
 
     await recordAudit(env, {
       userId: payload.userId, userEmail: payload.email,

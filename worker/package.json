@@ -6,13 +6,15 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "eslint .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "migrate:check": "wrangler d1 migrations apply avital-heal-crm --local"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.0",
     "eslint": "^9.9.0",
     "globals": "^15.9.0",
     "prettier": "^3.3.3",
-    "vitest": "^2.0.5"
+    "vitest": "^2.0.5",
+    "wrangler": "^4.127.1"
   }
 }
