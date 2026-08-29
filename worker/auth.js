@@ -120,10 +120,16 @@ async function issueTokenPair(env, user) {
 // can mint a fresh access token either). Used on password change/reset and
 // when an admin deactivates a user.
 export async function revokeAllSessions(env, userId) {
-  await env.DB.prepare('UPDATE users SET token_version = token_version + 1 WHERE id = ?').bind(userId).run();
-  await env.DB.prepare(
-    "UPDATE refresh_tokens SET revoked_at = datetime('now') WHERE user_id = ? AND revoked_at IS NULL"
-  ).bind(userId).run();
+  // Atomic: if only the token_version bump landed and the refresh-token
+  // revocation didn't, a still-valid refresh token could mint a fresh
+  // access token (at the new tokenVersion) right after a "revoke
+  // everything" call — defeating the whole point of calling it.
+  await env.DB.batch([
+    env.DB.prepare('UPDATE users SET token_version = token_version + 1 WHERE id = ?').bind(userId),
+    env.DB.prepare(
+      "UPDATE refresh_tokens SET revoked_at = datetime('now') WHERE user_id = ? AND revoked_at IS NULL"
+    ).bind(userId),
+  ]);
 }
 
 // ─── Auth middleware check ───
@@ -436,18 +442,15 @@ export async function handleMfaSetupVerify(request, env, payload) {
     const result = await verifyTotp(secret, code);
     if (!result.valid) return errorResponse('קוד אימות שגוי', 401, request);
 
-    await env.DB.prepare(
-      'UPDATE users SET mfa_enabled = 1, mfa_last_counter = ? WHERE id = ?'
-    ).bind(result.counter, user.id).run();
-
-    const backupCodes = [];
-    for (let i = 0; i < 8; i++) {
-      const raw = generateBackupCode();
-      backupCodes.push(raw);
-      await env.DB.prepare(
-        'INSERT INTO mfa_backup_codes (user_id, code_hash) VALUES (?, ?)'
-      ).bind(user.id, await hashToken(raw.toUpperCase())).run();
-    }
+    // Atomic: enabling MFA with fewer than 8 backup codes stored (a partial
+    // failure partway through the old sequential inserts) would silently
+    // strand the user with no way to recover a lost device later.
+    const backupCodes = Array.from({ length: 8 }, () => generateBackupCode());
+    const codeHashes = await Promise.all(backupCodes.map(raw => hashToken(raw.toUpperCase())));
+    await env.DB.batch([
+      env.DB.prepare('UPDATE users SET mfa_enabled = 1, mfa_last_counter = ? WHERE id = ?').bind(result.counter, user.id),
+      ...codeHashes.map(hash => env.DB.prepare('INSERT INTO mfa_backup_codes (user_id, code_hash) VALUES (?, ?)').bind(user.id, hash)),
+    ]);
 
     await recordAudit(env, { userId: user.id, userEmail: user.email, action: 'mfa_enable', entityType: 'user', entityId: user.id, result: 'success' });
     return jsonResponse({ message: 'אימות דו-שלבי הופעל בהצלחה', backupCodes }, 200, request);
@@ -467,10 +470,10 @@ export async function handleMfaDisable(request, env, payload) {
     const valid = await verifyPassword(currentPassword, user.password_hash);
     if (!valid) return errorResponse('סיסמה שגויה', 401, request);
 
-    await env.DB.prepare(
-      "UPDATE users SET mfa_enabled = 0, mfa_secret = NULL, mfa_last_counter = NULL WHERE id = ?"
-    ).bind(user.id).run();
-    await env.DB.prepare('DELETE FROM mfa_backup_codes WHERE user_id = ?').bind(user.id).run();
+    await env.DB.batch([
+      env.DB.prepare("UPDATE users SET mfa_enabled = 0, mfa_secret = NULL, mfa_last_counter = NULL WHERE id = ?").bind(user.id),
+      env.DB.prepare('DELETE FROM mfa_backup_codes WHERE user_id = ?').bind(user.id),
+    ]);
 
     await recordAudit(env, { userId: user.id, userEmail: user.email, action: 'mfa_disable', entityType: 'user', entityId: user.id, result: 'success' });
     return jsonResponse({ message: 'אימות דו-שלבי בוטל' }, 200, request);
@@ -636,12 +639,13 @@ export async function handleExecuteReset(request, env) {
       return errorResponse('קישור האיפוס פג תוקף', 400, request);
     }
     const passwordHash = await hashPassword(newPassword);
-    await env.DB.prepare(
-      "UPDATE users SET password_hash = ?, updated_at = datetime('now') WHERE id = ?"
-    ).bind(passwordHash, reset.user_id).run();
-    await env.DB.prepare(
-      'UPDATE password_resets SET used = 1 WHERE id = ?'
-    ).bind(reset.id).run();
+    // Atomic: if the password update landed but marking the token used
+    // didn't, the same reset link could be replayed to "reset" the
+    // password again — a needless extra window if the link was intercepted.
+    await env.DB.batch([
+      env.DB.prepare("UPDATE users SET password_hash = ?, updated_at = datetime('now') WHERE id = ?").bind(passwordHash, reset.user_id),
+      env.DB.prepare('UPDATE password_resets SET used = 1 WHERE id = ?').bind(reset.id),
+    ]);
     await revokeAllSessions(env, reset.user_id);
     await recordAudit(env, { userId: reset.user_id, action: 'password_reset', entityType: 'user', entityId: reset.user_id, result: 'success', metadata: { sessionsRevoked: true } });
     return jsonResponse({ message: 'הסיסמה עודכנה בהצלחה' }, 200, request);

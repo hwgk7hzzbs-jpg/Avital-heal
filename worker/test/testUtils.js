@@ -388,6 +388,16 @@ export function makeFakeD1({ contacts = [], workshops = [], rateLimits = new Map
       };
       return api;
     },
+    // Real D1's batch() runs every statement atomically in one transaction.
+    // This fake doesn't model rollback-on-partial-failure (nothing here
+    // actually fails mid-batch) — it exists so production code can call
+    // env.DB.batch([...]) and have each statement's .run() actually execute
+    // against the same in-memory state the rest of these tests inspect.
+    async batch(statements) {
+      const results = [];
+      for (const stmt of statements) results.push(await stmt.run());
+      return results;
+    },
   };
 }
 

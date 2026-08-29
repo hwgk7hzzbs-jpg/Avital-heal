@@ -36,6 +36,9 @@ jobs:
       - name: Test
         run: npm test
 
+      - name: Validate D1 migrations (against a fresh local DB, no credentials needed)
+        run: npm run migrate:check
+
       - name: Dependency audit (informational — does not fail the build)
         run: npm audit --audit-level=high || true
 
