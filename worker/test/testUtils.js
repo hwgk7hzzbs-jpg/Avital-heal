@@ -101,6 +101,13 @@ export function makeFakeD1({ contacts = [], workshops = [], rateLimits = new Map
             const r = state.workshopRegistrations.find(x => String(x.id) === String(call.args[0]));
             return (r && r.deleted_at) ? r : null;
           }
+          if (/FROM workshop_registrations\s+WHERE workshop_id = \? AND date_option = \? AND phone = \? AND status != 'cancelled'/.test(sql)) {
+            const [workshopId, dateOption, phone] = call.args;
+            return state.workshopRegistrations.find(r =>
+              r.workshop_id === workshopId && r.date_option === dateOption && r.phone === phone &&
+              r.status !== 'cancelled' && !r.deleted_at
+            ) || null;
+          }
           if (/FROM consents WHERE id = \?/.test(sql)) {
             return state.consents.find(c => c.id === call.args[0]) || null;
           }

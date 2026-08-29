@@ -44,6 +44,11 @@ export default {
     const method = request.method;
     const corsHeaders = getCorsHeaders(request);
 
+    // Threaded through to every error response (see utils.js errorResponse)
+    // so a user-reported issue can be correlated with the matching Worker
+    // log line — set once per request, read wherever `request` is passed.
+    request.requestId = crypto.randomUUID();
+
     // CORS preflight
     if (method === 'OPTIONS') {
       return new Response(null, {
@@ -52,12 +57,14 @@ export default {
       });
     }
 
-    // Helper: ensure every response has correct CORS for this origin
+    // Helper: ensure every response has correct CORS for this origin, and
+    // carries the request ID for support/debugging even on success responses.
     function withCors(response) {
       const newHeaders = new Headers(response.headers);
       for (const [k, v] of Object.entries(corsHeaders)) {
         newHeaders.set(k, v);
       }
+      newHeaders.set('X-Request-Id', request.requestId);
       return new Response(response.body, {
         status: response.status,
         statusText: response.statusText,
@@ -99,7 +106,7 @@ export default {
     if (path.startsWith('/api/')) {
       authPayload = await getAuthPayload(request, env);
       if (!authPayload) {
-        return withCors(errorResponse('Unauthorized', 401));
+        return withCors(errorResponse('Unauthorized', 401, request));
       }
     }
 
@@ -265,7 +272,7 @@ export default {
       return withCors(await handleGetAuditLog(url, env, authPayload));
     }
 
-    return withCors(errorResponse('Not found', 404));
+    return withCors(errorResponse('Not found', 404, request));
   },
 
   // Daily cleanup of expired operational data (see docs/data-retention-policy.md).

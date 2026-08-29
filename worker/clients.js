@@ -8,6 +8,18 @@ import { jsonResponse, errorResponse, csvResponse } from './utils.js';
 import { requireRole } from './auth.js';
 import { encryptField, decryptField } from './crypto.js';
 import { recordAudit } from './auditLog.js';
+import { validate, normalizeEmail, normalizePhone, isValidEmail, isValidPhone, isValidDate, CLIENT_STATUSES, TREATMENT_TYPES } from './validation.js';
+
+const CLIENT_FIELD_RULES = {
+  email: { normalize: normalizeEmail, validate: isValidEmail, message: 'Email is invalid' },
+  phone: { normalize: normalizePhone, validate: isValidPhone, message: 'Phone number is invalid' },
+  birth_date: { validate: isValidDate, message: 'Birth date is invalid' },
+  treatment_type: { enum: TREATMENT_TYPES },
+};
+
+const CLIENT_CREATE_SCHEMA = { ...CLIENT_FIELD_RULES, full_name: { required: true } };
+// `status` is only settable via update — a brand-new client is always active.
+const CLIENT_UPDATE_SCHEMA = { ...CLIENT_FIELD_RULES, full_name: {}, status: { enum: CLIENT_STATUSES } };
 
 // ─── Get all clients (excludes soft-deleted) ───
 
@@ -82,8 +94,10 @@ export async function handleCreateClient(request, env, payload) {
   if (forbidden) return forbidden;
   try {
     const data = await request.json();
-    const { full_name, email, phone, address, birth_date, treatment_type, notes } = data;
-    if (!full_name) return errorResponse('Full name is required');
+    const { valid, data: v, errors } = validate(data, CLIENT_CREATE_SCHEMA);
+    if (!valid) return errorResponse(errors[0].message, 400, request, 'VALIDATION_ERROR');
+    const { full_name, email, phone, birth_date, treatment_type } = v;
+    const { address, notes } = data;
 
     const result = await env.DB.prepare(
       `INSERT INTO clients (full_name, email, phone, address, birth_date, treatment_type, notes)
@@ -112,6 +126,9 @@ export async function handleUpdateClient(id, request, env, payload) {
   if (forbidden) return forbidden;
   try {
     const data = await request.json();
+    const { valid, data: v, errors } = validate(data, CLIENT_UPDATE_SCHEMA);
+    if (!valid) return errorResponse(errors[0].message, 400, request, 'VALIDATION_ERROR');
+
     const fields = [];
     const values = [];
     const allowed = [
@@ -122,10 +139,12 @@ export async function handleUpdateClient(id, request, env, payload) {
     for (const field of allowed) {
       if (data[field] !== undefined) {
         fields.push(`${field} = ?`);
-        values.push(field === 'notes' ? await encryptField(env, data[field]) : data[field]);
+        let value = field in v ? v[field] : data[field];
+        if (field === 'notes') value = await encryptField(env, value);
+        values.push(value);
       }
     }
-    if (fields.length === 0) return errorResponse('No fields to update');
+    if (fields.length === 0) return errorResponse('No fields to update', 400, request);
 
     fields.push("updated_at = datetime('now')");
     values.push(id);

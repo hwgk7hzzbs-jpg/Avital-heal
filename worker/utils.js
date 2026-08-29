@@ -53,8 +53,13 @@ export function jsonResponse(data, status = 200, request = null) {
   });
 }
 
-export function errorResponse(message, status = 400, request = null) {
-  return jsonResponse({ error: message }, status, request);
+export function errorResponse(message, status = 400, request = null, code = null) {
+  const body = { error: message };
+  // Additive only — `error` stays a plain string so every existing caller
+  // (frontend included) that reads it as one keeps working unchanged.
+  if (code) body.code = code;
+  if (request?.requestId) body.requestId = request.requestId;
+  return jsonResponse(body, status, request);
 }
 
 export function csvResponse(csv, filename, request = null) {

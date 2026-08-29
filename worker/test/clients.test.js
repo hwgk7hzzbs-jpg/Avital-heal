@@ -99,6 +99,54 @@ describe('handleCreateClient / handleUpdateClient — RBAC', () => {
   });
 });
 
+describe('handleCreateClient / handleUpdateClient — field validation', () => {
+  it('rejects a malformed email', async () => {
+    const res = await handleCreateClient(req({ full_name: 'X', email: 'not-an-email' }), withDB(makeFakeD1()), { role: 'admin' });
+    expect(res.status).toBe(400);
+  });
+
+  it('rejects a malformed phone number', async () => {
+    const res = await handleCreateClient(req({ full_name: 'X', phone: 'call-me' }), withDB(makeFakeD1()), { role: 'admin' });
+    expect(res.status).toBe(400);
+  });
+
+  it('rejects a treatment_type outside the closed list', async () => {
+    const res = await handleCreateClient(req({ full_name: 'X', treatment_type: 'homeopathy' }), withDB(makeFakeD1()), { role: 'admin' });
+    expect(res.status).toBe(400);
+  });
+
+  it('normalizes email and phone before storing', async () => {
+    const db = makeFakeD1();
+    const res = await handleCreateClient(req({ full_name: 'X', email: '  Test@Example.COM ', phone: '050-123 4567' }), withDB(db), { role: 'admin' });
+    expect(res.status).toBe(201);
+    expect(db._state.clients[0].email).toBe('test@example.com');
+    expect(db._state.clients[0].phone).toBe('0501234567');
+  });
+
+  it('leaves blank optional fields alone rather than rejecting them', async () => {
+    const res = await handleCreateClient(req({ full_name: 'X', email: '', phone: '', birth_date: '' }), withDB(makeFakeD1()), { role: 'admin' });
+    expect(res.status).toBe(201);
+  });
+
+  it('rejects an invalid status on update', async () => {
+    const db = makeFakeD1({ clients: [{ id: 1, full_name: 'X' }] });
+    const res = await handleUpdateClient('1', req({ status: 'on-vacation' }), withDB(db), { role: 'admin' });
+    expect(res.status).toBe(400);
+  });
+
+  it('rejects a malformed email on update', async () => {
+    const db = makeFakeD1({ clients: [{ id: 1, full_name: 'X' }] });
+    const res = await handleUpdateClient('1', req({ email: 'nope' }), withDB(db), { role: 'admin' });
+    expect(res.status).toBe(400);
+  });
+
+  it('allows updating an unrelated field without touching validated ones', async () => {
+    const db = makeFakeD1({ clients: [{ id: 1, full_name: 'X' }] });
+    const res = await handleUpdateClient('1', req({ address: 'New address' }), withDB(db), { role: 'admin' });
+    expect(res.status).toBe(200);
+  });
+});
+
 describe('soft-delete recycle bin — clients', () => {
   it('soft-deleted client disappears from the normal list and detail view, but appears in the recycle bin', async () => {
     const db = makeFakeD1({ clients: [{ id: 1, full_name: 'X' }] });
