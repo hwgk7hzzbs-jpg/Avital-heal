@@ -157,6 +157,111 @@ export async function hashToken(token) {
   return bufToHex(new Uint8Array(digest));
 }
 
+// ─── TOTP (RFC 6238) two-factor authentication ───
+// Standard 6-digit, 30-second-step TOTP over HMAC-SHA1 — the algorithm every
+// mainstream authenticator app (Google Authenticator, Authy, 1Password, ...)
+// expects by default. The shared secret is encrypted at rest by the caller
+// (see encryptField) the same way clinical notes are — it's a credential,
+// not a UI string.
+
+const BASE32_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+const TOTP_STEP_SECONDS = 30;
+const TOTP_DIGITS = 6;
+
+function base32Encode(bytes) {
+  let bits = 0, value = 0, output = '';
+  for (let i = 0; i < bytes.length; i++) {
+    value = (value << 8) | bytes[i];
+    bits += 8;
+    while (bits >= 5) {
+      output += BASE32_ALPHABET[(value >>> (bits - 5)) & 31];
+      bits -= 5;
+    }
+  }
+  if (bits > 0) output += BASE32_ALPHABET[(value << (5 - bits)) & 31];
+  return output;
+}
+
+function base32Decode(str) {
+  const clean = str.toUpperCase().replace(/[^A-Z2-7]/g, '');
+  let bits = 0, value = 0;
+  const output = [];
+  for (let i = 0; i < clean.length; i++) {
+    const idx = BASE32_ALPHABET.indexOf(clean[i]);
+    if (idx === -1) continue;
+    value = (value << 5) | idx;
+    bits += 5;
+    if (bits >= 8) {
+      output.push((value >>> (bits - 8)) & 0xff);
+      bits -= 8;
+    }
+  }
+  return new Uint8Array(output);
+}
+
+// Generates a fresh 160-bit (20-byte) shared secret, base32-encoded the way
+// authenticator apps expect it typed/scanned.
+export function generateTotpSecret() {
+  return base32Encode(crypto.getRandomValues(new Uint8Array(20)));
+}
+
+// otpauth:// URI — most authenticator apps' "enter manually" flow also
+// accepts pasting this directly, in addition to scanning a QR code of it.
+export function getTotpUri(secret, email, issuer = 'Avital Heal CRM') {
+  const label = encodeURIComponent(`${issuer}:${email}`);
+  return `otpauth://totp/${label}?secret=${secret}&issuer=${encodeURIComponent(issuer)}&digits=${TOTP_DIGITS}&period=${TOTP_STEP_SECONDS}`;
+}
+
+async function hotp(keyBytes, counter) {
+  const key = await crypto.subtle.importKey('raw', keyBytes, { name: 'HMAC', hash: 'SHA-1' }, false, ['sign']);
+  const counterBuf = new ArrayBuffer(8);
+  // Counter fits comfortably in the low 32 bits until the year 6429 (2^32
+  // steps of 30s) — the high word is deliberately left zero.
+  new DataView(counterBuf).setUint32(4, counter, false);
+  const sig = new Uint8Array(await crypto.subtle.sign('HMAC', key, counterBuf));
+  const offset = sig[sig.length - 1] & 0xf;
+  const binCode =
+    ((sig[offset] & 0x7f) << 24) |
+    ((sig[offset + 1] & 0xff) << 16) |
+    ((sig[offset + 2] & 0xff) << 8) |
+    (sig[offset + 3] & 0xff);
+  return String(binCode % 10 ** TOTP_DIGITS).padStart(TOTP_DIGITS, '0');
+}
+
+/**
+ * Verifies a 6-digit TOTP code against `secret`, tolerating ±`window` steps
+ * of clock drift (default: one 30s step either way). When `lastCounter` is
+ * given, any code from that step or earlier is rejected even if otherwise
+ * correct — replay protection against a captured/observed code being reused
+ * within its own validity window.
+ */
+export async function verifyTotp(secret, code, { window = 1, lastCounter = null } = {}) {
+  if (!/^\d{6}$/.test(String(code || ''))) return { valid: false };
+  const keyBytes = base32Decode(secret);
+  const currentCounter = Math.floor(Date.now() / 1000 / TOTP_STEP_SECONDS);
+  for (let drift = -window; drift <= window; drift++) {
+    const counter = currentCounter + drift;
+    if (lastCounter != null && counter <= lastCounter) continue;
+    if ((await hotp(keyBytes, counter)) === code) {
+      return { valid: true, counter };
+    }
+  }
+  return { valid: false };
+}
+
+// ─── MFA backup/recovery codes ───
+// Single-use codes for when the authenticator device is unavailable. Human-
+// typeable alphabet (no 0/O/1/I) to cut down on transcription errors.
+
+const BACKUP_CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+
+export function generateBackupCode() {
+  const bytes = crypto.getRandomValues(new Uint8Array(8));
+  let code = '';
+  for (let i = 0; i < bytes.length; i++) code += BACKUP_CODE_ALPHABET[bytes[i] % BACKUP_CODE_ALPHABET.length];
+  return `${code.slice(0, 4)}-${code.slice(4)}`;
+}
+
 // ─── Field-level encryption (AES-256-GCM) ───
 // Used for sensitive free-text fields (session summaries, next-session notes,
 // client notes) so their content isn't sitting in D1 as plaintext. Values are

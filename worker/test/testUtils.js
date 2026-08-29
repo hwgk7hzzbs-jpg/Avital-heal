@@ -19,6 +19,7 @@ function applyDynamicUpdate(sql, args, collection) {
     if (rawValue === '?') return { field, placeholder: true };
     if (/^datetime\(/i.test(rawValue)) return { field, literal: new Date().toISOString() };
     if (/^NULL$/i.test(rawValue)) return { field, literal: null };
+    if (/^-?\d+(\.\d+)?$/.test(rawValue)) return { field, literal: Number(rawValue) };
     return { field, literal: rawValue.replace(/^'|'$/g, '') };
   });
 
@@ -42,7 +43,7 @@ function applyDynamicUpdate(sql, args, collection) {
  * matcher rather than a real SQL parser — good enough for unit tests without
  * pulling in a full SQLite engine.
  */
-export function makeFakeD1({ contacts = [], workshops = [], rateLimits = new Map(), clients = [], consents = [], workshopRegistrations = [], sessions = [], passwordResets = [], auditLog = [], users = [], refreshTokens = [], loginAttempts = [] } = {}) {
+export function makeFakeD1({ contacts = [], workshops = [], rateLimits = new Map(), clients = [], consents = [], workshopRegistrations = [], sessions = [], passwordResets = [], auditLog = [], users = [], refreshTokens = [], loginAttempts = [], mfaBackupCodes = [] } = {}) {
   let nextContactId = contacts.reduce((m, c) => Math.max(m, c.id || 0), 0) + 1;
   let nextClientId = clients.reduce((m, c) => Math.max(m, c.id || 0), 0) + 1;
   let nextConsentId = 1;
@@ -52,7 +53,8 @@ export function makeFakeD1({ contacts = [], workshops = [], rateLimits = new Map
   let nextUserId = users.reduce((m, u) => Math.max(m, u.id || 0), 0) + 1;
   let nextRefreshTokenId = refreshTokens.reduce((m, r) => Math.max(m, r.id || 0), 0) + 1;
   let nextPasswordResetId = passwordResets.reduce((m, r) => Math.max(m, r.id || 0), 0) + 1;
-  const state = { contacts, workshops, rateLimits, clients, consents, workshopRegistrations, sessions, passwordResets, auditLog, users, refreshTokens, loginAttempts };
+  let nextMfaBackupCodeId = mfaBackupCodes.reduce((m, c) => Math.max(m, c.id || 0), 0) + 1;
+  const state = { contacts, workshops, rateLimits, clients, consents, workshopRegistrations, sessions, passwordResets, auditLog, users, refreshTokens, loginAttempts, mfaBackupCodes };
 
   return {
     _state: state,
@@ -128,6 +130,10 @@ export function makeFakeD1({ contacts = [], workshops = [], rateLimits = new Map
           }
           if (/FROM login_attempts WHERE email = \?/.test(sql)) {
             return state.loginAttempts.find(a => a.email === call.args[0]) || null;
+          }
+          if (/FROM mfa_backup_codes WHERE user_id = \? AND code_hash = \?/.test(sql)) {
+            const [userId, codeHash] = call.args;
+            return state.mfaBackupCodes.find(c => String(c.user_id) === String(userId) && c.code_hash === codeHash && !c.used_at) || null;
           }
           return null;
         },
@@ -316,6 +322,21 @@ export function makeFakeD1({ contacts = [], workshops = [], rateLimits = new Map
             const [ip, id] = call.args;
             const u = state.users.find(x => String(x.id) === String(id));
             if (u) { u.last_login_at = new Date().toISOString(); u.last_login_ip = ip; }
+          } else if (/INSERT INTO mfa_backup_codes/.test(sql)) {
+            const [user_id, code_hash] = call.args;
+            const id = nextMfaBackupCodeId++;
+            state.mfaBackupCodes.push({ id, user_id, code_hash, used_at: null });
+            return { meta: { last_row_id: id } };
+          } else if (/UPDATE mfa_backup_codes SET used_at = datetime\('now'\)/.test(sql)) {
+            const [id] = call.args;
+            const c = state.mfaBackupCodes.find(x => String(x.id) === String(id));
+            if (c) c.used_at = new Date().toISOString();
+            return { meta: { changes: c ? 1 : 0 } };
+          } else if (/DELETE FROM mfa_backup_codes WHERE user_id = \?/.test(sql)) {
+            const [userId] = call.args;
+            const before = state.mfaBackupCodes.length;
+            state.mfaBackupCodes = state.mfaBackupCodes.filter(c => String(c.user_id) !== String(userId));
+            return { meta: { changes: before - state.mfaBackupCodes.length } };
           } else if (/UPDATE users SET token_version = token_version \+ 1/.test(sql)) {
             const [id] = call.args;
             const u = state.users.find(x => String(x.id) === String(id));

@@ -1,5 +1,21 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { hashPassword, verifyPassword, needsRehash, createJWT, verifyJWT, generateToken, hashToken, encryptField, decryptField } from '../crypto.js';
+import { hashPassword, verifyPassword, needsRehash, createJWT, verifyJWT, generateToken, hashToken, encryptField, decryptField, generateTotpSecret, getTotpUri, verifyTotp, generateBackupCode } from '../crypto.js';
+
+// Independent base32 encoder (RFC 4648) used only to feed the RFC 6238
+// reference vector's raw ASCII key through verifyTotp's public API, which
+// always expects a base32 secret — this is deliberately NOT imported from
+// crypto.js, so the test cross-checks against an independent implementation.
+function base32EncodeForTest(bytes) {
+  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+  let bits = 0, value = 0, output = '';
+  for (let i = 0; i < bytes.length; i++) {
+    value = (value << 8) | bytes[i];
+    bits += 8;
+    while (bits >= 5) { output += alphabet[(value >>> (bits - 5)) & 31]; bits -= 5; }
+  }
+  if (bits > 0) output += alphabet[(value << (5 - bits)) & 31];
+  return output;
+}
 
 // 32 bytes, hex-encoded — matches how ENCRYPTION_KEY is expected to be provisioned.
 const TEST_KEY = 'a'.repeat(64);
@@ -180,5 +196,72 @@ describe('encryptField / decryptField', () => {
 
   it('throws clearly if ENCRYPTION_KEY is not configured', async () => {
     await expect(encryptField({}, 'text')).rejects.toThrow(/ENCRYPTION_KEY/);
+  });
+});
+
+describe('TOTP', () => {
+  afterEach(() => vi.useRealTimers());
+
+  it('matches the RFC 6238 reference test vector (SHA1, T=59s)', async () => {
+    // https://www.rfc-editor.org/rfc/rfc6238#appendix-B — 8-digit vector is
+    // 94287082 for the ASCII key "12345678901234567890" at T=1 (59s / 30).
+    // The low 6 digits of that same computation are what a 6-digit TOTP
+    // (what we actually implement) would produce.
+    const secret = base32EncodeForTest(new TextEncoder().encode('12345678901234567890'));
+    vi.useFakeTimers();
+    vi.setSystemTime(59 * 1000);
+    expect(await verifyTotp(secret, '287082', { window: 0 })).toMatchObject({ valid: true });
+    expect(await verifyTotp(secret, '287083', { window: 0 })).toMatchObject({ valid: false });
+  });
+
+  it('generates a base32 secret usable end-to-end with verifyTotp', async () => {
+    const secret = generateTotpSecret();
+    expect(secret).toMatch(/^[A-Z2-7]+$/);
+    // We can't know the "right" code without reimplementing the algorithm,
+    // but a wrong one must always be rejected.
+    expect(await verifyTotp(secret, '000000')).toMatchObject({ valid: false });
+  });
+
+  it('rejects non-6-digit input outright', async () => {
+    const secret = generateTotpSecret();
+    expect(await verifyTotp(secret, '12345')).toMatchObject({ valid: false });
+    expect(await verifyTotp(secret, 'abcdef')).toMatchObject({ valid: false });
+    expect(await verifyTotp(secret, '')).toMatchObject({ valid: false });
+  });
+
+  it('tolerates clock drift within the window but not beyond it', async () => {
+    const secret = base32EncodeForTest(new TextEncoder().encode('12345678901234567890'));
+    // T=1's code is 287082 (see RFC vector above); one step later is T=2 (60-89s).
+    vi.useFakeTimers();
+    vi.setSystemTime(61 * 1000);
+    expect(await verifyTotp(secret, '287082', { window: 1 })).toMatchObject({ valid: true });
+    expect(await verifyTotp(secret, '287082', { window: 0 })).toMatchObject({ valid: false });
+  });
+
+  it('rejects a code at or before lastCounter (replay protection)', async () => {
+    const secret = base32EncodeForTest(new TextEncoder().encode('12345678901234567890'));
+    vi.useFakeTimers();
+    vi.setSystemTime(59 * 1000); // T=1
+    expect(await verifyTotp(secret, '287082', { window: 0, lastCounter: 1 })).toMatchObject({ valid: false });
+    expect(await verifyTotp(secret, '287082', { window: 0, lastCounter: 0 })).toMatchObject({ valid: true, counter: 1 });
+  });
+
+  it('getTotpUri produces a well-formed otpauth:// URI containing the secret and email', () => {
+    const secret = generateTotpSecret();
+    const uri = getTotpUri(secret, 'admin@x.com');
+    expect(uri).toMatch(/^otpauth:\/\/totp\//);
+    expect(uri).toContain(`secret=${secret}`);
+    expect(uri).toContain(encodeURIComponent('admin@x.com'));
+  });
+});
+
+describe('generateBackupCode', () => {
+  it('produces codes in XXXX-XXXX format from an unambiguous alphabet', () => {
+    const code = generateBackupCode();
+    expect(code).toMatch(/^[A-HJ-NP-Z2-9]{4}-[A-HJ-NP-Z2-9]{4}$/);
+  });
+
+  it('generates unique codes', () => {
+    expect(generateBackupCode()).not.toBe(generateBackupCode());
   });
 });
