@@ -67,8 +67,8 @@ describe('needsRehash', () => {
     expect(needsRehash(await hashPassword('S3curePass!'))).toBe(false);
   });
 
-  it('is true for a legacy two-part hash', () => {
-    expect(needsRehash('deadbeef:c0ffee')).toBe(true);
+  it('is false for a legacy two-part hash, since its implied iteration count already equals the platform maximum', () => {
+    expect(needsRehash('deadbeef:c0ffee')).toBe(false);
   });
 
   it('is true for a hash whose embedded iteration count is lower than current', () => {

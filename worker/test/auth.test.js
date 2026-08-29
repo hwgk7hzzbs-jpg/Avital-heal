@@ -294,8 +294,10 @@ describe('handleLogin — token pair issuance', () => {
     expect(db._state.refreshTokens[0].token_hash).not.toBe(body.refreshToken);
   });
 
-  it('opportunistically re-hashes a legacy-format password hash on successful login', async () => {
+  it('does not rehash a legacy-format password hash on successful login, since its implied iteration count already equals the Workers runtime PBKDF2 ceiling', async () => {
     // Build a real legacy (2-part, no iteration count) hash so login can succeed.
+    // Regression test: hashPassword's target used to exceed the platform's
+    // PBKDF2 iteration cap, so this rehash step crashed every successful login.
     const salt = crypto.getRandomValues(new Uint8Array(16));
     const key = await crypto.subtle.importKey('raw', new TextEncoder().encode('CorrectPass1'), 'PBKDF2', false, ['deriveBits']);
     const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' }, key, 256);
@@ -310,8 +312,7 @@ describe('handleLogin — token pair issuance', () => {
       body: JSON.stringify({ email: user.email, password: 'CorrectPass1', 'cf-turnstile-response': 't' }),
     }), env);
     expect(res.status).toBe(200);
-    expect(db._state.users[0].password_hash).not.toBe(realLegacyHash);
-    expect(db._state.users[0].password_hash.split(':')).toHaveLength(3);
+    expect(db._state.users[0].password_hash).toBe(realLegacyHash);
   });
 
   it('records last_login_at/last_login_ip and audit metadata (ip, user agent) on success', async () => {

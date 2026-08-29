@@ -6,11 +6,15 @@
  * @security CRITICAL — handles all credential operations.
  */
 
-// 2023 OWASP guidance for PBKDF2-HMAC-SHA256. The iteration count is stored
-// alongside each hash (see hashPassword) so raising this constant never
-// invalidates passwords hashed under an older value — verifyPassword reads
-// whatever count the hash itself was created with.
-const PBKDF2_ITERATIONS = 600000;
+// 100,000 is the highest PBKDF2 iteration count the Workers runtime's
+// crypto.subtle accepts — deriveBits throws NotSupportedError above it, which
+// previously crashed every successful login during the opportunistic-rehash
+// step below (verifyPassword itself never reached the cap; needsRehash did).
+// The iteration count is stored alongside each hash (see hashPassword) so
+// raising this constant in the future never invalidates passwords hashed
+// under an older value — verifyPassword reads whatever count the hash itself
+// was created with.
+const PBKDF2_ITERATIONS = 100000;
 // Original, pre-hardening iteration count. Hashes written before this file
 // started embedding the count in the stored value have exactly two ':'-parts
 // (salt:hash, no leading iteration count) and are assumed to use this value.
