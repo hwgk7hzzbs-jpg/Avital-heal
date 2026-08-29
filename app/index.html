@@ -7,7 +7,7 @@
   <title>Avital Heal CRM</title>
   <link rel="icon" href="logo-favicon.webp" type="image/webp">
   <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=10">
+  <link rel="stylesheet" href="admin.css?v=11">
 </head>
 <body>
 
@@ -50,8 +50,20 @@
   <div class="reset-box">
     <h2>סיסמה חדשה</h2>
     <p class="subtitle">הגדר סיסמה חדשה</p>
-    <input type="password" id="newPassword" placeholder="סיסמה חדשה" class="input-field">
-    <input type="password" id="confirmPassword" placeholder="אישור סיסמה" class="input-field">
+    <div class="password-wrapper">
+      <input type="password" id="newPassword" placeholder="סיסמה חדשה" class="input-field">
+      <button type="button" class="toggle-password" onclick="togglePasswordVisibility('newPassword', this)" aria-label="הצג סיסמה">
+        <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        <svg class="eye-off-icon hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+      </button>
+    </div>
+    <div class="password-wrapper">
+      <input type="password" id="confirmPassword" placeholder="אישור סיסמה" class="input-field">
+      <button type="button" class="toggle-password" onclick="togglePasswordVisibility('confirmPassword', this)" aria-label="הצג סיסמה">
+        <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        <svg class="eye-off-icon hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+      </button>
+    </div>
     <button onclick="executeReset()" class="btn btn-primary">עדכן סיסמה</button>
     <div id="resetExecMsg" class="reset-msg"></div>
   </div>
@@ -402,7 +414,13 @@
     <input type="hidden" id="uf_id">
     <input type="text" id="uf_name" placeholder="שם מלא" class="input-field">
     <input type="email" id="uf_email" placeholder="אימייל" class="input-field">
-    <input type="password" id="uf_password" placeholder="סיסמה (לפחות 8 תווים, אות גדולה+קטנה+מספר)" class="input-field">
+    <div class="password-wrapper">
+      <input type="password" id="uf_password" placeholder="סיסמה (לפחות 8 תווים, אות גדולה+קטנה+מספר)" class="input-field">
+      <button type="button" class="toggle-password" onclick="togglePasswordVisibility('uf_password', this)" aria-label="הצג סיסמה">
+        <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        <svg class="eye-off-icon hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+      </button>
+    </div>
     <select id="uf_role" class="input-field">
       <option value="admin">מנהל (admin)</option>
       <option value="therapist" selected>מטפל (therapist)</option>
@@ -418,9 +436,27 @@
   <div class="modal-content">
     <span class="modal-close" onclick="closeChangePasswordModal()">&times;</span>
     <h2>שינוי סיסמה</h2>
-    <input type="password" id="cp_current" placeholder="סיסמה נוכחית" class="input-field">
-    <input type="password" id="cp_new" placeholder="סיסמה חדשה" class="input-field">
-    <input type="password" id="cp_confirm" placeholder="אישור סיסמה" class="input-field">
+    <div class="password-wrapper">
+      <input type="password" id="cp_current" placeholder="סיסמה נוכחית" class="input-field">
+      <button type="button" class="toggle-password" onclick="togglePasswordVisibility('cp_current', this)" aria-label="הצג סיסמה">
+        <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        <svg class="eye-off-icon hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+      </button>
+    </div>
+    <div class="password-wrapper">
+      <input type="password" id="cp_new" placeholder="סיסמה חדשה" class="input-field">
+      <button type="button" class="toggle-password" onclick="togglePasswordVisibility('cp_new', this)" aria-label="הצג סיסמה">
+        <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        <svg class="eye-off-icon hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+      </button>
+    </div>
+    <div class="password-wrapper">
+      <input type="password" id="cp_confirm" placeholder="אישור סיסמה" class="input-field">
+      <button type="button" class="toggle-password" onclick="togglePasswordVisibility('cp_confirm', this)" aria-label="הצג סיסמה">
+        <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        <svg class="eye-off-icon hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+      </button>
+    </div>
     <div id="cpMsg" class="reset-msg"></div>
     <button onclick="changePassword()" class="btn btn-primary">עדכן סיסמה</button>
   </div>
