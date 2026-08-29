@@ -331,6 +331,7 @@
     }
   </style>
 
+  <script src="config.js"></script>
   <script src="script.js" defer></script>
 </head>
 
@@ -546,7 +547,7 @@
     // הגדרות
     // ═══════════════════════════════════════════════════════════════
     // CRM Worker API (primary) + Google Sheets backup
-    const CRM_API_URL = 'https://avital-heal-crm.tgthf7frmp.workers.dev/api/consent';
+    const CRM_API_URL = AVITAL_API_BASE + '/api/consent';
     const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyrwywGtqchdRmZ1wmgCLS_VfXJbWOEhMbPAByKdNUYthZL4P4cQFChCwiKaKLVrLIpXQ/exec';
 
     // ═══════════════════════════════════════════════════════════════

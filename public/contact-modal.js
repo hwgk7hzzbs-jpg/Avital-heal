@@ -8,7 +8,7 @@
 (function () {
   'use strict';
 
-  const API_URL = 'https://avital-heal-crm.tgthf7frmp.workers.dev';
+  const API_URL = AVITAL_API_BASE;
   const TURNSTILE_SITEKEY = '0x4AAAAAACxQXQewOnLqH3uM';
 
   const CSS = `

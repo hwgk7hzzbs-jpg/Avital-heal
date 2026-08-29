@@ -36,6 +36,7 @@ import {
   handlePermanentDeleteRegistration,
 } from './workshops.js';
 import { handleGetAuditLog } from './auditLog.js';
+import { handleHealthCheck } from './health.js';
 
 export default {
   async fetch(request, env) {
@@ -73,6 +74,9 @@ export default {
     }
 
     // ─── Public endpoints (no auth required) ───
+    if (path === '/api/health' && method === 'GET') {
+      return withCors(await handleHealthCheck(env, request));
+    }
     if (path === '/api/consent' && method === 'POST') {
       return withCors(await handleConsentSubmission(request, env));
     }
