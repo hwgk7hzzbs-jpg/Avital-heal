@@ -33,7 +33,7 @@ function renderUsersTable() {
   if (!tbody) return;
 
   if (allUsers.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-light);">אין משתמשים</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-light);">אין משתמשים</td></tr>';
     return;
   }
 
@@ -44,6 +44,7 @@ function renderUsersTable() {
       <td>${ROLE_BADGES[u.role] || escapeHtml(u.role)}</td>
       <td>${u.active ? '<span class="badge badge-green">פעיל</span>' : '<span class="badge badge-red">לא פעיל</span>'}</td>
       <td>${u.created_at ? new Date(u.created_at).toLocaleDateString('he-IL') : '—'}</td>
+      <td title="${u.last_login_ip ? 'כתובת IP: ' + escapeHtml(u.last_login_ip) : ''}">${u.last_login_at ? new Date(u.last_login_at).toLocaleString('he-IL') : 'מעולם לא'}</td>
       <td class="actions-cell">
         <button onclick="editUser(${u.id})" class="btn btn-sm btn-outline" title="עריכה">✏️</button>
         <button onclick="resetUserPassword(${u.id})" class="btn btn-sm btn-outline" title="איפוס סיסמה">🔑</button>

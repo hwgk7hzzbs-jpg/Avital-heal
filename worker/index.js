@@ -81,6 +81,29 @@ async function runMigrations(env) {
     await env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_audit_log_entity ON audit_log(entity_type, entity_id)`).run();
     await env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_audit_log_created ON audit_log(created_at)`).run();
 
+    // Add last-login tracking to users (for admin visibility — see
+    // worker/auth.js handleLogin). Full IP/device history for every attempt,
+    // not just the last successful one, lives in audit_log instead.
+    if (!cols.results.some(c => c.name === 'last_login_at')) {
+      await env.DB.prepare("ALTER TABLE users ADD COLUMN last_login_at DATETIME").run();
+    }
+    if (!cols.results.some(c => c.name === 'last_login_ip')) {
+      await env.DB.prepare("ALTER TABLE users ADD COLUMN last_login_ip TEXT").run();
+    }
+
+    // Create login_attempts table — tracks consecutive failed logins per
+    // email so handleLogin can apply a progressive lockout (see auth.js),
+    // on top of (not instead of) the fixed-window rate limiting already in
+    // place. Reset to zero on a successful login.
+    await env.DB.prepare(`
+      CREATE TABLE IF NOT EXISTS login_attempts (
+        email TEXT PRIMARY KEY,
+        failed_count INTEGER NOT NULL DEFAULT 0,
+        locked_until DATETIME,
+        updated_at DATETIME DEFAULT (datetime('now'))
+      )
+    `).run();
+
     // Add token_version to users (bumped to invalidate every outstanding
     // access/refresh token on password change/reset or deactivation)
     if (!cols.results.some(c => c.name === 'token_version')) {

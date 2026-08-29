@@ -279,6 +279,71 @@ describe('handleLogin — token pair issuance', () => {
     expect(db._state.users[0].password_hash).not.toBe(realLegacyHash);
     expect(db._state.users[0].password_hash.split(':')).toHaveLength(3);
   });
+
+  it('records last_login_at/last_login_ip and audit metadata (ip, user agent) on success', async () => {
+    const user = await makeUser();
+    const db = makeFakeD1({ users: [user] });
+    const env = { DB: db, JWT_SECRET, TURNSTILE_SECRET_KEY: 'k' };
+    await handleLogin(new Request('https://x', {
+      method: 'POST',
+      headers: { 'CF-Connecting-IP': '9.9.9.9', 'User-Agent': 'TestAgent/1.0' },
+      body: JSON.stringify({ email: user.email, password: 'CorrectPass1', 'cf-turnstile-response': 't' }),
+    }), env);
+
+    expect(db._state.users[0].last_login_ip).toBe('9.9.9.9');
+    expect(db._state.users[0].last_login_at).toBeTruthy();
+    const successEntry = db._state.auditLog.find(a => a.action === 'login' && a.result === 'success');
+    expect(JSON.parse(successEntry.metadata)).toMatchObject({ ip: '9.9.9.9', userAgent: 'TestAgent/1.0' });
+  });
+});
+
+describe('handleLogin — progressive lockout', () => {
+  beforeEach(() => mockFetchTurnstile(true));
+  afterEach(() => vi.unstubAllGlobals());
+
+  async function attemptLogin(env, email, password) {
+    return handleLogin(new Request('https://x', {
+      method: 'POST',
+      body: JSON.stringify({ email, password, 'cf-turnstile-response': 't' }),
+    }), env);
+  }
+
+  it('locks out after repeated failures, even with the correct password', async () => {
+    const user = await makeUser();
+    const db = makeFakeD1({ users: [user] });
+    const env = { DB: db, JWT_SECRET, TURNSTILE_SECRET_KEY: 'k' };
+
+    let last;
+    for (let i = 0; i < 3; i++) {
+      last = await attemptLogin(env, user.email, 'WrongPassword');
+    }
+    expect(last.status).toBe(401); // the 3rd failure itself still reports "wrong password"
+
+    // The lockout kicks in on the *next* attempt, correct password or not.
+    const lockedOut = await attemptLogin(env, user.email, 'CorrectPass1');
+    expect(lockedOut.status).toBe(429);
+  });
+
+  it('does not lock out a fresh account before the failure threshold', async () => {
+    const user = await makeUser();
+    const db = makeFakeD1({ users: [user] });
+    const env = { DB: db, JWT_SECRET, TURNSTILE_SECRET_KEY: 'k' };
+
+    await attemptLogin(env, user.email, 'WrongPassword');
+    const res = await attemptLogin(env, user.email, 'CorrectPass1');
+    expect(res.status).toBe(200);
+  });
+
+  it('clears the lockout counter on a successful login', async () => {
+    const user = await makeUser();
+    const db = makeFakeD1({ users: [user] });
+    const env = { DB: db, JWT_SECRET, TURNSTILE_SECRET_KEY: 'k' };
+
+    await attemptLogin(env, user.email, 'WrongPassword');
+    await attemptLogin(env, user.email, 'WrongPassword');
+    await attemptLogin(env, user.email, 'CorrectPass1'); // succeeds — only 2 fails, below the 3-fail threshold
+    expect(db._state.loginAttempts.find(a => a.email === user.email).failed_count).toBe(0);
+  });
 });
 
 describe('handleRefresh', () => {

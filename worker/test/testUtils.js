@@ -42,7 +42,7 @@ function applyDynamicUpdate(sql, args, collection) {
  * matcher rather than a real SQL parser — good enough for unit tests without
  * pulling in a full SQLite engine.
  */
-export function makeFakeD1({ contacts = [], workshops = [], rateLimits = new Map(), clients = [], consents = [], workshopRegistrations = [], sessions = [], passwordResets = [], auditLog = [], users = [], refreshTokens = [] } = {}) {
+export function makeFakeD1({ contacts = [], workshops = [], rateLimits = new Map(), clients = [], consents = [], workshopRegistrations = [], sessions = [], passwordResets = [], auditLog = [], users = [], refreshTokens = [], loginAttempts = [] } = {}) {
   let nextContactId = contacts.reduce((m, c) => Math.max(m, c.id || 0), 0) + 1;
   let nextClientId = clients.reduce((m, c) => Math.max(m, c.id || 0), 0) + 1;
   let nextConsentId = 1;
@@ -52,7 +52,7 @@ export function makeFakeD1({ contacts = [], workshops = [], rateLimits = new Map
   let nextUserId = users.reduce((m, u) => Math.max(m, u.id || 0), 0) + 1;
   let nextRefreshTokenId = refreshTokens.reduce((m, r) => Math.max(m, r.id || 0), 0) + 1;
   let nextPasswordResetId = passwordResets.reduce((m, r) => Math.max(m, r.id || 0), 0) + 1;
-  const state = { contacts, workshops, rateLimits, clients, consents, workshopRegistrations, sessions, passwordResets, auditLog, users, refreshTokens };
+  const state = { contacts, workshops, rateLimits, clients, consents, workshopRegistrations, sessions, passwordResets, auditLog, users, refreshTokens, loginAttempts };
 
   return {
     _state: state,
@@ -125,6 +125,9 @@ export function makeFakeD1({ contacts = [], workshops = [], rateLimits = new Map
           }
           if (/FROM password_resets WHERE token = \?/.test(sql)) {
             return state.passwordResets.find(r => r.token === call.args[0]) || null;
+          }
+          if (/FROM login_attempts WHERE email = \?/.test(sql)) {
+            return state.loginAttempts.find(a => a.email === call.args[0]) || null;
           }
           return null;
         },
@@ -300,6 +303,19 @@ export function makeFakeD1({ contacts = [], workshops = [], rateLimits = new Map
             const id = nextUserId++;
             state.users.push({ id, name, email, role, password_hash, active: 1, token_version: 0 });
             return { meta: { last_row_id: id } };
+          } else if (/INSERT INTO login_attempts/.test(sql)) {
+            const [email, failed_count, locked_until] = call.args;
+            const existing = state.loginAttempts.find(a => a.email === email);
+            if (existing) { existing.failed_count = failed_count; existing.locked_until = locked_until; }
+            else state.loginAttempts.push({ email, failed_count, locked_until });
+          } else if (/UPDATE login_attempts SET failed_count = 0/.test(sql)) {
+            const [email] = call.args;
+            const existing = state.loginAttempts.find(a => a.email === email);
+            if (existing) { existing.failed_count = 0; existing.locked_until = null; }
+          } else if (/UPDATE users SET last_login_at = datetime\('now'\)/.test(sql)) {
+            const [ip, id] = call.args;
+            const u = state.users.find(x => String(x.id) === String(id));
+            if (u) { u.last_login_at = new Date().toISOString(); u.last_login_ip = ip; }
           } else if (/UPDATE users SET token_version = token_version \+ 1/.test(sql)) {
             const [id] = call.args;
             const u = state.users.find(x => String(x.id) === String(id));

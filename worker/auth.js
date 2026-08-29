@@ -165,6 +165,68 @@ export function requireRole(payload, ...roles) {
   return null;
 }
 
+// ─── Progressive login lockout ───
+// Layered on top of (not instead of) the fixed-window rate limits above:
+// those cap the *rate* of attempts, this escalates a *block* the longer
+// someone keeps failing against one specific email, tracked in D1 so it
+// survives across the fixed-window resets. Reset to zero on success.
+
+const LOCKOUT_THRESHOLDS = [
+  { attempts: 3, seconds: 30 },
+  { attempts: 5, seconds: 5 * 60 },
+  { attempts: 8, seconds: 30 * 60 },
+  { attempts: 12, seconds: 2 * 60 * 60 },
+];
+
+function lockoutSecondsFor(failedCount) {
+  let seconds = 0;
+  for (const threshold of LOCKOUT_THRESHOLDS) {
+    if (failedCount >= threshold.attempts) seconds = threshold.seconds;
+  }
+  return seconds;
+}
+
+async function getLoginLockout(env, email) {
+  try {
+    return await env.DB.prepare(
+      'SELECT failed_count, locked_until FROM login_attempts WHERE email = ?'
+    ).bind(email).first();
+  } catch (e) {
+    // Fail open, same posture as checkRateLimit — a broken lockout tracker
+    // must not lock everyone out (or lock no one out) site-wide.
+    console.error('Login lockout read error:', e);
+    return null;
+  }
+}
+
+async function recordFailedLogin(env, email) {
+  try {
+    const existing = await env.DB.prepare(
+      'SELECT failed_count FROM login_attempts WHERE email = ?'
+    ).bind(email).first();
+    const failedCount = (existing?.failed_count || 0) + 1;
+    const lockSeconds = lockoutSecondsFor(failedCount);
+    const lockedUntil = lockSeconds ? new Date(Date.now() + lockSeconds * 1000).toISOString() : null;
+    await env.DB.prepare(
+      `INSERT INTO login_attempts (email, failed_count, locked_until, updated_at)
+       VALUES (?, ?, ?, datetime('now'))
+       ON CONFLICT(email) DO UPDATE SET failed_count = excluded.failed_count, locked_until = excluded.locked_until, updated_at = datetime('now')`
+    ).bind(email, failedCount, lockedUntil).run();
+  } catch (e) {
+    console.error('Record failed login error:', e);
+  }
+}
+
+async function clearLoginLockout(env, email) {
+  try {
+    await env.DB.prepare(
+      "UPDATE login_attempts SET failed_count = 0, locked_until = NULL, updated_at = datetime('now') WHERE email = ?"
+    ).bind(email).run();
+  } catch (e) {
+    console.error('Clear login lockout error:', e);
+  }
+}
+
 // ─── Login (email + password) ───
 
 export async function handleLogin(request, env) {
@@ -173,14 +235,24 @@ export async function handleLogin(request, env) {
     if (!email || !password) {
       return errorResponse('נדרש אימייל וסיסמה', 400, request);
     }
+    const normalizedEmail = email.toLowerCase().trim();
     const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
+    const userAgent = (request.headers.get('User-Agent') || 'unknown').slice(0, 200);
+    const auditMeta = { ip, userAgent };
 
     if (!(await checkRateLimit(env, `login:ip:${ip}`, 15, 900))) {
       return errorResponse('יותר מדי ניסיונות כניסה — נסי שוב בעוד כמה דקות', 429, request);
     }
-    if (!(await checkRateLimit(env, `login:email:${email.toLowerCase().trim()}`, 8, 900))) {
+    if (!(await checkRateLimit(env, `login:email:${normalizedEmail}`, 8, 900))) {
       return errorResponse('יותר מדי ניסיונות כניסה — נסי שוב בעוד כמה דקות', 429, request);
     }
+
+    const lockout = await getLoginLockout(env, normalizedEmail);
+    if (lockout?.locked_until && new Date(lockout.locked_until) > new Date()) {
+      await recordAudit(env, { userEmail: normalizedEmail, action: 'login', entityType: 'user', result: 'failure', metadata: { ...auditMeta, reason: 'locked_out' } });
+      return errorResponse('יותר מדי ניסיונות כניסה כושלים — נסי שוב מאוחר יותר', 429, request);
+    }
+
     if (!turnstileToken) {
       return errorResponse('אימות CAPTCHA נדרש', 403, request);
     }
@@ -190,19 +262,21 @@ export async function handleLogin(request, env) {
 
     const user = await env.DB.prepare(
       'SELECT id, email, name, role, password_hash, active, token_version FROM users WHERE email = ?'
-    ).bind(email.toLowerCase().trim()).first();
+    ).bind(normalizedEmail).first();
     if (!user) {
-      await recordAudit(env, { userEmail: email.toLowerCase().trim(), action: 'login', entityType: 'user', result: 'failure' });
+      await recordFailedLogin(env, normalizedEmail);
+      await recordAudit(env, { userEmail: normalizedEmail, action: 'login', entityType: 'user', result: 'failure', metadata: auditMeta });
       return errorResponse('אימייל או סיסמה שגויים', 401, request);
     }
     // Block inactive users
     if (user.active === 0) {
-      await recordAudit(env, { userId: user.id, userEmail: user.email, action: 'login', entityType: 'user', entityId: user.id, result: 'failure', metadata: { reason: 'inactive' } });
+      await recordAudit(env, { userId: user.id, userEmail: user.email, action: 'login', entityType: 'user', entityId: user.id, result: 'failure', metadata: { ...auditMeta, reason: 'inactive' } });
       return errorResponse('החשבון אינו פעיל — פנה למנהל המערכת', 403, request);
     }
     const valid = await verifyPassword(password, user.password_hash);
     if (!valid) {
-      await recordAudit(env, { userId: user.id, userEmail: user.email, action: 'login', entityType: 'user', entityId: user.id, result: 'failure' });
+      await recordFailedLogin(env, normalizedEmail);
+      await recordAudit(env, { userId: user.id, userEmail: user.email, action: 'login', entityType: 'user', entityId: user.id, result: 'failure', metadata: auditMeta });
       return errorResponse('אימייל או סיסמה שגויים', 401, request);
     }
 
@@ -213,8 +287,13 @@ export async function handleLogin(request, env) {
       await env.DB.prepare("UPDATE users SET password_hash = ? WHERE id = ?").bind(rehashed, user.id).run();
     }
 
+    await clearLoginLockout(env, normalizedEmail);
+    await env.DB.prepare(
+      "UPDATE users SET last_login_at = datetime('now'), last_login_ip = ? WHERE id = ?"
+    ).bind(ip, user.id).run();
+
     const { token, refreshToken } = await issueTokenPair(env, user);
-    await recordAudit(env, { userId: user.id, userEmail: user.email, action: 'login', entityType: 'user', entityId: user.id, result: 'success' });
+    await recordAudit(env, { userId: user.id, userEmail: user.email, action: 'login', entityType: 'user', entityId: user.id, result: 'success', metadata: auditMeta });
     return jsonResponse({ token, refreshToken, user: { id: user.id, email: user.email, name: user.name, role: user.role } }, 200, request);
   } catch (e) {
     console.error('Login error:', e);

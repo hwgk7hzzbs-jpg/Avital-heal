@@ -34,7 +34,7 @@ export async function handleGetUsers(env, payload) {
 
   try {
     const { results } = await env.DB.prepare(
-      'SELECT id, name, email, role, active, created_at, updated_at FROM users ORDER BY id'
+      'SELECT id, name, email, role, active, created_at, updated_at, last_login_at, last_login_ip FROM users ORDER BY id'
     ).all();
     return jsonResponse(results || []);
   } catch (e) {
