@@ -112,7 +112,7 @@ document.addEventListener("DOMContentLoaded", () => {
   ----------------------- */
   const contactForm = document.getElementById("contactForm");
   if (contactForm) {
-    const CRM_CONTACT_URL = "https://avital-heal-crm.tgthf7frmp.workers.dev/api/contact";
+    const CRM_CONTACT_URL = AVITAL_API_BASE + "/api/contact";
     let contactTurnstileToken = "";
 
     // Turnstile callback
