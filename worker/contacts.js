@@ -7,9 +7,9 @@
 import { jsonResponse, errorResponse, sendNotification } from './utils.js';
 import { verifyTurnstile, checkRateLimit, requireRole } from './auth.js';
 import { recordAudit } from './auditLog.js';
+import { normalizeEmail, normalizePhone, isValidEmail, isValidPhone, CONTACT_STATUSES } from './validation.js';
 
 const MAX_FIELD_LEN = 2000;
-const CONTACT_STATUSES = ['new', 'contacted', 'converted', 'closed'];
 
 // ─── Contact form submission (public) ───
 
@@ -40,6 +40,12 @@ export async function handleContactSubmission(request, env) {
     if ([fullName, phone, email, message].some(v => typeof v === 'string' && v.length > MAX_FIELD_LEN)) {
       return errorResponse('שדה חורג מהאורך המותר', 400);
     }
+    if (email && !isValidEmail(String(email).trim())) {
+      return errorResponse('כתובת אימייל לא תקינה', 400);
+    }
+    if (phone && !isValidPhone(String(phone).trim())) {
+      return errorResponse('מספר טלפון לא תקין', 400);
+    }
 
     const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
     if (!(await checkRateLimit(env, `contact:ip:${ip}`, 10, 3600))) {
@@ -57,8 +63,8 @@ export async function handleContactSubmission(request, env) {
        VALUES (?, ?, ?, ?, 'website', 'new', datetime('now'))`
     ).bind(
       fullName.trim(),
-      phone ? phone.trim() : null,
-      email ? email.trim() : null,
+      phone ? normalizePhone(phone) : null,
+      email ? normalizeEmail(email) : null,
       message ? message.trim() : null
     ).run();
 

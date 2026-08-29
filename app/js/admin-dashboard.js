@@ -10,6 +10,7 @@ function contactStatusBadge(status) {
     'contacted': '<span class="badge badge-blue">נוצר קשר</span>',
     'converted': '<span class="badge badge-green">הפך ללקוח</span>',
     'closed': '<span class="badge badge-gray">סגור</span>',
+    'rejected': '<span class="badge badge-red">דחוי</span>',
   };
   return map[status] || '<span class="badge badge-gray">' + escapeHtml(status || '—') + '</span>';
 }

@@ -87,6 +87,37 @@ describe('handleContactSubmission', () => {
     expect(res.status).toBe(400);
   });
 
+  it('rejects a malformed email', async () => {
+    mockFetchTurnstile(true);
+    const env = { DB: makeFakeD1(), TURNSTILE_SECRET_KEY: 'k' };
+    const res = await handleContactSubmission(
+      makeRequest({ fullName: 'Test User', email: 'not-an-email', turnstileToken: 't' }),
+      env
+    );
+    expect(res.status).toBe(400);
+  });
+
+  it('rejects a malformed phone number', async () => {
+    mockFetchTurnstile(true);
+    const env = { DB: makeFakeD1(), TURNSTILE_SECRET_KEY: 'k' };
+    const res = await handleContactSubmission(
+      makeRequest({ fullName: 'Test User', phone: 'abc', turnstileToken: 't' }),
+      env
+    );
+    expect(res.status).toBe(400);
+  });
+
+  it('normalizes email and phone before storing', async () => {
+    mockFetchTurnstile(true);
+    const env = { DB: makeFakeD1(), TURNSTILE_SECRET_KEY: 'k' };
+    await handleContactSubmission(
+      makeRequest({ fullName: 'Test User', email: '  Test@Example.COM ', phone: '050-123 4567', turnstileToken: 't' }),
+      env
+    );
+    expect(env.DB._state.contacts[0].email).toBe('test@example.com');
+    expect(env.DB._state.contacts[0].phone).toBe('0501234567');
+  });
+
   it('is rate limited after too many requests from one IP', async () => {
     mockFetchTurnstile(true);
     const env = { DB: makeFakeD1(), TURNSTILE_SECRET_KEY: 'k' };
@@ -140,6 +171,16 @@ describe('handleUpdateContact — RBAC', () => {
     });
     const res = await handleUpdateContact('1', req, env, { role: 'admin' });
     expect(res.status).toBe(400);
+  });
+
+  it('accepts "rejected" as a valid status', async () => {
+    const env = { DB: makeFakeD1() };
+    const req = new Request('https://x/api/contacts/1', {
+      method: 'PUT',
+      body: JSON.stringify({ status: 'rejected' }),
+    });
+    const res = await handleUpdateContact('1', req, env, { role: 'admin' });
+    expect(res.status).toBe(200);
   });
 });
 

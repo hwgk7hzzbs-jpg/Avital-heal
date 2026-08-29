@@ -8,9 +8,9 @@ import { jsonResponse, errorResponse, sendNotification } from './utils.js';
 import { verifyTurnstile, checkRateLimit, requireRole } from './auth.js';
 import { recordConsent } from './consents.js';
 import { recordAudit } from './auditLog.js';
+import { normalizeEmail, normalizePhone, isValidEmail, isValidPhone, REGISTRATION_STATUSES } from './validation.js';
 
 const MAX_FIELD_LEN = 2000;
-const REGISTRATION_STATUSES = ['new', 'contacted', 'confirmed', 'cancelled'];
 
 // ─── Public: Workshop registration (from brochure) ───
 
@@ -39,6 +39,12 @@ export async function handleWorkshopRegister(request, env) {
     }
     if (!phone || !phone.trim()) {
       return errorResponse('טלפון הוא שדה חובה', 400);
+    }
+    if (!isValidPhone(phone.trim())) {
+      return errorResponse('מספר טלפון לא תקין', 400);
+    }
+    if (email && !isValidEmail(String(email).trim())) {
+      return errorResponse('כתובת אימייל לא תקינה', 400);
     }
     if (!workshopId) {
       return errorResponse('סדנה לא נבחרה', 400);
@@ -81,6 +87,19 @@ export async function handleWorkshopRegister(request, env) {
       return errorResponse('מועד הסדנה שנבחר אינו קיים', 400);
     }
 
+    const normalizedPhone = normalizePhone(phone);
+
+    // Prevent duplicate registration: same phone, same workshop, same date —
+    // unless her previous registration for that slot was cancelled, in which
+    // case re-registering is a legitimate, expected flow.
+    const existing = await env.DB.prepare(
+      `SELECT id FROM workshop_registrations
+       WHERE workshop_id = ? AND date_option = ? AND phone = ? AND status != 'cancelled' AND deleted_at IS NULL`
+    ).bind(workshopId, dateOption, normalizedPhone).first();
+    if (existing) {
+      return errorResponse('כבר קיימת הרשמה עם מספר הטלפון הזה למועד זה', 400);
+    }
+
     // Insert registration — IP is recorded once, on the consents row below.
     const inserted = await env.DB.prepare(
       `INSERT INTO workshop_registrations
@@ -90,8 +109,8 @@ export async function handleWorkshopRegister(request, env) {
     ).bind(
       workshopId,
       fullName.trim(),
-      phone.trim(),
-      email ? email.trim() : null,
+      normalizedPhone,
+      email ? normalizeEmail(email) : null,
       dateOption,
       notes ? notes.trim() : null
     ).run();

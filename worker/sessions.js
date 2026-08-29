@@ -8,6 +8,26 @@ import { jsonResponse, errorResponse } from './utils.js';
 import { requireRole } from './auth.js';
 import { encryptField, decryptField } from './crypto.js';
 import { recordAudit } from './auditLog.js';
+import { validate, isValidDate, isNonNegativeAmount, isPositiveInteger, SESSION_TYPES, PAYMENT_METHODS } from './validation.js';
+
+const SESSION_CREATE_SCHEMA = {
+  client_id: { required: true, integer: true, validate: isPositiveInteger, message: 'Client ID must be a positive integer' },
+  session_date: { required: true, validate: isValidDate, message: 'Session date is invalid' },
+  session_type: { enum: SESSION_TYPES },
+  duration_minutes: { integer: true, validate: isPositiveInteger, message: 'Duration must be a positive number of minutes' },
+  amount: { number: true, validate: isNonNegativeAmount, message: 'Amount cannot be negative' },
+  payment_method: { enum: PAYMENT_METHODS },
+};
+
+// Same rules as create, minus client_id (never changes after creation) and
+// with session_date optional (only validated if the caller is changing it).
+const SESSION_UPDATE_SCHEMA = {
+  session_date: { validate: isValidDate, message: 'Session date is invalid' },
+  session_type: { enum: SESSION_TYPES },
+  duration_minutes: { integer: true, validate: isPositiveInteger, message: 'Duration must be a positive number of minutes' },
+  amount: { number: true, validate: isNonNegativeAmount, message: 'Amount cannot be negative' },
+  payment_method: { enum: PAYMENT_METHODS },
+};
 
 async function decryptSessionRow(env, row) {
   return {
@@ -69,19 +89,15 @@ export async function handleCreateSession(request, env, payload) {
   if (forbidden) return forbidden;
   try {
     const data = await request.json();
-    const {
-      client_id, session_date, session_type, duration_minutes,
-      summary, next_session_notes, paid, amount, payment_method, invoice_number,
-    } = data;
-
-    if (!client_id || !session_date) {
-      return errorResponse('Client ID and session date are required');
-    }
+    const { valid, data: v, errors } = validate(data, SESSION_CREATE_SCHEMA);
+    if (!valid) return errorResponse(errors[0].message, 400, request, 'VALIDATION_ERROR');
+    const { client_id, session_date, session_type, duration_minutes, amount, payment_method } = v;
+    const { summary, next_session_notes, paid, invoice_number } = data;
 
     const client = await env.DB.prepare(
       'SELECT id FROM clients WHERE id = ? AND deleted_at IS NULL'
     ).bind(client_id).first();
-    if (!client) return errorResponse('Client not found', 404);
+    if (!client) return errorResponse('Client not found', 404, request);
 
     const result = await env.DB.prepare(
       `INSERT INTO sessions
@@ -90,10 +106,10 @@ export async function handleCreateSession(request, env, payload) {
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     ).bind(
       client_id, session_date, session_type || null,
-      duration_minutes || 50,
+      duration_minutes ?? 50,
       await encryptField(env, summary || null),
       await encryptField(env, next_session_notes || null),
-      paid ? 1 : 0, amount || 0, payment_method || null, invoice_number || null
+      paid ? 1 : 0, amount ?? 0, payment_method || null, invoice_number || null
     ).run();
 
     await recordAudit(env, {
@@ -116,6 +132,9 @@ export async function handleUpdateSession(id, request, env, payload) {
   if (forbidden) return forbidden;
   try {
     const data = await request.json();
+    const { valid, data: v, errors } = validate(data, SESSION_UPDATE_SCHEMA);
+    if (!valid) return errorResponse(errors[0].message, 400, request, 'VALIDATION_ERROR');
+
     const fields = [];
     const values = [];
     const allowed = [
@@ -126,13 +145,13 @@ export async function handleUpdateSession(id, request, env, payload) {
     for (const field of allowed) {
       if (data[field] !== undefined) {
         fields.push(`${field} = ?`);
-        let value = data[field];
+        let value = field in v ? v[field] : data[field];
         if (field === 'paid') value = value ? 1 : 0;
         else if (field === 'summary' || field === 'next_session_notes') value = await encryptField(env, value);
         values.push(value);
       }
     }
-    if (fields.length === 0) return errorResponse('No fields to update');
+    if (fields.length === 0) return errorResponse('No fields to update', 400, request);
 
     fields.push("updated_at = datetime('now')");
     values.push(id);

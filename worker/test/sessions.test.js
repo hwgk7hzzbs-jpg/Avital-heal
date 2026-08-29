@@ -67,6 +67,59 @@ describe('session summary / next_session_notes are encrypted at rest', () => {
   });
 });
 
+describe('handleCreateSession / handleUpdateSession — field validation', () => {
+  it('rejects a negative amount on create', async () => {
+    const db = makeFakeD1({ clients: [{ id: 1, full_name: 'Client' }] });
+    const res = await handleCreateSession(req({ client_id: 1, session_date: '2026-01-01', amount: -50 }), withDB(db), { role: 'admin' });
+    expect(res.status).toBe(400);
+  });
+
+  it('rejects an invalid session_date', async () => {
+    const db = makeFakeD1({ clients: [{ id: 1, full_name: 'Client' }] });
+    const res = await handleCreateSession(req({ client_id: 1, session_date: 'not-a-date' }), withDB(db), { role: 'admin' });
+    expect(res.status).toBe(400);
+  });
+
+  it('rejects a session_type outside the closed list', async () => {
+    const db = makeFakeD1({ clients: [{ id: 1, full_name: 'Client' }] });
+    const res = await handleCreateSession(req({ client_id: 1, session_date: '2026-01-01', session_type: 'not-a-real-type' }), withDB(db), { role: 'admin' });
+    expect(res.status).toBe(400);
+  });
+
+  it('rejects a non-positive duration_minutes', async () => {
+    const db = makeFakeD1({ clients: [{ id: 1, full_name: 'Client' }] });
+    const res = await handleCreateSession(req({ client_id: 1, session_date: '2026-01-01', duration_minutes: 0 }), withDB(db), { role: 'admin' });
+    expect(res.status).toBe(400);
+  });
+
+  it('accepts a valid session with all optional fields at their boundary values', async () => {
+    const db = makeFakeD1({ clients: [{ id: 1, full_name: 'Client' }] });
+    const res = await handleCreateSession(req({
+      client_id: 1, session_date: '2026-01-01', session_type: 'combined',
+      duration_minutes: 50, amount: 0, payment_method: 'cash',
+    }), withDB(db), { role: 'admin' });
+    expect(res.status).toBe(201);
+  });
+
+  it('rejects a negative amount on update', async () => {
+    const db = makeFakeD1({ sessions: [{ id: 5, client_id: 1, session_date: '2026-01-01' }] });
+    const res = await handleUpdateSession('5', new Request('https://x', { method: 'PUT', body: JSON.stringify({ amount: -1 }) }), withDB(db), { role: 'admin' });
+    expect(res.status).toBe(400);
+  });
+
+  it('rejects an invalid payment_method on update', async () => {
+    const db = makeFakeD1({ sessions: [{ id: 5, client_id: 1, session_date: '2026-01-01' }] });
+    const res = await handleUpdateSession('5', new Request('https://x', { method: 'PUT', body: JSON.stringify({ payment_method: 'bitcoin' }) }), withDB(db), { role: 'admin' });
+    expect(res.status).toBe(400);
+  });
+
+  it('allows updating just an unrelated field (e.g. summary) without touching validated fields', async () => {
+    const db = makeFakeD1({ sessions: [{ id: 5, client_id: 1, session_date: '2026-01-01' }] });
+    const res = await handleUpdateSession('5', new Request('https://x', { method: 'PUT', body: JSON.stringify({ summary: 'just a note' }) }), withDB(db), { role: 'admin' });
+    expect(res.status).toBe(200);
+  });
+});
+
 describe('handleCreateSession / handleUpdateSession — RBAC', () => {
   it('blocks viewer from creating a session', async () => {
     const res = await handleCreateSession(req({ client_id: 1, session_date: '2026-01-01' }), withDB(makeFakeD1()), { role: 'viewer' });

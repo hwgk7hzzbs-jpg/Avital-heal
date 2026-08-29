@@ -9,12 +9,9 @@ import { jsonResponse, errorResponse } from './utils.js';
 import { hashPassword } from './crypto.js';
 import { requireRole, revokeAllSessions } from './auth.js';
 import { recordAudit } from './auditLog.js';
+import { isValidEmail, normalizeEmail, USER_ROLES } from './validation.js';
 
 // ─── Validation helpers ───
-
-function validateEmail(email) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-}
 
 function validatePassword(password) {
   if (password.length < 8) return 'הסיסמה חייבת להכיל לפחות 8 תווים';
@@ -23,8 +20,6 @@ function validatePassword(password) {
   if (!/[0-9]/.test(password)) return 'הסיסמה חייבת להכיל מספר';
   return null;
 }
-
-const VALID_ROLES = ['admin', 'therapist', 'viewer'];
 
 // ─── GET /api/users ───
 
@@ -56,7 +51,7 @@ export async function handleCreateUser(request, env, payload) {
     if (!name || name.trim().length < 2) {
       return errorResponse('שם חייב להכיל לפחות 2 תווים', 400);
     }
-    if (!email || !validateEmail(email)) {
+    if (!email || !isValidEmail(email)) {
       return errorResponse('אימייל לא תקין', 400);
     }
     if (!password) {
@@ -65,14 +60,14 @@ export async function handleCreateUser(request, env, payload) {
     const passErr = validatePassword(password);
     if (passErr) return errorResponse(passErr, 400);
 
-    if (!role || !VALID_ROLES.includes(role)) {
+    if (!role || !USER_ROLES.includes(role)) {
       return errorResponse('תפקיד לא תקין — admin/therapist/viewer', 400);
     }
 
     // Check unique email
     const existing = await env.DB.prepare(
       'SELECT id FROM users WHERE email = ?'
-    ).bind(email.toLowerCase().trim()).first();
+    ).bind(normalizeEmail(email)).first();
     if (existing) {
       return errorResponse('כבר קיים משתמש עם אימייל זה', 409);
     }
@@ -81,7 +76,7 @@ export async function handleCreateUser(request, env, payload) {
     const result = await env.DB.prepare(
       `INSERT INTO users (name, email, role, password_hash, active, created_at, updated_at)
        VALUES (?, ?, ?, ?, 1, datetime('now'), datetime('now'))`
-    ).bind(name.trim(), email.toLowerCase().trim(), role, passwordHash).run();
+    ).bind(name.trim(), normalizeEmail(email), role, passwordHash).run();
 
     await recordAudit(env, {
       userId: payload.userId, userEmail: payload.email,
@@ -92,7 +87,7 @@ export async function handleCreateUser(request, env, payload) {
     return jsonResponse({
       id: result.meta.last_row_id,
       name: name.trim(),
-      email: email.toLowerCase().trim(),
+      email: normalizeEmail(email),
       role,
       active: 1,
     }, 201);
@@ -119,10 +114,10 @@ export async function handleUpdateUser(userId, request, env, payload) {
     if (name !== undefined && name.trim().length < 2) {
       return errorResponse('שם חייב להכיל לפחות 2 תווים', 400);
     }
-    if (email !== undefined && !validateEmail(email)) {
+    if (email !== undefined && !isValidEmail(email)) {
       return errorResponse('אימייל לא תקין', 400);
     }
-    if (role !== undefined && !VALID_ROLES.includes(role)) {
+    if (role !== undefined && !USER_ROLES.includes(role)) {
       return errorResponse('תפקיד לא תקין — admin/therapist/viewer', 400);
     }
 
@@ -130,7 +125,7 @@ export async function handleUpdateUser(userId, request, env, payload) {
     if (email !== undefined) {
       const existing = await env.DB.prepare(
         'SELECT id FROM users WHERE email = ? AND id != ?'
-      ).bind(email.toLowerCase().trim(), userId).first();
+      ).bind(normalizeEmail(email), userId).first();
       if (existing) {
         return errorResponse('כבר קיים משתמש עם אימייל זה', 409);
       }
@@ -154,7 +149,7 @@ export async function handleUpdateUser(userId, request, env, payload) {
     const fields = [];
     const values = [];
     if (name !== undefined) { fields.push('name = ?'); values.push(name.trim()); }
-    if (email !== undefined) { fields.push('email = ?'); values.push(email.toLowerCase().trim()); }
+    if (email !== undefined) { fields.push('email = ?'); values.push(normalizeEmail(email)); }
     if (role !== undefined) { fields.push('role = ?'); values.push(role); }
     if (active !== undefined) { fields.push('active = ?'); values.push(active ? 1 : 0); }
     fields.push("updated_at = datetime('now')");

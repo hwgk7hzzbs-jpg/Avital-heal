@@ -31,6 +31,7 @@ function renderContacts(contacts) {
           <option value="contacted" ${c.status === 'contacted' ? 'selected' : ''}>נוצר קשר</option>
           <option value="converted" ${c.status === 'converted' ? 'selected' : ''}>הפך ללקוח</option>
           <option value="closed" ${c.status === 'closed' ? 'selected' : ''}>סגור</option>
+          <option value="rejected" ${c.status === 'rejected' ? 'selected' : ''}>דחוי</option>
         </select>
       </td>
     </tr>
@@ -38,14 +39,6 @@ function renderContacts(contacts) {
 }
 
 let currentContactId = null;
-
-const CONTACT_STATUS_LABELS = {
-  new: 'חדש',
-  contacted: 'נוצר קשר',
-  converted: 'הפך ללקוח',
-  closed: 'סגור',
-  rejected: 'דחוי',
-};
 
 function openContactDetail(id) {
   const c = (allContacts || []).find(x => x.id === id);
