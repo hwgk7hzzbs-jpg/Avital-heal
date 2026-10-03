@@ -27,3 +27,6 @@
 .article-invitation p { margin: 16px 0 23px; }
 @media (min-width: 701px) and (max-width: 1000px) { .nav-links { gap: 12px; font-size: 12px; } .brand small { display: none; } .article-card { padding: 22px; } }
 @media (max-width: 700px) { .article-grid { grid-template-columns: 1fr; gap: 20px; } .journal-top { align-items: flex-start; flex-direction: column; } .journal-intro { font-size: 18px; } .article-card { padding: 25px; } .reading { padding-top: 28px; } .breadcrumbs { margin-bottom: 30px; } .article-lead { font-size: 20px; } .article-body { font-size: 18px; } .article-body h2 { font-size: 25px; } .article-invitation { padding: 22px; } }
+
+.article-card > p.reading-time{font-size:13px;color:var(--green);margin:0 0 16px}.related-reading{margin-top:40px;padding-top:28px;border-top:1px solid var(--line)}.related-reading h2{font-size:25px}.related-reading ul{list-style:none;padding:0;margin:18px 0 0}.related-reading li{display:flex;align-items:baseline;justify-content:space-between;gap:18px;padding:15px 0;border-bottom:1px solid var(--line)}.related-reading a{color:var(--green);text-decoration:underline;text-underline-offset:5px}.related-reading .small{white-space:nowrap}
+@media(max-width:700px){.related-reading li{align-items:flex-start;flex-direction:column;gap:4px}}
