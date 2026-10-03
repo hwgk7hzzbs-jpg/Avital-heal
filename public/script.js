@@ -20,7 +20,8 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!targetEl) return;
 
       e.preventDefault();
-      targetEl.scrollIntoView({ behavior: "smooth" });
+      targetEl.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+      if (this.classList.contains("skip-link")) targetEl.focus({ preventScroll: true });
     });
   });
 
