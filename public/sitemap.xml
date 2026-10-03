@@ -2,7 +2,7 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://avital-heal.com/</loc>
-    <lastmod>2026-04-24</lastmod>
+    <lastmod>2026-10-03</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
@@ -27,5 +27,6 @@
   <!-- workshop.avital-heal.com has its own sitemap at workshop/sitemap.xml —
        a cross-host URL here is silently ignored by Search Console anyway,
        since sitemaps are verified per-host. -->
+<url><loc>https://avital-heal.com/articles</loc><lastmod>2026-10-03</lastmod></url><url><loc>https://avital-heal.com/repeating-patterns</loc><lastmod>2026-10-03</lastmod></url><url><loc>https://avital-heal.com/dreams-and-emotions</loc><lastmod>2026-10-03</lastmod></url><url><loc>https://avital-heal.com/first-meeting</loc><lastmod>2026-10-03</lastmod></url>
 </urlset>
 
